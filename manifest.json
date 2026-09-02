@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "RepriceAA",
+  "version": "0.1.0",
+  "description": "Reprice Artificial Analysis benchmarks using the prices you actually pay.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://artificialanalysis.ai/*",
+        "https://www.artificialanalysis.ai/*"
+      ],
+      "js": [
+        "src/lib/pricing.js",
+        "src/lib/pareto.js",
+        "src/lib/storage.js",
+        "src/lib/colors.js",
+        "src/lib/registry.js",
+        "src/content/extract.js",
+        "src/content/state.js",
+        "src/content/chart-integration.js",
+        "src/content/panel.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
