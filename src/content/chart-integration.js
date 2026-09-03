@@ -230,6 +230,76 @@
       ctx.tip = document.createElement('div');
       ctx.tip.className = 'raa-tip';
     }
+    ensureLegendHook();
+  }
+
+  var highlight = null;
+  var legendHooked = false;
+
+  function ensureLegendHook() {
+    if (legendHooked) return;
+    legendHooked = true;
+    document.addEventListener('click', onLegendClick, true);
+  }
+
+  function onLegendClick(ev) {
+    var target = ev.target;
+    if (!target || !target.closest) return;
+    var anchor = target.closest('[id^="intelligence-index-vs-cost"]');
+    if (!anchor) return;
+    var btn = target.closest('button');
+    if (!btn || !anchor.contains(btn)) return;
+    var sws = btn.querySelectorAll('span[style*="background-color"]');
+    var sw = null, m = null;
+    for (var i = 0; i < sws.length; i++) {
+      m = RAA.colors._internals.extractBgColor(sws[i].getAttribute('style'));
+      if (m) { sw = sws[i]; break; }
+    }
+    if (!sw || !m) return;
+    var nameEl = sw.nextElementSibling;
+    var name = nameEl ? (nameEl.textContent || '').trim() : '';
+    if (!name) {
+      name = (btn.textContent || '').trim();
+    }
+    if (!name || name === 'Most attractive quadrant' || name === 'Pareto line') {
+      return;
+    }
+    if (highlight && highlight.name === name) {
+      highlight = null;
+    } else {
+      highlight = { name: name, color: m };
+      fetchProvidersFor();
+    }
+    renderAllBars();
+  }
+
+  function fetchProvidersFor() {
+    var selected = urlSelectedIds();
+    if (!selected || !selected.length) return;
+    var all = RAA.registry.all();
+    var missing = selected.filter(function (id) {
+      if (fetchState[id] === 'pending' || fetchState[id] === 'done') return false;
+      var entry = null;
+      all.forEach(function (mm) { if (mm.id === id) entry = mm; });
+      return entry && !entry.provider;
+    });
+    if (!missing.length || typeof root.fetch !== 'function') return;
+    missing.forEach(function (id) { fetchState[id] = 'pending'; });
+    setTimeout(function () {
+      missing.forEach(fetchModelDetail);
+    }, 200);
+  }
+
+  function matchesHighlight(m) {
+    if (!highlight) return false;
+    if (m.provider && String(m.provider).toLowerCase() === highlight.name.toLowerCase()) return true;
+    if (RAA.colors._internals.inferProviderName(m.label, m.id) === highlight.name) return true;
+    var c = RAA.colors._internals.normalizeCssColor(RAA.colors.colorFor(m.label, m.id, m.provider));
+    return c !== null && c === highlight.color;
+  }
+
+  function isHighlighted(m) {
+    return !highlight || matchesHighlight(m);
   }
 
   function populateSelect(select) {
@@ -288,7 +358,6 @@
       ctx.tip = document.createElement('div');
       ctx.tip.className = 'raa-tip';
       ctx.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      ctx.gLgd = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ctx.gAxis = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ctx.path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       ctx.path.setAttribute('fill', 'none');
@@ -298,7 +367,6 @@
       ctx.path.setAttribute('stroke-linecap', 'round');
       ctx.gPts = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ctx.gLbl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      ctx.svg.appendChild(ctx.gLgd);
       ctx.svg.appendChild(ctx.gAxis);
       ctx.svg.appendChild(ctx.path);
       ctx.svg.appendChild(ctx.gPts);
@@ -521,6 +589,8 @@
     }).then(function (html) {
       if (!html) { fetchState[id] = 'failed'; return; }
       var models = RAA.extract.extractFlightModelsFromHtml(html);
+      var target = null;
+      models.forEach(function (mm) { if (mm.id === id) target = mm; });
       if (models.length) {
         RAA.registry.upsertModels(models);
         fetchState[id] = 'done';
@@ -563,52 +633,11 @@
     var head = (box ? 'R' + box.w + 'x' + box.h + '@' + box.left + ',' + box.top : 'P') +
       '|' + bundle.profileName + '|' + bundle.source + '|' +
       (bundle.selectedIds ? bundle.selectedIds.join(',') : '') + '|' +
-      (nativeDots == null ? '?' : nativeDots) + '|';
+      (nativeDots == null ? '?' : nativeDots) + '|' +
+      (highlight ? highlight.name : '') + '|';
     return head + bundle.priced.map(function (m) {
       return m.id + ':' + m.intelligence + ':' + m.repricedCost;
     }).join(';');
-  }
-
-  function providerList(priced) {
-    var internals = RAA.colors._internals;
-    var seen = {};
-    var items = [];
-    priced.forEach(function (m) {
-      var p = internals.inferProviderName(m.label, m.id) || 'Other';
-      if (!seen[p]) {
-        seen[p] = true;
-        items.push({ name: p, color: RAA.colors.colorFor(m.label, m.id) });
-      }
-    });
-    return items;
-  }
-
-  function buildLegend(ctx, priced) {
-    var W = ctx.lastW;
-    var s = '';
-    var x = 2, y = 12;
-    var rowH = 27;
-    function need(w) {
-      if (x + w > W - 8) { x = 2; y += rowH; }
-    }
-    need(196);
-    s += '<rect x="' + x + '" y="' + y + '" width="14" height="14" rx="3" fill="#34A853" fill-opacity="0.35"/>';
-    s += '<text x="' + (x + 21) + '" y="' + (y + 11.5) + '" font-size="12.5" fill="#26272b">Most attractive quadrant</text>';
-    x += 196;
-    need(122);
-    s += '<line x1="' + (x + 2) + '" y1="' + (y + 5.5) + '" x2="' + (x + 28) + '" y2="' + (y + 5.5) +
-      '" stroke="#565a61" stroke-width="2.5" stroke-dasharray="0.1 7" stroke-linecap="round"/>';
-    s += '<text x="' + (x + 36) + '" y="' + (y + 11.5) + '" font-size="12.5" fill="#26272b">Pareto line</text>';
-    x += 122;
-    providerList(priced).forEach(function (it) {
-      var w = 34 + it.name.length * 7.2 + 22;
-      need(w);
-      s += '<circle cx="' + (x + 6) + '" cy="' + (y + 5.5) + '" r="5.5" fill="' + it.color + '"/>';
-      s += '<text x="' + (x + 17) + '" y="' + (y + 11.5) + '" font-size="12.5" fill="#26272b">' + esc(it.name) + '</text>';
-      x += w;
-    });
-    ctx.gLgd.innerHTML = s;
-    return y + rowH;
   }
 
   function updateProv(ctx, bundle, nativeDots) {
@@ -620,6 +649,10 @@
     var label = 'Repriced by RepriceAA';
     if (total && total >= n) label += ' \u00B7 <b>' + n + '</b> / ' + total + ' models';
     else label += ' \u00B7 <b>' + n + '</b> models';
+    if (highlight) {
+      var hits = bundle.priced.filter(matchesHighlight).length;
+      label += ' \u00B7 highlighting ' + esc(highlight.name) + ' (' + hits + ')';
+    }
     var pc = bundle.pageCoverage;
     var tip = 'Points come from data serialized into the page (' +
       (bundle.source || 'page data') + ')';
@@ -627,6 +660,9 @@
     if (total && total > n) {
       tip += '. The model selector currently covers ' + total +
         ' models; the rest lack usable cost data in the page payload and are hidden here.';
+    }
+    if (highlight) {
+      tip += '. Clicking the highlighted legend entry again clears the highlight.';
     }
     ctx.prov.innerHTML = label;
     ctx.prov.title = tip;
@@ -651,14 +687,13 @@
       return;
     }
 
-    var legendH = buildLegend(ctx, priced);
-    var lay = layoutFor(ctx, priced, legendH);
-    if (!lay || ctx.lastH < legendH + 240) {
-      ctx.lastH = legendH + 300;
+    var lay = layoutFor(ctx, priced);
+    if (!lay || ctx.lastH < 240) {
+      ctx.lastH = 300;
       ctx.svg.setAttribute('viewBox', '0 0 ' + Math.round(ctx.lastW) + ' ' + Math.round(ctx.lastH));
       ctx.svg.setAttribute('width', Math.round(ctx.lastW));
       ctx.svg.setAttribute('height', Math.round(ctx.lastH));
-      lay = layoutFor(ctx, priced, legendH);
+      lay = layoutFor(ctx, priced);
     }
 
     drawAxes(ctx, lay, priced);
@@ -683,9 +718,10 @@
     priced.forEach(function (m) {
       seen[m.id] = true;
       var x = lay.sx(m.repricedCost), y = lay.sy(m.intelligence);
+      var dim = !isHighlighted(m);
       var g = ctx.nodes[m.id];
       if (!g) {
-        g = makePointNode(ctx, { m: m }, RAA.colors.colorFor(m.label, m.id));
+        g = makePointNode(ctx, { m: m }, RAA.colors.colorFor(m.label, m.id, m.provider));
         ctx.nodes[m.id] = g;
         applyPos(g, isNum(m.aaCost) ? lay.sx(m.aaCost) : x, y);
         requestAnimationFrame(function () {
@@ -697,8 +733,10 @@
       } else {
         applyPos(g, x, y);
         var body = g.querySelector('circle.body');
-        if (body) body.setAttribute('fill', RAA.colors.colorFor(m.label, m.id));
+        if (body) body.setAttribute('fill', RAA.colors.colorFor(m.label, m.id, m.provider));
       }
+      g.setAttribute('opacity', dim ? '0.15' : '1');
+      if (body) body.setAttribute('r', dim ? '4.5' : '5');
     });
     Object.keys(ctx.nodes).forEach(function (id) {
       if (!seen[id]) {
@@ -818,6 +856,8 @@
       var cx = lay.sx(m.repricedCost), cy = lay.sy(m.intelligence);
       var text = truncateLabel(m.label);
       var w = text.length * 6.1 + 4;
+      var dim = !isHighlighted(m);
+      var dimAttr = dim ? ' opacity="0.2"' : '';
 
       var best = null, bestLevel = 0;
       for (var level = 0; level <= MAX_LEVEL && !best; level++) {
@@ -865,13 +905,13 @@
         var ny = Math.max(best.y1, Math.min(cy, best.y2));
         line = '<line x1="' + (cx + ux * 6).toFixed(1) + '" y1="' + (cy + uy * 6).toFixed(1) +
           '" x2="' + (nx - ux * 1.5).toFixed(1) + '" y2="' + (ny - uy * 1.5).toFixed(1) +
-          '" stroke="#9ca3af" stroke-width="1" opacity="0.85"/>';
+          '" stroke="#9ca3af" stroke-width="1" opacity="0.85"' + dimAttr + '/>';
       }
 
       var tx = best.anchor === 'start' ? best.x1 : best.anchor === 'end' ? best.x2 : best.x1 + w / 2;
       var ty = best.y1 + H / 2 + 3.5;
       s += line + '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) +
-        '" font-size="11" fill="#404040" text-anchor="' + best.anchor + '">' +
+        '" font-size="11" fill="#404040" text-anchor="' + best.anchor + '"' + dimAttr + '>' +
         esc(text) + '</text>';
     });
     ctx.gLbl.innerHTML = s;

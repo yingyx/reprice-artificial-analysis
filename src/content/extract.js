@@ -113,6 +113,16 @@
     return flightChunksFromString(parts.join('\n'));
   }
 
+  function modelBoundary(text, from) {
+    var cands = [
+      text.indexOf('},{"id":"', from),
+      text.indexOf('},{"slug":"', from),
+      text.indexOf('},{"release":{', from)
+    ].filter(function (c) { return c > 0; });
+    if (!cands.length) return Math.min(text.length, from + 20000);
+    return Math.min.apply(null, cands.concat([Math.min(text.length, from + 20000)]));
+  }
+
   function scanFlightModelsTopSlug(text) {
     if (text.length < 200) return [];
 
@@ -127,12 +137,12 @@
       var label = m[2].replace(/\\u([\dA-Fa-f]{4})/g, function (all, hex) {
         return String.fromCharCode(parseInt(hex, 16));
       }).replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim() || id;
-      var segEnd = text.indexOf('},{"', re.lastIndex);
-      if (segEnd === -1 || segEnd - re.lastIndex > 12000) segEnd = Math.min(text.length, re.lastIndex + 12000);
+      var segEnd = modelBoundary(text, re.lastIndex);
       var seg = text.slice(re.lastIndex, segEnd);
       var costM = new RegExp('"intelligenceIndexCostPerTask":\\{"cost":\\{"total":(' + NUM_RE + ')').exec(seg);
       var cost = costM ? parseFloat(costM[1]) : null;
-      byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost };
+      var provM = new RegExp('"creator":\\{[^}]*?"name":"([^"\\\\]+)"').exec(seg);
+      byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost, provider: provM ? provM[1] : null };
     }
     return Object.keys(byId).map(function (k) { return byId[k]; });
   }
@@ -156,7 +166,8 @@
       var seg = text.slice(re.lastIndex, segEnd);
       var costM = new RegExp('"intelligenceIndexCostPerTask":\\{"cost":\\{"total":(' + NUM_RE + ')').exec(seg);
       var cost = costM ? parseFloat(costM[1]) : null;
-      byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost };
+      var provM = new RegExp('"creator":\\{[^}]*?"name":"([^"\\\\]+)"').exec(seg);
+      byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost, provider: provM ? provM[1] : null };
     }
     return Object.keys(byId).map(function (k) { return byId[k]; });
   }
@@ -193,7 +204,7 @@
   function mergeModelLists(primary, secondary) {
     var byId = {};
     (secondary || []).forEach(function (m) {
-      byId[m.id] = { id: m.id, label: m.label || m.id, intelligence: m.intelligence, aaCost: m.aaCost };
+      byId[m.id] = { id: m.id, label: m.label || m.id, intelligence: m.intelligence, aaCost: m.aaCost, provider: m.provider || null };
     });
     (primary || []).forEach(function (m) {
       var prev = byId[m.id];
@@ -201,7 +212,8 @@
         id: m.id,
         label: m.label || (prev && prev.label) || m.id,
         intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
-        aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null)
+        aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
+        provider: m.provider || (prev ? prev.provider : null)
       };
     });
     return Object.keys(byId)

@@ -68,6 +68,7 @@
         label: m.label || (prev && prev.label) || m.id,
         intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
         aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
+        provider: m.provider || (prev ? prev.provider : null),
         lastSeen: now
       };
     });
@@ -99,6 +100,7 @@
         label: m.label || (prev && prev.label) || m.id,
         intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
         aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
+        provider: m.provider || (prev ? prev.provider : null),
         lastSeen: now
       };
     });

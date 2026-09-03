@@ -190,9 +190,6 @@ async function main() {
   assert.strictEqual(ctxA.select.value, 'opencode-go-example', 'select reflects profile');
   assert.ok(ctxA.svg, 'overlay svg created in repriced mode');
   assert.strictEqual(ctxA.wrap.style.display, '', 'overlay visible in repriced mode');
-  assert.ok(ctxA.gLgd._innerHTML.indexOf('Most attractive quadrant') !== -1, 'legend has MAQ entry');
-  assert.ok(ctxA.gLgd._innerHTML.indexOf('Pareto line') !== -1, 'legend has Pareto entry');
-  assert.ok(ctxA.gLgd._innerHTML.indexOf('OpenAI') !== -1, 'legend lists providers');
   assert.strictEqual(ctxA.path.attrs['stroke-dasharray'], '0.1 7', 'Pareto line dotted like AA legend');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('fill-opacity="0.2"') !== -1, 'MAQ shading visible');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('$0.05') !== -1, 'exact log cost ticks');

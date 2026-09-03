@@ -37,20 +37,46 @@
     return null;
   }
 
+  function normalizeCssColor(v) {
+    var s = String(v == null ? '' : v).trim().toLowerCase();
+    var m = /^#([0-9a-f]{3,8})$/.exec(s);
+    if (m) {
+      var hex = m[1];
+      if (hex.length === 3 || hex.length === 4) {
+        hex = hex.split('').map(function (c) { return c + c; }).join('');
+      }
+      if (hex.length === 8) hex = hex.slice(0, 6);
+      if (hex.length !== 6) return null;
+      return 'rgb(' + parseInt(hex.slice(0, 2), 16) + ',' + parseInt(hex.slice(2, 4), 16) + ',' + parseInt(hex.slice(4, 6), 16) + ')';
+    }
+    m = /^rgba?\(([^)]+)\)$/.exec(s);
+    if (m) {
+      var nums = m[1].split(',').map(function (p) { return parseFloat(p); });
+      if (nums.length < 3) return null;
+      return 'rgb(' + Math.round(nums[0]) + ',' + Math.round(nums[1]) + ',' + Math.round(nums[2]) + ')';
+    }
+    return null;
+  }
+
+  function extractBgColor(styleAttr) {
+    var m = /background-color:\s*([^;]+)/.exec(String(styleAttr || ''));
+    return m ? normalizeCssColor(m[1]) : null;
+  }
+
   function harvestLegendColors(doc) {
     doc = doc || document;
     var map = {};
     try {
-      var nodes = doc.querySelectorAll('span[style*="background-color:#"]');
+      var nodes = doc.querySelectorAll('span[style*="background-color"]');
       for (var i = 0; i < nodes.length; i++) {
         var el = nodes[i];
-        var m = /background-color:\s*(#[0-9a-fA-F]{3,8})/.exec(el.getAttribute('style') || '');
-        if (!m) continue;
+        var color = extractBgColor(el.getAttribute('style'));
+        if (!color) continue;
         var nameEl = el.nextElementSibling;
         if (!nameEl) continue;
         var text = (nameEl.textContent || '').trim();
         if (!text || text.length > 60) continue;
-        map[norm(text)] = m[1];
+        map[norm(text)] = color;
       }
     } catch (e) { /* ignore */ }
     return map;
@@ -74,10 +100,10 @@
       return null;
     }
 
-    function colorFor(label, id) {
+    function colorFor(label, id, providerHint) {
       var key = String(id || label);
       if (assigned[key]) return assigned[key];
-      var provider = inferProviderName(label, id);
+      var provider = providerHint || inferProviderName(label, id);
       var hex = provider ? providerHex(provider) : null;
       if (!hex) {
         var h = 0;
@@ -96,6 +122,8 @@
       _internals: {
         inferProviderName: inferProviderName,
         harvestLegendColors: harvestLegendColors,
+        normalizeCssColor: normalizeCssColor,
+        extractBgColor: extractBgColor,
         FALLBACK_PALETTE: FALLBACK_PALETTE
       }
     };
