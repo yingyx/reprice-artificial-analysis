@@ -41,6 +41,7 @@
     profiles: [],
     activeProfileId: 'aa-default',
     sourceMode: 'aa',
+    enabledSourceIds: [],
     logScale: true,
     panelOpen: false
   };
@@ -82,11 +83,14 @@
       cache.profiles.forEach(function (p) { if (p.id === aid) ok = true; });
       cache.activeProfileId = ok ? aid : 'aa-default';
       var prefs = res[storageApi.KEYS.prefs] || {};
-      if (prefs.mode === 'aa' || prefs.mode === 'repriced') state.sourceMode = prefs.mode;
+      if (prefs.mode === 'aa' || prefs.mode === 'repriced' || prefs.mode === 'best') state.sourceMode = prefs.mode;
+      if (Array.isArray(prefs.enabledSourceIds)) {
+        cache.enabledSourceIds = prefs.enabledSourceIds.filter(function (id) { return typeof id === 'string'; });
+      }
       cache.logScale = prefs.logScale !== false;
       cache.panelOpen = !!prefs.panelOpen;
       var sm = res[storageApi.KEYS.sourceMode];
-      state.sourceMode = sm === 'repriced' ? sm : sm === 'aa' ? 'aa' : state.sourceMode;
+      if (sm === 'repriced' || sm === 'best' || sm === 'aa') state.sourceMode = sm;
       return cache;
     });
   }
@@ -106,6 +110,12 @@
       cache.activeProfileId = 'aa-default';
       state.sourceMode = 'aa';
     }
+    // clean dangling references in remaining profiles
+    cache.profiles.forEach(function (p) {
+      if (p.basedOn === id) p.basedOn = null;
+      if (p.fallbackTo === id) p.fallbackTo = null;
+    });
+    cache.enabledSourceIds = cache.enabledSourceIds.filter(function (sid) { return sid !== id; });
     persistProfiles();
   }
 
@@ -134,7 +144,9 @@
   }
 
   function setSource(sourceId) {
-    if (sourceId === '__aa__' || sourceId == null) {
+    if (sourceId === '__best__') {
+      state.sourceMode = 'best';
+    } else if (sourceId === '__aa__' || sourceId == null) {
       state.sourceMode = 'aa';
     } else {
       state.sourceMode = 'repriced';
@@ -142,6 +154,62 @@
     }
     persistAll();
     notify('source');
+  }
+
+  function setBestSources(ids) {
+    var known = {};
+    cache.profiles.forEach(function (p) { known[p.id] = true; });
+    cache.enabledSourceIds = (Array.isArray(ids) ? ids : []).filter(function (id) { return known[id]; });
+    if (state.sourceMode === 'best' && cache.enabledSourceIds.length === 0) {
+      state.sourceMode = 'aa';
+    }
+    persistAll();
+    notify('source');
+  }
+
+  function getEnabledSourceIds() {
+    var known = {};
+    cache.profiles.forEach(function (p) { known[p.id] = true; });
+    return cache.enabledSourceIds.filter(function (id) { return known[id]; });
+  }
+
+  function sourceTemplates() {
+    return [
+      {
+        key: 'blank',
+        label: 'Blank (pay-as-you-go)',
+        description: 'Start from scratch; default multiplier \u00D71',
+        profile: { kind: 'usage', defaultRule: { type: 'multiplier', value: 1 }, rules: {}, nameIncludes: [] }
+      },
+      {
+        key: 'gateway',
+        label: 'Gateway / reseller (+5.5%)',
+        description: 'Aggregated billing like OpenRouter; all models \u00D71.055',
+        profile: { kind: 'usage', defaultRule: { type: 'multiplier', value: 1.055 }, rules: {}, nameIncludes: [] }
+      },
+      {
+        key: 'batch',
+        label: 'Batch (\u00D70.5, derived)',
+        description: 'Half price of another source; pick the parent below',
+        profile: { kind: 'usage', basedOn: '__pick__', defaultRule: { type: 'multiplier', value: 0.5 }, rules: {}, nameIncludes: [] }
+      },
+      {
+        key: 'subscription',
+        label: 'Subscription (Coding Plan)',
+        description: 'Monthly fee amortized into a ratio; uncovered models fall back',
+        profile: {
+          kind: 'subscription', monthlyFee: null, monthlyQuotaTokens: null,
+          refBlendedPrice: null, manualRatio: null, fallbackTo: '__pick__',
+          defaultRule: { type: 'multiplier', value: 1 }, rules: {}, nameIncludes: []
+        }
+      },
+      {
+        key: 'local',
+        label: 'Local / free ($0)',
+        description: 'Self-hosted or free endpoints; all models $0',
+        profile: { kind: 'usage', defaultRule: { type: 'absolute', value: 0 }, rules: {}, nameIncludes: [] }
+      }
+    ];
   }
 
   function setLogScale(v) {
@@ -162,7 +230,11 @@
   }
 
   function persistPrefs() {
-    storageApi.set(storageApi.KEYS.prefs, { logScale: cache.logScale, panelOpen: cache.panelOpen });
+    storageApi.set(storageApi.KEYS.prefs, {
+      logScale: cache.logScale,
+      panelOpen: cache.panelOpen,
+      enabledSourceIds: cache.enabledSourceIds
+    });
   }
 
   function persistAll() {
@@ -176,10 +248,17 @@
     onProfilesChanged: function (fn) {
       listeners.push(fn);
     },
-    getSourceMode: function () { return state.sourceMode; },
-    getSourceId: function () { return state.sourceMode === 'repriced' ? cache.activeProfileId : '__aa__'; },
+    getSourceMode: function () {
+      return state.sourceMode === 'best' ? 'best'
+        : state.sourceMode === 'repriced' ? 'repriced' : 'aa';
+    },
+    getSourceId: function () { return state.sourceMode === 'repriced' ? cache.activeProfileId : (state.sourceMode === 'best' ? '__best__' : '__aa__'); },
     activePricingProfile: activePricingProfile,
+    getProfileById: getProfileById,
     setSource: setSource,
+    setBestSources: setBestSources,
+    getEnabledSourceIds: getEnabledSourceIds,
+    sourceTemplates: sourceTemplates,
     setLogScale: setLogScale,
     setPanelOpen: setPanelOpen,
     isPanelOpen: function () { return cache.panelOpen; },

@@ -221,9 +221,60 @@ async function main() {
   await new Promise((r) => setTimeout(r, 50));
   assert.strictEqual(ctxA.wrap.style.display, 'none', 'overlay hidden again in AA mode');
 
+  // ---- best-of mode: subscription + derived batch source ----
+  R.state.upsertProfile({
+    id: 'claude-max', name: 'Claude Max', kind: 'subscription',
+    monthlyFee: 20, monthlyQuotaTokens: 4.33e6, refBlendedPrice: 9,
+    fallbackTo: 'openrouter-x', defaultRule: { type: 'multiplier', value: 1 },
+    rules: {}, nameIncludes: [{ match: 'claude', rule: { type: 'multiplier', value: 0.3 } }]
+  });
+  R.state.upsertProfile({
+    id: 'openrouter-x', name: 'OpenRouter', kind: 'usage',
+    defaultRule: { type: 'multiplier', value: 1.055 }, rules: {}, nameIncludes: []
+  });
+  R.state.upsertProfile({
+    id: 'or-batch', name: 'OpenRouter@Batch', kind: 'usage', basedOn: 'openrouter-x',
+    defaultRule: { type: 'multiplier', value: 0.5 }, rules: {}, nameIncludes: []
+  });
+  R.state.setBestSources(['claude-max', 'openrouter-x', 'or-batch']);
+  R.state.setSource('__best__');
+  await new Promise((r) => setTimeout(r, 50));
+
+  assert.strictEqual(R.state.getSourceMode(), 'best', 'source mode best');
+  assert.strictEqual(ctxA.select.value, '__best__', 'select reflects best mode');
+  assert.ok(ctxA.wrap.style.display === '', 'overlay visible in best mode');
+
+  // Claude models: covered by Max -> unified amortized ratio (20/4.33/9 ≈ 0.5131)
+  // overrides the pattern's own ×0.3; beats OpenRouter & Batch
+  const claude = R.pricing.applyBest(
+    [{ id: 'claude-opus-5', label: 'Claude Opus 5 (max)', intelligence: 63.05, aaCost: 2.3368 }],
+    ['claude-max', 'openrouter-x', 'or-batch'],
+    R.state.cache.profiles
+  )[0];
+  const ratio = (20 / 4.33) / 9;
+  assert.ok(Math.abs(claude.repricedCost - 2.3368 * ratio) < 1e-6, 'covered claude uses amortized ratio');
+  assert.strictEqual(claude.winnerSourceId, 'claude-max', 'subscription wins for covered model');
+
+  // GPT model: not covered by Max -> falls back to OpenRouter (4.22) ties with Batch (4.22);
+  // Batch derived price = 1.055*0.5 = 0.5275x -> cheaper, batch wins
+  const gpt = R.pricing.applyBest(
+    [{ id: 'gpt-5-6-sol', label: 'GPT-5.6 Sol (max)', intelligence: 60.92, aaCost: 1.0056 }],
+    ['claude-max', 'openrouter-x', 'or-batch'],
+    R.state.cache.profiles
+  )[0];
+  assert.ok(Math.abs(gpt.repricedCost - 1.0056 * 1.055 * 0.5) < 1e-9, 'batch derived price wins for gpt');
+  assert.strictEqual(gpt.winnerSourceId, 'or-batch', 'derived batch wins for uncovered model');
+
+  assert.ok(ctxA.gAxis._innerHTML.indexOf('Auto-best') !== -1, 'axis label mentions Auto-best');
+  assert.ok(ctxA.nodes['glm-5-3'], 'GLM point still rendered in best mode');
+
+  R.state.setSource('__aa__');
+  await new Promise((r) => setTimeout(r, 50));
+  assert.strictEqual(ctxA.wrap.style.display, 'none', 'overlay hidden in AA mode after best');
+
   console.log('integration test passed: bar mounts; repriced switch moves GLM to x=' +
     glmX.toFixed(0) + ', DeepSeek ' + dsX1.toFixed(0) + 'px -> ' + dsX2.toFixed(0) +
-    'px across profiles, overlay restores in AA mode');
+    'px across profiles, overlay restores in AA mode; best-of mode composes subscription+derived sources');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

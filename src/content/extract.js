@@ -83,6 +83,27 @@
 
   var SLUG_RE = /^[a-z0-9][a-z0-9._\-]{0,79}$/i;
   var NUM_RE = '-?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?';
+  var INDEX_VER_RE = /Intelligence Index v(\d+\.\d+(?:\.\d+)?)/;
+
+  function extractIndexVersionFromText(text) {
+    var m = INDEX_VER_RE.exec(String(text || ''));
+    return m ? m[1] : null;
+  }
+
+  function extractIndexVersion(doc) {
+    try {
+      var v = extractIndexVersionFromText(flightText(doc));
+      if (v) return v;
+    } catch (e) { }
+    try {
+      var scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      for (var i = 0; i < scripts.length; i++) {
+        var v2 = extractIndexVersionFromText(scripts[i].textContent);
+        if (v2) return v2;
+      }
+    } catch (e) { }
+    return null;
+  }
 
   function flightChunksFromString(raw) {
     var parts = [];
@@ -249,6 +270,7 @@
     return {
       models: models,
       source: source,
+      indexVersion: extractIndexVersion(doc),
       coverage: { total: models.length, withCost: withCost }
     };
   }
@@ -264,6 +286,8 @@
     extractFromLdJson: extractFromLdJson,
     extractFlightModels: extractFlightModels,
     extractFlightModelsFromHtml: extractFlightModelsFromHtml,
+    extractIndexVersionFromText: extractIndexVersionFromText,
+    extractIndexVersion: extractIndexVersion,
     extractModelsDetailed: extractModelsDetailed,
     extractModels: extractModels
   };

@@ -20,6 +20,9 @@
     '.raa-prov{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#5b21b6;background:#f5f2fc;',
     'border:1px solid #e7defa;border-radius:999px;padding:3px 9px;line-height:1.4;cursor:default}',
     '.raa-prov b{color:#111827;font-weight:600}',
+    '.raa-panelbtn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#5b21b6;background:#f5f2fc;',
+    'border:1px solid #e7defa;border-radius:8px;padding:6px 11px;cursor:pointer;line-height:1.4;transition:background .15s ease}',
+    '.raa-panelbtn:hover{background:#ede7fb}',
     '.raa-pt{transition:transform .55s cubic-bezier(.22,.9,.24,1);will-change:transform;cursor:default}',
     '.raa-pt.raa-noanim{transition:none}',
     '.raa-pt.raa-cached circle.body{opacity:.55}',
@@ -213,6 +216,17 @@
       ctx.prov.style.display = 'none';
       ctx.bar.appendChild(ctx.prov);
 
+      var pbtn = document.createElement('button');
+      pbtn.type = 'button';
+      pbtn.className = 'raa-panelbtn';
+      pbtn.setAttribute('aria-label', 'Open RepriceAA sources & settings');
+      pbtn.title = 'RepriceAA: manage price sources';
+      pbtn.textContent = '\u2699 RepriceAA';
+      pbtn.addEventListener('click', function () {
+        root.dispatchEvent(new CustomEvent('repriceaa:open-panel'));
+      });
+      ctx.bar.appendChild(pbtn);
+
       ctx.select.addEventListener('change', function () {
         var v = ctx.select.value;
         if (v === '__customize__') {
@@ -304,7 +318,9 @@
 
   function populateSelect(select) {
     var desired = RAA.state.getSourceId();
+    var mode = RAA.state.getSourceMode();
     var opts = ['<option value="__aa__">Artificial Analysis</option>'];
+    opts.push('<option value="__best__"' + (mode === 'best' ? '' : '') + '>\u2605 Auto-best (cheapest)</option>');
     RAA.state.cache.profiles.forEach(function (p) {
       opts.push('<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>');
     });
@@ -484,9 +500,9 @@
       }
     });
 
-    var repriced = RAA.state.getSourceMode() === 'repriced';
+    var repriced = RAA.state.getSourceMode() !== 'aa';
     var xlabel = (lay.log ? 'Cost per Task (USD, Log Scale)' : 'Cost per Task (USD)') +
-      (repriced ? ' \u00B7 Repriced' : '');
+      (repriced ? (RAA.state.getSourceMode() === 'best' ? ' \u00B7 Repriced (Auto-best)' : ' \u00B7 Repriced') : '');
     s += '<text x="' + (lay.L + lay.iw / 2).toFixed(1) + '" y="' + (lay.H - 10) +
       '" font-size="12" fill="#565a61" text-anchor="middle">' + esc(xlabel) + '</text>';
     s += '<text x="14" y="' + (lay.T + lay.ih / 2).toFixed(1) + '" font-size="12" fill="#565a61" text-anchor="middle"' +
@@ -524,15 +540,34 @@
   function showTip(ctx, modelId, ev) {
     var m = ctx.dataById[modelId];
     if (!m) return;
-    var profileName = ctx.profile ? ctx.profile.name : 'Artificial Analysis';
+    var profileName = ctx.profileName || (ctx.profile ? ctx.profile.name : 'Artificial Analysis');
+    var mode = ctx.mode || RAA.state.getSourceMode();
     var sav = RAA.pricing.savingsFraction(m.aaCost, m.repricedCost);
     var rows = '';
     rows += row('Intelligence Index', isNum(m.intelligence) ? m.intelligence.toFixed(1) : '?');
     rows += row('AA Cost / Task', fmtMoney(m.aaCost));
-    if (RAA.state.getSourceMode() === 'repriced') {
+    if (mode !== 'aa') {
       rows += row('Repriced Cost / Task', '<span class="rule">' + fmtMoney(m.repricedCost) + '</span>');
-      rows += row('Pricing Profile', esc(profileName));
-      rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription) + '</span>');
+      if (m.winnerSourceName) {
+        rows += row('Won by', '<span class="rule">' + esc(m.winnerSourceName) + '</span>');
+        rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription || '') + '</span>');
+      } else {
+        rows += row('Pricing Source', esc(profileName));
+        rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription) + '</span>');
+      }
+      if (Array.isArray(m.candidates) && m.candidates.length > 1) {
+        rows += row('Candidates', m.candidates.map(function (c) {
+          return esc(c.sourceName) + ' ' + fmtMoney(c.price);
+        }).join(' \u00B7 '));
+      }
+      var anomalyTexts = {
+        'zero-cost': '$0 (free or misconfig?)',
+        'formula-error': 'formula error',
+        'chain-loop': 'fallback loop'
+      };
+      if (Array.isArray(m.anomalies) && m.anomalies.length) {
+        rows += row('\u26A0', m.anomalies.map(function (a) { return anomalyTexts[a] || a; }).join('; '));
+      }
       if (sav !== null) {
         rows += row('vs AA Cost', (sav >= 0 ? '\u2212' : '+') + Math.abs(Math.round(sav * 100)) + '%');
       }
@@ -555,7 +590,7 @@
 
   function computePriced() {
     var bundle = RAA.extract.extractModelsDetailed(document);
-    var merged = RAA.registry.merge(bundle.models);
+    var merged = RAA.registry.merge(bundle.models, bundle.indexVersion);
     var selectedIds = urlSelectedIds();
     if (selectedIds) {
       var wanted = {};
@@ -565,12 +600,23 @@
     } else {
       merged = merged.filter(function (m) { return !m._cached; });
     }
+    var mode = RAA.state.getSourceMode();
     var profile = RAA.state.activePricingProfile() || aaLikeProfile('Artificial Analysis');
+    var priced, profileName;
+    if (mode === 'best') {
+      var enabledIds = RAA.state.getEnabledSourceIds();
+      priced = RAA.pricing.applyBest(merged, enabledIds, RAA.state.cache.profiles);
+      profileName = 'Auto-best (' + enabledIds.length + ' source' + (enabledIds.length === 1 ? '' : 's') + ')';
+    } else {
+      priced = RAA.pricing.applyProfile(merged, profile);
+      profileName = profile.name;
+    }
     return {
-      priced: RAA.pricing.applyProfile(merged, profile).filter(function (m) {
+      priced: priced.filter(function (m) {
         return isNum(m.intelligence) && isNum(m.repricedCost);
       }),
-      profileName: profile.name,
+      profileName: profileName,
+      mode: mode,
       source: bundle.source,
       pageCoverage: bundle.coverage,
       selectedIds: selectedIds,
@@ -592,7 +638,7 @@
       var target = null;
       models.forEach(function (mm) { if (mm.id === id) target = mm; });
       if (models.length) {
-        RAA.registry.upsertModels(models);
+        RAA.registry.upsertModels(models, RAA.extract.extractIndexVersionFromText(html));
         fetchState[id] = 'done';
         renderAllBars();
       } else {
@@ -672,6 +718,8 @@
     RAA.colors.refresh(document);
     var priced = bundle.priced;
     ctx.profile = RAA.state.activePricingProfile() || aaLikeProfile('Artificial Analysis');
+    ctx.profileName = bundle.profileName;
+    ctx.mode = bundle.mode;
     ctx.dataById = {};
     priced.forEach(function (m) { ctx.dataById[m.id] = m; });
 
@@ -750,7 +798,7 @@
     });
     drawLabels(ctx, lay, priced, polyPts);
 
-    ctx.prov.style.display = RAA.state.getSourceMode() === 'repriced' ? '' : 'none';
+    ctx.prov.style.display = RAA.state.getSourceMode() !== 'aa' ? '' : 'none';
   }
 
   function truncateLabel(t) {
@@ -922,7 +970,7 @@
   }
 
   function isActiveSource(stateApi) {
-    return stateApi.getSourceMode() === 'repriced';
+    return stateApi.getSourceMode() !== 'aa';
   }
 
   function syncVisibility(ctx) {

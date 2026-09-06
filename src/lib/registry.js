@@ -55,7 +55,7 @@
     }, SAVE_DEBOUNCE_MS);
   }
 
-  function merge(pageModels) {
+  function merge(pageModels, pageVersion) {
     if (!cache) cache = {};
     var now = Date.now();
     var pageIds = {};
@@ -69,6 +69,7 @@
         intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
         aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
         provider: m.provider || (prev ? prev.provider : null),
+        ver: pageVersion != null ? pageVersion : ((prev && prev.ver) || null),
         lastSeen: now
       };
     });
@@ -79,6 +80,11 @@
       if (pageIds[id]) {
         out.push(Object.assign({}, e));
       } else if (now - e.lastSeen < STALE_MS) {
+        // Cached entries only carry values from the page that captured them.
+        // When the current page declares an Intelligence Index version, an
+        // entry captured under a different (or unknown) version is stale —
+        // e.g. AA bumping v4.1.1 -> v4.2 re-scores every model.
+        if (pageVersion != null && (!e.ver || e.ver !== pageVersion)) return;
         out.push(Object.assign({}, e, { _cached: true }));
       }
     });
@@ -89,7 +95,7 @@
     return out;
   }
 
-  function upsertModels(models) {
+  function upsertModels(models, version) {
     if (!cache) cache = {};
     var now = Date.now();
     (models || []).forEach(function (m) {
@@ -101,6 +107,7 @@
         intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
         aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
         provider: m.provider || (prev ? prev.provider : null),
+        ver: version != null ? version : ((prev && prev.ver) || null),
         lastSeen: now
       };
     });
