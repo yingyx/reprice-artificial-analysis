@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches manifest version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $manifest = (Get-Content manifest.json -Raw | ConvertFrom-Json).version
+          if ($tag -ne "v$manifest") { throw "tag $tag does not match manifest version v$manifest" }
+
+      - name: Run tests
+        run: node test/run-tests.js
+
+      - name: Package
+        run: powershell -ExecutionPolicy Bypass -File pack.ps1
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/repriceaa-*.zip
+          generate_release_notes: true
