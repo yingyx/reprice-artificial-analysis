@@ -53,14 +53,25 @@ RepriceAA 在任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页�
 
 ## 安装
 
+**方式一 —— 下载打包的 Release（推荐）**
+
+1. 从 [Releases](../../releases) 页面下载 `repriceaa-vX.Y.Z.zip` 并解压。
+2. `chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中解压后的文件夹。
+
+**方式二 —— 从源码安装**
+
 ```bash
 git clone <本仓库>
 ```
 
 然后：`chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中本目录。
-访问任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页面，点击右下角的紫色圆钮。
+
+如需自行打包：`powershell -File pack.ps1`（产物在 `dist/` 目录）。
 
 没有构建步骤，没有依赖，纯 JavaScript。
+
+安装完成后，访问任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页面，
+点击右下角的紫色圆钮。
 
 ## 整体结构
 

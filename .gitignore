@@ -6,3 +6,5 @@ playwright-mcp.json
 aa-original.png
 assets/*
 !assets/hero.gif
+
+dist/
