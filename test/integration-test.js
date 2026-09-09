@@ -272,9 +272,30 @@ async function main() {
   await new Promise((r) => setTimeout(r, 50));
   assert.strictEqual(ctxA.wrap.style.display, 'none', 'overlay hidden in AA mode after best');
 
+  // ---- coding plan preset library sanity ----
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const expected = {
+    'codex-plus': 0.26, 'codex-pro-5x': 0.26, 'codex-pro-20x': 0.13,
+    'claude-pro': 0.03, 'claude-max-5x': 0.03, 'claude-max-20x': 0.015,
+    'glm-coding-lite': 0.05, 'glm-coding-pro': 0.04, 'glm-coding-max': 0.035,
+    'command-code-goat': 0.14, 'kimi-allegretto': 0.005
+  };
+  for (const [id, ratio] of Object.entries(expected)) {
+    const p = R.state.cache.profiles.find(q => q.id === id);
+    assert.ok(p, `preset source exists: ${id}`);
+    assert.strictEqual(p.kind, 'subscription', `${id} kind subscription`);
+    assert.ok(R.pricing.computeSubscriptionRatio(p) != null, `${id} ratio computable`);
+    assert.ok(Math.abs(R.pricing.computeSubscriptionRatio(p) - ratio) < 1e-9, `${id} ratio = x${ratio}`);
+    assert.ok(p.asOf && DATE_RE.test(p.asOf), `${id} asOf date present`);
+  }
+
+  // GOAT covers a broad model family list; Codex/Claude/GLM/Kimi cover their own
+  const goat = R.state.cache.profiles.find(q => q.id === 'command-code-goat');
+  assert.ok(goat.nameIncludes.length >= 7, 'GOAT has broad family patterns');
+
   console.log('integration test passed: bar mounts; repriced switch moves GLM to x=' +
     glmX.toFixed(0) + ', DeepSeek ' + dsX1.toFixed(0) + 'px -> ' + dsX2.toFixed(0) +
-    'px across profiles, overlay restores in AA mode; best-of mode composes subscription+derived sources');
+    'px across profiles, overlay restores in AA mode; best-of mode composes subscription+derived sources; coding plan presets valid');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

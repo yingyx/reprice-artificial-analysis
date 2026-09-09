@@ -375,6 +375,10 @@
       stateApi.cache.profiles.forEach(function (q) { if (q.id === p.fallbackTo) fb = q; });
       bits.push('fallback: ' + (fb ? fb.name : 'AA'));
     }
+    if (p.asOf) {
+      var ago = Math.max(0, Math.floor((Date.now() - new Date(p.asOf + 'T00:00:00').getTime()) / 86400000));
+      bits.push('asOf ' + p.asOf + (ago > 60 ? ' \u26A0' : ''));
+    }
     return bits.length ? '<span style="font-size:10px;color:#8b5cf6;background:#f5f2fc;border-radius:999px;padding:1px 7px;margin-left:6px">' +
       esc(bits.join(' \u00B7 ')) + '</span>' : '';
   }
@@ -393,7 +397,7 @@
       var locked = !!p.builtin;
       html += '<div class="srcrow' + (locked ? ' dim' : '') + '">' +
         '<input type="checkbox" class="raa-best-src" data-sid="' + esc(p.id) + '"' + (enabled[p.id] ? ' checked' : '') + '>' +
-        '<span class="srcname" title="' + esc(p.id) + '">' + esc(p.name) + '</span>' +
+        '<span class="srcname" title="' + esc(p.notes || p.id) + '">' + esc(p.name) + '</span>' +
         sourceChip(p) +
         '<span style="flex:1"></span>' +
         (!locked ? '<button class="btn" data-edit="' + esc(p.id) + '">Edit</button>' : '') +
