@@ -268,6 +268,10 @@
   }
 
   // Best-of mode: for each model, resolve across enabled sources and take the min.
+  // Candidates that leave the model at the AA list price (source does not cover
+  // it and no fallback applies) are flagged identity:true so the UI can hide
+  // them; when such a candidate wins, the price is surfaced as plain "AA list
+  // price" instead of being attributed to a source.
   function applyBest(models, enabledIds, sources) {
     var ctx = makeCtx(sources);
     var list = Array.isArray(models) ? models : [];
@@ -284,7 +288,8 @@
             sourceName: (ctx.sourcesById[id] && ctx.sourcesById[id].name) || id,
             price: res.price,
             ruleDescription: res.ruleDescription,
-            anomalies: res.anomalies
+            anomalies: res.anomalies,
+            identity: res.sourceId === null
           });
         }
       });
@@ -292,6 +297,16 @@
       candidates.forEach(function (c) {
         if (!winner || c.price < winner.price - EPS) winner = c;
       });
+      if (winner && winner.identity) {
+        return Object.assign({}, m, {
+          repricedCost: winner.price,
+          ruleDescription: 'AA list price',
+          winnerSourceId: null,
+          winnerSourceName: null,
+          candidates: candidates,
+          anomalies: winner.anomalies
+        });
+      }
       return Object.assign({}, m, {
         repricedCost: winner ? winner.price : null,
         ruleDescription: winner ? winner.ruleDescription : null,

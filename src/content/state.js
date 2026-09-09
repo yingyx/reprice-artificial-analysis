@@ -6,15 +6,8 @@
 
   function builtinProfiles() {
     return [
-      {
-        id: 'aa-default',
-        name: 'AA Cost',
-        builtin: true,
-        locked: true,
-        defaultRule: { type: 'multiplier', value: 1 },
-        rules: {},
-        nameIncludes: []
-      },
+      // 'aa-default' (AA Cost) was removed: the built-in '__aa__' identity
+      // option already covers plain AA list pricing.
       {
         id: 'opencode-go-example',
         name: 'OpenCode Go (example)',
@@ -193,7 +186,7 @@
 
   var cache = {
     profiles: [],
-    activeProfileId: 'aa-default',
+    activeProfileId: null,
     sourceMode: 'aa',
     enabledSourceIds: [],
     logScale: true,
@@ -231,11 +224,12 @@
       storageApi.KEYS.sourceMode
     ]).then(function (res) {
       var goneIds = res[storageApi.KEYS.deletedBuiltins] || [];
-      cache.profiles = seedProfiles(res[storageApi.KEYS.profiles], goneIds);
+      cache.profiles = seedProfiles(res[storageApi.KEYS.profiles], goneIds)
+        .filter(function (p) { return p.id !== 'aa-default'; });
       var aid = res[storageApi.KEYS.activeProfileId];
       var ok = false;
       cache.profiles.forEach(function (p) { if (p.id === aid) ok = true; });
-      cache.activeProfileId = ok ? aid : 'aa-default';
+      cache.activeProfileId = ok ? aid : null;
       var prefs = res[storageApi.KEYS.prefs] || {};
       if (prefs.mode === 'aa' || prefs.mode === 'repriced' || prefs.mode === 'best') state.sourceMode = prefs.mode;
       if (Array.isArray(prefs.enabledSourceIds)) {
@@ -245,6 +239,7 @@
       cache.panelOpen = !!prefs.panelOpen;
       var sm = res[storageApi.KEYS.sourceMode];
       if (sm === 'repriced' || sm === 'best' || sm === 'aa') state.sourceMode = sm;
+      if (state.sourceMode === 'repriced' && !ok) state.sourceMode = 'aa';
       return cache;
     });
   }
@@ -261,7 +256,7 @@
   function removeProfile(id) {
     cache.profiles = cache.profiles.filter(function (p) { return p.id !== id; });
     if (cache.activeProfileId === id) {
-      cache.activeProfileId = 'aa-default';
+      cache.activeProfileId = null;
       state.sourceMode = 'aa';
     }
     // clean dangling references in remaining profiles

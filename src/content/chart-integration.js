@@ -292,7 +292,7 @@
     if (!selected || !selected.length) return;
     var all = RAA.registry.all();
     var missing = selected.filter(function (id) {
-      if (fetchState[id] === 'pending' || fetchState[id] === 'done') return false;
+      if (!fetchRetryDue(id)) return false;
       var entry = null;
       all.forEach(function (mm) { if (mm.id === id) entry = mm; });
       return entry && !entry.provider;
@@ -543,9 +543,14 @@
     var profileName = ctx.profileName || (ctx.profile ? ctx.profile.name : 'Artificial Analysis');
     var mode = ctx.mode || RAA.state.getSourceMode();
     var sav = RAA.pricing.savingsFraction(m.aaCost, m.repricedCost);
+    // when no source affects this model (price == AA list price), the AA
+    // original price row would just duplicate the repriced one — hide it
+    var repricedBySource = !!(m.winnerSourceId || m.sourceId);
     var rows = '';
     rows += row('Intelligence Index', isNum(m.intelligence) ? m.intelligence.toFixed(1) : '?');
-    rows += row('AA Cost / Task', fmtMoney(m.aaCost));
+    if (mode === 'aa' || repricedBySource) {
+      rows += row('AA Cost / Task', fmtMoney(m.aaCost));
+    }
     if (mode !== 'aa') {
       rows += row('Repriced Cost / Task', '<span class="rule">' + fmtMoney(m.repricedCost) + '</span>');
       if (m.winnerSourceName) {
@@ -555,8 +560,10 @@
         rows += row('Pricing Source', esc(profileName));
         rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription) + '</span>');
       }
-      if (Array.isArray(m.candidates) && m.candidates.length > 1) {
-        rows += row('Candidates', m.candidates.map(function (c) {
+      var shownCands = (Array.isArray(m.candidates) ? m.candidates : [])
+        .filter(function (c) { return !c.identity; });
+      if (shownCands.length > 1) {
+        rows += row('Candidates', shownCands.map(function (c) {
           return esc(c.sourceName) + ' ' + fmtMoney(c.price);
         }).join(' \u00B7 '));
       }
@@ -611,10 +618,24 @@
       priced = RAA.pricing.applyProfile(merged, profile);
       profileName = profile.name;
     }
+    var finalPriced = priced.filter(function (m) {
+      return isNum(m.intelligence) && isNum(m.repricedCost);
+    });
+    var shownIds = {};
+    finalPriced.forEach(function (m) { shownIds[m.id] = true; });
+    var hidden = [];
+    (selectedIds || merged.map(function (m) { return m.id; })).forEach(function (id) {
+      if (shownIds[id]) return;
+      var mm = null;
+      merged.forEach(function (x) { if (x.id === id) mm = x; });
+      hidden.push({
+        id: id,
+        label: (mm && mm.label) || id,
+        incomplete: !mm || !isNum(mm.intelligence) || !isNum(mm.aaCost)
+      });
+    });
     return {
-      priced: priced.filter(function (m) {
-        return isNum(m.intelligence) && isNum(m.repricedCost);
-      }),
+      priced: finalPriced,
       profileName: profileName,
       mode: mode,
       source: bundle.source,
@@ -623,17 +644,26 @@
       knownIds: merged.map(function (m) { return m.id; }),
       incompleteIds: merged.filter(function (m) {
         return !isNum(m.intelligence) || !isNum(m.aaCost);
-      }).map(function (m) { return m.id; })
+      }).map(function (m) { return m.id; }),
+      hidden: hidden
     };
   }
 
   var fetchState = {};
+  var fetchFailAt = {};
+  var FETCH_RETRY_MS = 60000;
+
+  function fetchRetryDue(id) {
+    if (fetchState[id] === 'pending' || fetchState[id] === 'done') return false;
+    if (fetchState[id] === 'failed' && Date.now() - (fetchFailAt[id] || 0) < FETCH_RETRY_MS) return false;
+    return true;
+  }
 
   function fetchModelDetail(id) {
     root.fetch('/models/' + encodeURIComponent(id)).then(function (r) {
       return r.ok ? r.text() : null;
     }).then(function (html) {
-      if (!html) { fetchState[id] = 'failed'; return; }
+      if (!html) { fetchState[id] = 'failed'; fetchFailAt[id] = Date.now(); return; }
       var models = RAA.extract.extractFlightModelsFromHtml(html);
       var target = null;
       models.forEach(function (mm) { if (mm.id === id) target = mm; });
@@ -643,9 +673,11 @@
         renderAllBars();
       } else {
         fetchState[id] = 'failed';
+        fetchFailAt[id] = Date.now();
       }
     }).catch(function () {
       fetchState[id] = 'failed';
+      fetchFailAt[id] = Date.now();
     });
   }
 
@@ -659,7 +691,7 @@
     var incomplete = {};
     (bundle.incompleteIds || []).forEach(function (id) { incomplete[id] = true; });
     var missing = bundle.selectedIds.filter(function (id) {
-      if (fetchState[id] === 'pending' || fetchState[id] === 'done') return false;
+      if (!fetchRetryDue(id)) return false;
       if (!knownOk[id]) return true;
       if (incomplete[id]) {
         var entry = null;
@@ -703,15 +735,29 @@
     var tip = 'Points come from data serialized into the page (' +
       (bundle.source || 'page data') + ')';
     if (pc) tip += ': ' + pc.withCost + '/' + pc.total + ' models carry an AA cost';
-    if (total && total > n) {
+    if (bundle.hidden && bundle.hidden.length) {
+      var names = bundle.hidden.slice(0, 12).map(function (h) {
+        return '\u00B7 ' + h.label + (h.incomplete ? ' (no usable cost/intelligence data)' : '');
+      });
+      if (bundle.hidden.length > 12) {
+        names.push('\u00B7 \u2026 and ' + (bundle.hidden.length - 12) + ' more');
+      }
+      tip += '\nNot repriced / not shown here (' + bundle.hidden.length + '):\n' + names.join('\n');
+    } else if (total && total > n) {
       tip += '. The model selector currently covers ' + total +
         ' models; the rest lack usable cost data in the page payload and are hidden here.';
     }
     if (highlight) {
       tip += '. Clicking the highlighted legend entry again clears the highlight.';
     }
-    ctx.prov.innerHTML = label;
-    ctx.prov.title = tip;
+    if (ctx._provLabel !== label) {
+      ctx.prov.innerHTML = label;
+      ctx._provLabel = label;
+    }
+    if (ctx._provTip !== tip) {
+      ctx.prov.title = tip;
+      ctx._provTip = tip;
+    }
   }
 
   function renderOverlay(ctx, bundle) {
@@ -722,8 +768,6 @@
     ctx.mode = bundle.mode;
     ctx.dataById = {};
     priced.forEach(function (m) { ctx.dataById[m.id] = m; });
-
-    updateProv(ctx, bundle, countNativeDots(ctx.anchor));
 
     if (!priced.length) {
       ctx.svg = null;
@@ -984,6 +1028,9 @@
     var box = measurePlot(ctx);
     var bundle = computePriced();
     maybeFetchMissing(bundle);
+    // refresh the badge on every scan: at page launch the native chart and the
+    // async model-detail fetches land late, so the a/b counts must self-update
+    updateProv(ctx, bundle, countNativeDots(ctx.anchor));
     var sig = dataSig(bundle, countNativeDots(ctx.anchor), box);
     if (!ctx.svg || sig !== ctx.lastSig) {
       ctx.lastSig = sig;

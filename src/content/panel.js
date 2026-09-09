@@ -15,6 +15,7 @@
     allModels: [],
     sourceInfo: null,
     editing: false,
+    readonly: false,
     draft: null,
     view: 'chart',
     editingFrom: 'chart',
@@ -116,6 +117,11 @@
     '.kv span{color:#111827;font-weight:600}',
     '.save-pct{color:#047857;font-weight:600}',
     '.src-chip{display:inline-flex;align-items:center;font-size:12px;color:#5b21b6;background:#f5f2fc;border:1px solid #e7defa;border-radius:999px;padding:4px 10px}',
+    '.srcpick-title{font-size:12px;color:#6b7280;white-space:nowrap}',
+    '.srcpick{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:150px}',
+    '.srcpick label{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#374151;background:#f9fafb;border:1px solid #e5e7eb;border-radius:999px;padding:3px 9px;cursor:pointer;white-space:nowrap;transition:border-color .15s ease,background .15s ease}',
+    '.srcpick label:hover{border-color:#c4b5fd;background:#f5f2fc}',
+    '.srcpick input{margin:0;accent-color:#5b21b6}',
     '.data-line{color:#9ca3af;font-size:11px}',
     '.editor .row{display:flex;gap:6px;align-items:center;padding:4px 0}',
     '.editor .row .mname{flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}',
@@ -269,10 +275,12 @@
       : '<span class="kv">Pricing <span>' + esc(profile.name) + '</span></span>' +
         '<span class="kv">Rule <span>' + esc(m.ruleDescription) + '</span></span>';
     var candHtml = '';
-    if (Array.isArray(m.candidates) && m.candidates.length > 1) {
+    var shownCandidates = (Array.isArray(m.candidates) ? m.candidates : [])
+      .filter(function (c) { return !c.identity; });
+    if (shownCandidates.length > 1) {
       candHtml = '<br><span class="kv">Candidates</span>' +
         '<div style="font-size:11px;color:#6b7280;line-height:1.6">' +
-        m.candidates.map(function (c) {
+        shownCandidates.map(function (c) {
           return esc(c.sourceName) + ': ' + fmtMoney(c.price) +
             (c.sourceId === m.winnerSourceId ? ' \u2713' : '');
         }).join('<br>') + '</div>';
@@ -304,12 +312,13 @@
       var enabled = {};
       stateApi.getEnabledSourceIds().forEach(function (id) { enabled[id] = true; });
       var boxHtml = boxes.map(function (p) {
-        return '<label style="font-size:12px;color:#374151;display:inline-flex;align-items:center;gap:3px">' +
-          '<input type="checkbox" class="raa-best-src" data-sid="' + esc(p.id) + '"' +
+        return '<label><input type="checkbox" class="raa-best-src" data-sid="' + esc(p.id) + '"' +
           (enabled[p.id] ? ' checked' : '') + '> ' + esc(p.name) + '</label>';
       }).join('');
-      sourceControl = '<span style="font-size:12px;color:#6b7280">Take the cheapest of:</span>' +
-        (boxHtml || '<span style="font-size:12px;color:#9ca3af">no sources yet</span>');
+      sourceControl = '<span class="srcpick-title">Take the cheapest of:</span>' +
+        '<span class="srcpick">' +
+        (boxHtml || '<span style="font-size:12px;color:#9ca3af">no sources yet</span>') +
+        '</span>';
     } else if (inPageControl) {
       sourceControl = '<span class="src-chip" title="Use the Price Source selector on the chart to switch profiles">' +
         'Source: ' + esc(profile.name) + '</span>';
@@ -400,8 +409,10 @@
         '<span class="srcname" title="' + esc(p.notes || p.id) + '">' + esc(p.name) + '</span>' +
         sourceChip(p) +
         '<span style="flex:1"></span>' +
-        (!locked ? '<button class="btn" data-edit="' + esc(p.id) + '">Edit</button>' : '') +
-        (!locked ? '<button class="btn danger" data-del="' + esc(p.id) + '">\u2715</button>' : '') +
+        (locked
+          ? '<button class="btn" data-view="' + esc(p.id) + '">View</button>'
+          : '<button class="btn" data-edit="' + esc(p.id) + '">Edit</button>' +
+            '<button class="btn danger" data-del="' + esc(p.id) + '">\u2715</button>') +
         '</div>';
     });
     html += '<div class="srcrow dim">' +
@@ -439,6 +450,12 @@
         if (p && !p.builtin) enterEditor(false, 'manage', p);
       });
     });
+    rootEl.querySelectorAll('[data-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var p = stateApi.getProfileById(btn.getAttribute('data-view'));
+        if (p) enterEditor(false, 'manage', p);
+      });
+    });
     rootEl.querySelectorAll('[data-del]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-del');
@@ -453,6 +470,8 @@
 
   function editorViewHtml() {
     var d = state.draft;
+    var ro = !!state.readonly;
+    var dis = ro ? ' disabled' : '';
     var onPageIds = {};
     state.models.forEach(function (m) { onPageIds[m.id] = true; });
 
@@ -467,20 +486,26 @@
         '<option value="formula"' + (t === 'formula' ? ' selected' : '') + '>f()</option>';
       var valInput = '';
       if (t === 'formula') {
-        valInput = '<input type="text" class="expr" placeholder="aaCost*0.5" data-target="' + id + '" data-fld="expr" value="' + esc(rule && rule.expr ? rule.expr : '') + '">';
+        valInput = '<input type="text" class="expr" placeholder="aaCost*0.5" data-target="' + id + '" data-fld="expr" value="' + esc(rule && rule.expr ? rule.expr : '') + '"' + dis + '>';
       } else if (t !== 'exclude') {
         valInput = '<input type="number" min="0" step="0.01" data-target="' + id + '" data-fld="value" value="' +
-          (rule && typeof rule.value === 'number' && isFinite(rule.value) ? rule.value : (t === 'absolute' ? '0' : '1')) + '">';
+          (rule && typeof rule.value === 'number' && isFinite(rule.value) ? rule.value : (t === 'absolute' ? '0' : '1')) + '"' + dis + '>';
       }
       return '<div class="row' + (dim ? ' dim' : '') + '">' +
         '<span class="mname" title="' + esc(labelText) + '">' + esc(labelText) + (dim ? ' \u00B7 off-page' : '') + '</span>' +
-        '<select data-target="' + id + '" data-fld="type">' + typeOpts + '</select>' +
+        '<select data-target="' + id + '" data-fld="type"' + dis + '>' + typeOpts + '</select>' +
         valInput +
         '<span class="preview" data-prev="' + id + '"></span>' +
         '</div>';
     }
 
     var html = '<div class="editor">';
+
+    if (ro) {
+      html += '<div style="font-size:11px;color:#6b7280;background:#f9fafb;border:1px solid #eef0f2;' +
+        'border-radius:8px;padding:6px 10px;margin-bottom:8px">Built-in source \u2014 read only. ' +
+        'Create a new source (with a template) to customize these rules.</div>';
+    }
 
     if (d._pickTemplate) {
       var tpls = stateApi.sourceTemplates();
@@ -495,19 +520,19 @@
       return html;
     }
 
-    html += '<h4>Source</h4><input type="text" id="raa-name" style="width:60%" maxlength="60" value="' + esc(d.name) + '">';
+    html += '<h4>Source</h4><input type="text" id="raa-name" style="width:60%" maxlength="60" value="' + esc(d.name) + '"' + dis + '>';
 
     if (d.kind === 'subscription') {
       var ratio = pricing.computeSubscriptionRatio(d);
       html += '<h3>Subscription</h3>';
       html += '<div class="row"><span class="mname">Monthly fee ($)</span>' +
-        '<input type="number" min="0" step="1" id="raa-fee" value="' + (isNum(d.monthlyFee) ? d.monthlyFee : '') + '"></div>';
+        '<input type="number" min="0" step="1" id="raa-fee" value="' + (isNum(d.monthlyFee) ? d.monthlyFee : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Monthly quota (M tokens)</span>' +
-        '<input type="number" min="0" step="0.1" id="raa-quota" value="' + (isNum(d.monthlyQuotaTokens) ? d.monthlyQuotaTokens / 1e6 : '') + '"></div>';
+        '<input type="number" min="0" step="0.1" id="raa-quota" value="' + (isNum(d.monthlyQuotaTokens) ? d.monthlyQuotaTokens / 1e6 : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Ref blended price ($/M)</span>' +
-        '<input type="number" min="0" step="0.1" id="raa-ref" value="' + (isNum(d.refBlendedPrice) ? d.refBlendedPrice : '') + '"></div>';
+        '<input type="number" min="0" step="0.1" id="raa-ref" value="' + (isNum(d.refBlendedPrice) ? d.refBlendedPrice : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Manual ratio (overrides)</span>' +
-        '<input type="number" min="0" step="0.05" id="raa-mratio" value="' + (isNum(d.manualRatio) ? d.manualRatio : '') + '"></div>';
+        '<input type="number" min="0" step="0.05" id="raa-mratio" value="' + (isNum(d.manualRatio) ? d.manualRatio : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Ratio preview</span>' +
         '<span class="preview" id="raa-ratio-preview">' + (ratio ? pricing.trimNum(ratio) + '\u00D7' : '\u2014') + '</span></div>';
     }
@@ -519,7 +544,7 @@
         }
       });
       html += '<h3>Derived source</h3>';
-      html += '<div class="row"><span class="mname">Based on</span><select id="raa-parent">' + parentOpts.join('') + '</select></div>';
+      html += '<div class="row"><span class="mname">Based on</span><select id="raa-parent"' + dis + '>' + parentOpts.join('') + '</select></div>';
     } else if (d.basedOn) {
       var parent = null;
       stateApi.cache.profiles.forEach(function (p) { if (p.id === d.basedOn) parent = p; });
@@ -537,7 +562,7 @@
       });
       html += '<div class="row"><span class="mname">' +
         (d.kind === 'subscription' ? 'Uncovered models fall back to' : 'Unchanged models fall back to') +
-        '</span><select id="raa-fb">' + fbOpts.join('') + '</select></div>';
+        '</span><select id="raa-fb"' + dis + '>' + fbOpts.join('') + '</select></div>';
     }
     if (d.kind === 'subscription') {
       html += '<div style="font-size:11px;color:#6b7280;margin:2px 0 4px">Models matching a name rule below are covered by the plan; everything else falls back.</div>';
@@ -564,22 +589,24 @@
       var t = nm.rule && nm.rule.type === 'absolute';
       var auto = subRatio !== null;
       html += '<div class="row">' +
-        '<input type="text" style="flex:1" placeholder="matches part of model name / slug" data-nm="' + ix + '" data-fld="match" value="' + esc(nm.match) + '"' + (auto ? ' title="Covered models get the amortized ratio"' : '') + '>' +
+        '<input type="text" style="flex:1" placeholder="matches part of model name / slug" data-nm="' + ix + '" data-fld="match" value="' + esc(nm.match) + '"' + (auto ? ' title="Covered models get the amortized ratio"' : '') + dis + '>' +
         (auto
           ? '<span class="preview" style="min-width:64px;text-align:right">\u2192 \u00D7' + pricing.trimNum(subRatio) + '</span>'
-          : '<select data-nm="' + ix + '" data-fld="nmType">' +
+          : '<select data-nm="' + ix + '" data-fld="nmType"' + dis + '>' +
             '<option value="multiplier"' + (!t ? ' selected' : '') + '>\u00D7</option>' +
             '<option value="absolute"' + (t ? ' selected' : '') + '>$</option></select>' +
-            '<input type="number" min="0" step="0.01" data-nm="' + ix + '" data-fld="nmValue" value="' + ((nm.rule && typeof nm.rule.value === 'number' && isFinite(nm.rule.value)) ? nm.rule.value : 1) + '">') +
-        '<input type="date" title="Promo ends (optional)" data-nm="' + ix + '" data-fld="nmUntil" value="' + esc(nm.rule && nm.rule.until ? nm.rule.until : '') + '">' +
-        '<button class="btn danger" data-delnm="' + ix + '">\u2715</button></div>';
+            '<input type="number" min="0" step="0.01" data-nm="' + ix + '" data-fld="nmValue" value="' + ((nm.rule && typeof nm.rule.value === 'number' && isFinite(nm.rule.value)) ? nm.rule.value : 1) + '"' + dis + '>') +
+        '<input type="date" title="Promo ends (optional)" data-nm="' + ix + '" data-fld="nmUntil" value="' + esc(nm.rule && nm.rule.until ? nm.rule.until : '') + '"' + dis + '>' +
+        (ro ? '' : '<button class="btn danger" data-delnm="' + ix + '">\u2715</button>') + '</div>';
     });
-    html += '<button class="btn" id="raa-addnm" style="margin-top:4px">+ name match</button>';
+    if (!ro) {
+      html += '<button class="btn" id="raa-addnm" style="margin-top:4px">+ name match</button>';
+    }
 
     html += '<div class="actions">' +
-      '<button class="btn primary" id="raa-save">Save</button>' +
-      '<button class="btn" id="raa-cancel">Cancel</button>' +
-      (!d.locked ? '<button class="btn danger" id="raa-delete" style="margin-left:auto">Delete source</button>' : '') +
+      (!ro ? '<button class="btn primary" id="raa-save">Save</button>' : '') +
+      '<button class="btn" id="raa-cancel">' + (ro ? '\u2190 Back' : 'Cancel') + '</button>' +
+      (!ro && !d.locked ? '<button class="btn danger" id="raa-delete" style="margin-left:auto">Delete source</button>' : '') +
       '</div></div>';
     return html;
   }
@@ -599,6 +626,12 @@
 
   function bindEditorEvents(rootEl) {
     updatePreviews(rootEl);
+    if (state.readonly) {
+      rootEl.onclick = function (ev) {
+        if (ev.target.closest('#raa-cancel')) exitEditor();
+      };
+      return;
+    }
 
     var nameEl = rootEl.querySelector('#raa-name');
     if (nameEl) {
@@ -821,7 +854,11 @@
   function enterEditor(forceNew, from, srcOverride) {
     var current = forceNew ? null : (srcOverride || stateApi.activePricingProfile());
     var src;
+    // built-in / locked sources open as a read-only view instead of a template
+    state.readonly = !!(current && (current.builtin || current.locked));
     if (current && !current.builtin && !current.locked) {
+      src = current;
+    } else if (current) {
       src = current;
     } else {
       src = {
@@ -849,6 +886,7 @@
 
   function exitEditor() {
     state.editing = false;
+    state.readonly = false;
     state.draft = null;
     state.view = state.editingFrom === 'manage' ? 'manage' : 'chart';
     rerender();
