@@ -9,22 +9,27 @@ permissions:
 
 jobs:
   release:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Verify tag matches manifest version
-        shell: pwsh
         run: |
-          $tag = "${{ github.ref_name }}"
-          $manifest = (Get-Content manifest.json -Raw | ConvertFrom-Json).version
-          if ($tag -ne "v$manifest") { throw "tag $tag does not match manifest version v$manifest" }
+          TAG="${{ github.ref_name }}"
+          VERSION=$(node -e "console.log(require('./manifest.json').version)")
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::tag $TAG does not match manifest version v$VERSION"
+            exit 1
+          fi
 
       - name: Run tests
         run: node test/run-tests.js
 
       - name: Package
-        run: powershell -ExecutionPolicy Bypass -File pack.ps1
+        run: |
+          VERSION=$(node -e "console.log(require('./manifest.json').version)")
+          mkdir dist
+          zip -r "dist/repriceaa-v${VERSION}.zip" manifest.json src LICENSE
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

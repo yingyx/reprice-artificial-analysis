@@ -68,7 +68,7 @@ git clone <this-repo>
 
 Then: `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the folder.
 
-To build the zip yourself: `powershell -File pack.ps1` (output in `dist/`).
+Releases are packaged automatically by CI; each zip contains `manifest.json`, `src/`, and `LICENSE`.
 
 No build step, no dependencies, plain JavaScript.
 

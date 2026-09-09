@@ -66,7 +66,7 @@ git clone <本仓库>
 
 然后：`chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中本目录。
 
-如需自行打包：`powershell -File pack.ps1`（产物在 `dist/` 目录）。
+Release 包由 CI 自动构建；zip 内含 `manifest.json`、`src/` 与 `LICENSE`。
 
 没有构建步骤，没有依赖，纯 JavaScript。
 
