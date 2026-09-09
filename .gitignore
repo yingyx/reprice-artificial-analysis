@@ -1,2 +1,8 @@
 .playwright-mcp/
 .playwright-profile/
+playwright-mcp.json
+
+.opencode/
+aa-original.png
+assets/*
+!assets/hero.gif
