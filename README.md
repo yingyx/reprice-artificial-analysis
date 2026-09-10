@@ -1,7 +1,7 @@
 # RepriceAA
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-42_passing-brightgreen?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/tests-46_passing-brightgreen?style=flat-square" alt="tests">
   <img src="https://img.shields.io/badge/network_requests-0-red?style=flat-square" alt="network requests">
   <img src="https://img.shields.io/badge/permissions-storage_only-green?style=flat-square" alt="permissions">
   <img src="https://img.shields.io/badge/rule_types-4-purple?style=flat-square" alt="rule types">
@@ -55,12 +55,20 @@ RepriceAA adds a side panel and integrates with the native chart on any
 
 ## Install
 
-**Option 1 — packaged release (recommended)**
+**Option 1 — packaged release (recommended, Chrome)**
 
 1. Download `repriceaa-vX.Y.Z.zip` from the [Releases](../../releases) page and unzip it.
 2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the unzipped folder.
 
-**Option 2 — from source**
+**Option 2 — userscript (Tampermonkey / Violentmonkey / Greasemonkey)**
+
+Install `repriceaa.user.js` from the [Releases](../../releases) page (Tampermonkey →
+Utilities → import, or drag the file into the dashboard), or install from
+[Greasy Fork](https://greasyfork.org), where the script syncs from this repo's releases and
+updates automatically. The same extension source produces the userscript —
+the header and file order are generated from `manifest.json`, so both stay in sync.
+
+**Option 3 — from source**
 
 ```bash
 git clone <this-repo>
@@ -68,7 +76,12 @@ git clone <this-repo>
 
 Then: `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the folder.
 
-Releases are packaged automatically by CI; each zip contains `manifest.json`, `src/`, and `LICENSE`.
+Releases are packaged automatically by CI; each release contains the extension zip and the
+generated userscript. Regenerate the userscript locally with:
+
+```bash
+node scripts/build-userscript.js repriceaa.user.js
+```
 
 No build step, no dependencies, plain JavaScript.
 
@@ -83,7 +96,7 @@ AA page ──→ extract models ──→ pricing engine ──→ re-priced sc
                 ↓                    ↓
          local registry       source rules ──→ best-of / fallback chains
                 │                    │
-                └────── chrome.storage (the only permission) ──────┘
+                └────── chrome.storage / localStorage (userscript) ──────┘
 ```
 
 ## Privacy
@@ -97,7 +110,7 @@ never leave your browser.
 node test/run-tests.js
 ```
 
-42 unit, integration, and smoke tests — zero dependencies.
+46 unit, integration, and smoke tests — zero dependencies, including the userscript build.
 
 <br>
 

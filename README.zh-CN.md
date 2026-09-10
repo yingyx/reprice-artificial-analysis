@@ -1,7 +1,7 @@
 # RepriceAA
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-42_passing-brightgreen?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/tests-46_passing-brightgreen?style=flat-square" alt="tests">
   <img src="https://img.shields.io/badge/network_requests-0-red?style=flat-square" alt="network requests">
   <img src="https://img.shields.io/badge/permissions-storage_only-green?style=flat-square" alt="permissions">
   <img src="https://img.shields.io/badge/rule_types-4-purple?style=flat-square" alt="rule types">
@@ -53,12 +53,20 @@ RepriceAA 在任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页�
 
 ## 安装
 
-**方式一 —— 下载打包的 Release（推荐）**
+**方式一 —— 下载打包的 Release（推荐，Chrome 扩展）**
 
 1. 从 [Releases](../../releases) 页面下载 `repriceaa-vX.Y.Z.zip` 并解压。
 2. `chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中解压后的文件夹。
 
-**方式二 —— 从源码安装**
+**方式二 —— 用户脚本（Tampermonkey / Violentmonkey / Greasemonkey）**
+
+从 [Releases](../../releases) 页面下载 `repriceaa.user.js`（在 Tampermonkey 的
+「实用工具」中导入，或将文件拖入脚本管理面板），也可以从
+[Greasy Fork](https://greasyfork.org) 安装——该脚本与 releases 同步，新版本发布后自动更新。
+用户脚本与扩展出自同一份源码——头部元信息与文件加载顺序均由 `manifest.json` 生成，
+两者自动保持同步。
+
+**方式三 —— 从源码安装**
 
 ```bash
 git clone <本仓库>
@@ -66,7 +74,11 @@ git clone <本仓库>
 
 然后：`chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中本目录。
 
-Release 包由 CI 自动构建；zip 内含 `manifest.json`、`src/` 与 `LICENSE`。
+Release 包由 CI 自动构建；每个 Release 同时包含扩展 zip 与生成的用户脚本。本地重新生成用户脚本：
+
+```bash
+node scripts/build-userscript.js repriceaa.user.js
+```
 
 没有构建步骤，没有依赖，纯 JavaScript。
 
@@ -81,7 +93,7 @@ AA 页面 ──→ 提取模型 ──→ 定价引擎 ──→ 重算后的�
                 ↓              ↓
           本地模型登记       渠道规则 ──→ best-of / 回退链
                 │              │
-                └── chrome.storage（唯一权限）──┘
+                └── chrome.storage / localStorage（用户脚本）──┘
 ```
 
 ## 隐私
@@ -94,7 +106,7 @@ AA 页面 ──→ 提取模型 ──→ 定价引擎 ──→ 重算后的�
 node test/run-tests.js
 ```
 
-42 个单元、集成与冒烟测试——零依赖。
+46 个单元、集成与冒烟测试——零依赖，含用户脚本构建测试。
 
 <br>
 

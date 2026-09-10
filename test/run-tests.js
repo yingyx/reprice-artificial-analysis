@@ -400,4 +400,61 @@ test('registry: on-page refresh overwrites stale intelligence and version', () =
   assert.strictEqual(astra._cached, undefined);
 });
 
+// ---- userscript build (single source of truth: manifest.json) ----
+
+const { buildUserscript } = require('../scripts/build-userscript.js');
+
+const rootDir = path.join(__dirname, '..');
+const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8'));
+const userscript = buildUserscript(rootDir);
+
+test('userscript: header first, version mirrors manifest', () => {
+  assert.ok(userscript.startsWith('// ==UserScript==\n'), 'metadata header must come first');
+  assert.ok(userscript.includes('// @version      ' + manifest.version + '\n'));
+  assert.ok(userscript.includes('// @grant        none\n'));
+  assert.ok(userscript.includes('// ==/UserScript==\n'));
+});
+
+test('userscript: @match mirrors manifest matches', () => {
+  for (const m of manifest.content_scripts[0].matches) {
+    assert.ok(userscript.includes('// @match        ' + m + '\n'), m);
+  }
+});
+
+test('userscript: embeds every manifest script in manifest order', () => {
+  let cursor = userscript.indexOf('// ==/UserScript==');
+  for (const rel of manifest.content_scripts[0].js) {
+    const code = fs.readFileSync(path.join(rootDir, rel), 'utf8').trim();
+    const idx = userscript.indexOf(code, cursor);
+    assert.ok(idx >= 0, rel + ' embedded after previous module');
+    cursor = idx + code.length;
+  }
+});
+
+test('userscript: runs in a bare page-like sandbox (no chrome.storage)', () => {
+  const store = {};
+  const quiet = { debug() { }, log() { }, warn() { }, error() { } };
+  const ctx = {
+    console: quiet,
+    localStorage: {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); }
+    },
+    setTimeout, clearTimeout,
+    addEventListener() { }, removeEventListener() { },
+    document: { body: null, addEventListener() { }, head: null },
+    CustomEvent: function CustomEvent(type) { this.type = type; },
+    MutationObserver: function MutationObserver() { this.observe = () => { }; this.disconnect = () => { }; }
+  };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(userscript, ctx);
+  assert.ok(ctx.RepriceAA && ctx.RepriceAA.storage, 'RepriceAA namespace mounted');
+  assert.ok(ctx.RepriceAA.pricing && ctx.RepriceAA.registry, 'lib modules present');
+  return ctx.RepriceAA.storage.set('repriceaa.prefs', { a: 1 }).then(() =>
+    ctx.RepriceAA.storage.get(['repriceaa.prefs']).then(res => {
+      assert.strictEqual(JSON.stringify(res['repriceaa.prefs']), '{"a":1}');
+    }));
+});
+
 console.log(passed + ' tests passed');
