@@ -20,6 +20,7 @@ function buildUserscript(repoRoot) {
   const header = [
     '// ==UserScript==',
     `// @name         ${manifest.name}`,
+    `// @name:zh-CN   ${manifest.name}`,
     `// @namespace    ${REPO_URL}`,
     `// @version      ${manifest.version}`,
     `// @description  ${manifest.description}`,
