@@ -1117,6 +1117,12 @@
     return RAA.registry.load();
   }).then(function () {
     start();
+    // Non-blocking preset freshness check: on success applyRemoteSources
+    // re-seeds state and notifies listeners, so charts re-render with the
+    // updated ratios; on failure nothing changes (bundled snapshot stays).
+    if (!root.__RAA_DISABLE_REMOTE__ && RAA.remotesources && RAA.remotesources.maybeRefresh) {
+      RAA.remotesources.maybeRefresh().catch(function () { });
+    }
   });
 
   RAA.integration = {

@@ -384,6 +384,15 @@
       stateApi.cache.profiles.forEach(function (q) { if (q.id === p.fallbackTo) fb = q; });
       bits.push('fallback: ' + (fb ? fb.name : 'AA'));
     }
+    if (Array.isArray(p.promos) && p.promos.length) {
+      var active = p.promos.filter(function (pr) {
+        return pr && pr.rule && (!pr.endsAt || String(new Date().toISOString().slice(0, 10)) <= pr.endsAt);
+      });
+      if (active.length) {
+        bits.push(active.length + ' promo' + (active.length > 1 ? 's' : '')
+          + (active.some(function (pr) { return !pr.endsAt; }) ? ' (limited \u23F3)' : ''));
+      }
+    }
     if (p.asOf) {
       var ago = Math.max(0, Math.floor((Date.now() - new Date(p.asOf + 'T00:00:00').getTime()) / 86400000));
       bits.push('asOf ' + p.asOf + (ago > 60 ? ' \u26A0' : ''));
@@ -421,7 +430,45 @@
       '<span style="font-size:10px;color:#9ca3af;margin-left:6px">reference list price (always available in the source dropdown)</span>' +
       '</div>';
     html += '</div>';
+    html += presetFreshnessHtml();
     return html;
+  }
+
+  function presetFreshnessHtml() {
+    var rs = RAA.remotesources;
+    if (!rs) return '';
+    var row = '<div class="raa-freshness" style="font-size:10px;color:#6b7280;margin:8px 0 0;display:flex;align-items:center;gap:6px">' +
+      '<span style="flex:1" id="raa-fresh-status">presets: checking\u2026</span>' +
+      '<button class="btn" id="raa-fresh-refresh" style="font-size:10px;padding:1px 8px">Refresh presets</button>' +
+      '</div>';
+    return row;
+  }
+
+  function formatAgeAgo(ts) {
+    if (!isNum(ts)) return '';
+    var s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+  }
+
+  function renderPresetFreshness() {
+    var rs = RAA.remotesources;
+    var el = document.getElementById('raa-fresh-status');
+    var btn = document.getElementById('raa-fresh-refresh');
+    if (!rs || !el || !btn) return;
+    rs.getStatus().then(function (st) {
+      if (st.where === 'remote' || st.where === 'cache') {
+        el.textContent = 'presets: remote' + (st.generatedAt ? ' (' + st.generatedAt + ')' : '')
+          + ', checked ' + formatAgeAgo(st.fetchedAt)
+          + (st.lastError ? ' \u26A0 ' + st.lastError : '');
+      } else {
+        el.textContent = 'presets: bundled snapshot' + (st.lastError ? ' (refresh failed: ' + st.lastError + ')' : '');
+      }
+    }).catch(function () {
+      el.textContent = 'presets: bundled snapshot';
+    });
   }
 
   function bindManageEvents(rootEl) {
@@ -432,6 +479,18 @@
     rootEl.querySelector('#raa-new').addEventListener('click', function () {
       enterEditor(true, 'manage');
     });
+    var refreshBtn = rootEl.querySelector('#raa-fresh-refresh');
+    if (refreshBtn && RAA.remotesources) {
+      refreshBtn.addEventListener('click', function () {
+        var el = rootEl.querySelector('#raa-fresh-status');
+        if (el) el.textContent = 'presets: refreshing\u2026';
+        RAA.remotesources.maybeRefresh(true).then(function (res) {
+          if (res.applied) rerender();
+          else renderPresetFreshness();
+        }).catch(function () { renderPresetFreshness(); });
+      });
+      renderPresetFreshness();
+    }
     rootEl.querySelectorAll('.raa-best-src').forEach(function (cb) {
       cb.addEventListener('change', function () {
         var ids = stateApi.getEnabledSourceIds().slice();

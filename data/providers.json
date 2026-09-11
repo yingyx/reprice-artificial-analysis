@@ -1,0 +1,19 @@
+{
+  "note": "Scheduled agent task list for source preset maintenance (see .github/workflows/update-sources.yml and .github/update-sources-prompt.md). sourceId must match an id in data/sources.json sources[]. Pages are sha256-hashed on each run; a source's agent task fires only when one of its pages changed. The agent itself (model/provider) is configured in repo Settings > Secrets and variables > Actions: secret AGENT_API_KEY plus variables AGENT_MODEL, AGENT_PROVIDER_ID, AGENT_BASE_URL.",
+  "providers": [
+    {
+      "sourceId": "opencode-go-example",
+      "label": "OpenCode Go",
+      "pages": [
+        {
+          "url": "https://opencode.ai/go",
+          "expect": "plan price, per-model request counts (5h/weekly/monthly), limited-time promo banners"
+        },
+        {
+          "url": "https://opencode.ai/docs/go",
+          "expect": "usage limits table, per-model $/1M prices and monthly usage $ value"
+        }
+      ]
+    }
+  ]
+}

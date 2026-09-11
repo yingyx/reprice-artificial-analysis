@@ -1,0 +1,117 @@
+name: Update sources
+
+# Scheduled data maintenance: detect provider pricing-page changes by HTML
+# hash, and only when something changed, run the opencode agent to refresh
+# data/sources.json. Agent output opens a PR for human review; a run that
+# changes no data just refreshes the hash state file directly on main.
+
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-sources
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Detect provider page changes
+        id: detect
+        env:
+          # Agent runtime config lives in repo variables (Settings > Secrets
+          # and variables > Actions > Variables): AGENT_MODEL ('provider/model',
+          # required when a page changed), optional AGENT_PROVIDER_ID and
+          # AGENT_BASE_URL (endpoint override; models.dev usually suffices).
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+          AGENT_PROVIDER_ID: ${{ vars.AGENT_PROVIDER_ID }}
+          AGENT_BASE_URL: ${{ vars.AGENT_BASE_URL }}
+        run: node scripts/check-providers.js >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cache opencode
+        if: steps.detect.outputs.changed != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.opencode/bin
+          key: opencode-${{ runner.os }}-${{ runner.arch }}-latest
+
+      - name: Install opencode
+        if: steps.detect.outputs.changed != ''
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
+
+      - name: Run data agent
+        if: steps.detect.outputs.changed != ''
+        env:
+          # Generic key secret; which provider consumes it is decided by the
+          # AGENT_* variables above and wired into opencode via
+          # OPENCODE_CONFIG_CONTENT ({env:...} lookup).
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          OPENCODE_CONFIG_CONTENT: ${{ steps.detect.outputs.opencode_config }}
+          OPENCODE_DISABLE_AUTOUPDATE: 'true'
+        run: |
+          if [ -z "$AGENT_API_KEY" ]; then
+            echo "::error::AGENT_API_KEY secret is not set - add it under repo Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          opencode run \
+            --model "${{ steps.detect.outputs.model }}" \
+            --auto \
+            "Changed source ids: ${{ steps.detect.outputs.changed }}." \
+            "$(cat .github/update-sources-prompt.md)"
+
+      - name: Validate generated data
+        if: steps.detect.outputs.changed != ''
+        run: |
+          node scripts/build-sources.js
+          node test/run-tests.js
+
+      - name: Check whether data actually changed
+        if: steps.detect.outputs.changed != ''
+        id: diff
+        run: |
+          if git diff --quiet -- data/sources.json; then
+            echo "data_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "data_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh page hashes (agent made no data change)
+        if: steps.detect.outputs.changed != '' && steps.diff.outputs.data_changed == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/.state/page-hashes.json
+          git commit -m "chore(data): refresh provider page hashes"
+          git push
+
+      - name: Create pull request (data changed)
+        if: steps.detect.outputs.changed != '' && steps.diff.outputs.data_changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: data/update-sources
+          delete-branch: true
+          labels: needs-review
+          title: 'data: scheduled source preset update'
+          body: |
+            Automated scheduled update triggered by provider page changes:
+            `${{ steps.detect.outputs.changed }}`
+
+            Review before merging, especially:
+            - `manualRatio` / multiplier changes (must be backed by numbers in `notes`)
+            - added/removed `nameIncludes` model families
+            - `promos` entries added or removed (limited-time offers)

@@ -20,6 +20,35 @@
     return String(today) <= rule.until;
   }
 
+  // Preset promo overlay (e.g. "DeepSeek V4.1 Flash: limited-time 4x quota").
+  // Active when startsAt <= today (if set) and today <= endsAt; endsAt null
+  // means "limited time, unconfirmed end" and stays active until the page
+  // says otherwise.
+  function promoActive(promo, today) {
+    if (!promo || typeof promo !== 'object') return false;
+    if (typeof promo.startsAt === 'string' && DATE_RE.test(promo.startsAt)
+      && String(today) < promo.startsAt) return false;
+    if (typeof promo.endsAt === 'string' && DATE_RE.test(promo.endsAt)
+      && String(today) > promo.endsAt) return false;
+    return true;
+  }
+
+  function matchPromo(source, modelId, label, today) {
+    if (!source || !Array.isArray(source.promos)) return null;
+    var idLower = String(modelId).toLowerCase();
+    var labelLower = String(label || '').toLowerCase();
+    for (var i = 0; i < source.promos.length; i++) {
+      var p = source.promos[i];
+      if (!p || !p.match || !p.rule) continue;
+      var m = String(p.match).toLowerCase();
+      var hit = (m.indexOf('/') === 0
+        ? idLower.indexOf(m.slice(1))
+        : labelLower.indexOf(m)) !== -1;
+      if (hit && promoActive(p, today)) return p;
+    }
+    return null;
+  }
+
   function normalizeRule(rule) {
     var out;
     if (!rule || typeof rule !== 'object') {
@@ -162,6 +191,10 @@
       ? normalizeRule(source.rules[model.id]) : null;
     if (exact && !ruleUntilActive(exact, ctx.today)) exact = null;
 
+    // preset promo overlay: below user exact overrides, above name-match
+    // rules and the subscription amortized ratio
+    var promo = !exact ? matchPromo(source, model.id, model.label, ctx.today) : null;
+
     // name-match rules, first active match wins
     var matched = null;
     if (Array.isArray(source.nameIncludes)) {
@@ -186,8 +219,15 @@
       if (ratio !== null) matched = { type: 'multiplier', value: ratio };
     }
 
-    var own = exact || matched || null;
+    var own = exact || null;
     var ownIsDefault = false;
+    if (!own && promo) {
+      own = normalizeRule(promo.rule);
+      if (typeof promo.endsAt === 'string' && DATE_RE.test(promo.endsAt)) {
+        own.until = promo.endsAt;
+      }
+    }
+    if (!own) own = matched || null;
     if (!own) {
       if (isSubscription) {
         own = { type: 'exclude' };
@@ -239,11 +279,12 @@
 
     return {
       price: price,
-      ruleDescription: describeRule(own),
+      ruleDescription: describeRule(own) + (promo && !own.until ? ' \u00B7 promo' : ''),
       ruleType: own.type,
       ruleValue: own.type === 'formula' ? null : own.value,
-      ruleSource: ownIsDefault ? 'default' : (exact ? 'override' : 'nameMatch'),
+      ruleSource: ownIsDefault ? 'default' : (promo ? 'promo' : (exact ? 'override' : 'nameMatch')),
       sourceId: source.id,
+      promo: promo ? { reason: promo.reason || null, endsAt: promo.endsAt || null } : undefined,
       anomalies: anomalies
     };
   }

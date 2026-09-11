@@ -16,6 +16,8 @@
         "src/lib/storage.js",
         "src/lib/colors.js",
         "src/lib/registry.js",
+        "src/lib/remotesources.js",
+        "src/data/sources.js",
         "src/content/extract.js",
         "src/content/state.js",
         "src/content/chart-integration.js",

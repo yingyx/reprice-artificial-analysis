@@ -6,7 +6,8 @@
     activeProfileId: 'repriceaa.activeProfileId',
     prefs: 'repriceaa.prefs',
     deletedBuiltins: 'repriceaa.deletedBuiltinIds',
-    sourceMode: 'repriceaa.sourceMode'
+    sourceMode: 'repriceaa.sourceMode',
+    remoteSources: 'repriceaa.remoteSources'
   };
 
   function hasChromeStorage() {

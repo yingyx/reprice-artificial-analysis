@@ -240,6 +240,63 @@ test('until: active rule applies, expired rule skipped', () => {
   assert.strictEqual(out2.price, 2);
 });
 
+// ---- preset promos (limited-time offers layered on a source) ----
+
+const GO = {
+  id: 'go', name: 'Go', kind: 'subscription', monthlyFee: 60, manualRatio: 0.05,
+  defaultRule: { type: 'multiplier', value: 0.05 },
+  nameIncludes: [{ match: 'deepseek', rule: { type: 'multiplier', value: 0.45 } }],
+  promos: [{
+    match: 'deepseek', rule: { type: 'multiplier', value: 0.1125 },
+    reason: 'limited-time 4x quota', startsAt: '2026-09-11', endsAt: null
+  }]
+};
+const mkGo = (today) => pricing.makeCtx([GO], today);
+const DS = () => mkModel('deepseek-v41-flash', 'DeepSeek V4.1 Flash', 50, 2);
+
+test('promo: active promo beats name-match and subscription ratio', () => {
+  const out = pricing.resolvePrice(DS(), 'go', mkGo('2026-09-20'));
+  assert.ok(Math.abs(out.price - 2 * 0.1125) < 1e-9, 'promo value 0.1125x, not 0.45x or 0.05x');
+  assert.strictEqual(out.ruleSource, 'promo');
+  assert.ok(out.ruleDescription.indexOf('promo') !== -1, 'null endsAt marked limited');
+  assert.strictEqual(out.promo.reason, 'limited-time 4x quota');
+  assert.strictEqual(out.promo.endsAt, null);
+});
+
+test('promo: exact override beats promo', () => {
+  const src = Object.assign({}, GO, { rules: { 'deepseek-v41-flash': { type: 'multiplier', value: 0.4 } } });
+  const out = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([src], '2026-09-20'));
+  assert.ok(Math.abs(out.price - 2 * 0.4) < 1e-9);
+  assert.strictEqual(out.ruleSource, 'override');
+  assert.strictEqual(out.promo, undefined);
+});
+
+test('promo: expired endsAt and future startsAt ignored', () => {
+  const expired = Object.assign({}, GO.promos[0], { endsAt: '2026-10-01' });
+  const out = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([GO], '2027-09-11'));
+  // GO.promos has no endsAt (indefinite) - replace it with the dated one
+  const goExpired = Object.assign({}, GO, { promos: [expired] });
+  const out2 = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([goExpired], '2027-09-11'));
+  assert.ok(Math.abs(out2.price - 2 * 0.05) < 1e-9, 'falls through to amortized subscription ratio');
+  assert.strictEqual(out2.ruleSource, 'nameMatch', 'no promo provenance');
+  const future = Object.assign({}, GO, { promos: [Object.assign({}, GO.promos[0], { startsAt: '2026-12-01' })] });
+  const out3 = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([future], '2026-09-20'));
+  assert.ok(Math.abs(out3.price - 2 * 0.05) < 1e-9, 'not started yet');
+});
+
+test('promo: dated endsAt surfaces the date in the description', () => {
+  const src = Object.assign({}, GO, { promos: [Object.assign({}, GO.promos[0], { endsAt: '2026-12-31' })] });
+  const out = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([src], '2026-09-20'));
+  assert.ok(out.ruleDescription.indexOf('2026-12-31') !== -1);
+  assert.ok(out.ruleDescription.indexOf('promo') === -1, 'no limited marker when dated');
+});
+
+test('promo: applyBest winner carries promo provenance', () => {
+  const out = pricing.applyBest([DS()], ['go'], [GO]);
+  assert.strictEqual(out[0].winnerSourceId, 'go');
+  assert.ok(out[0].ruleDescription.indexOf('promo') !== -1);
+});
+
 test('formula rule evaluates with aaCost and base', () => {
   const src = { id: 'f', defaultRule: { type: 'formula', expr: 'aaCost * 0.5 + 0.01' } };
   const out = pricing.applySource([mkModel('a', 'A', 50, 2)], src, [src]);
@@ -400,6 +457,101 @@ test('registry: on-page refresh overwrites stale intelligence and version', () =
   assert.strictEqual(astra._cached, undefined);
 });
 
+// ---- source presets (data/sources.json -> generated src/data/sources.js) ----
+
+const RULE_TYPES = ['multiplier', 'absolute', 'percentOff', 'formula', 'exclude'];
+const isRule = (r) => r && typeof r === 'object' && RULE_TYPES.indexOf(r.type) !== -1
+  && (r.type === 'exclude' || r.type === 'formula' || typeof r.value === 'number');
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function loadSourceDoc() {
+  return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
+}
+
+const sourceDoc = loadSourceDoc();
+
+test('sources: document shape with ordered, unique, valid entries', () => {
+  assert.strictEqual(sourceDoc.schema, 1, 'schema field');
+  assert.ok(Array.isArray(sourceDoc.sources) && sourceDoc.sources.length >= 10, 'preset library non-trivial');
+  const ids = new Set();
+  for (const profile of sourceDoc.sources) {
+    const label = 'entry ' + (profile && profile.id);
+    assert.ok(typeof profile.id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(profile.id), label + ' id');
+    assert.ok(!ids.has(profile.id), 'unique id: ' + profile.id);
+    ids.add(profile.id);
+    assert.ok(typeof profile.name === 'string' && profile.name, label + ' name');
+    assert.ok(isRule(profile.defaultRule), label + ' defaultRule');
+    assert.strictEqual(typeof profile.rules, 'object', label + ' rules');
+    for (const entry of profile.nameIncludes || []) {
+      assert.ok(typeof entry.match === 'string' && isRule(entry.rule), label + ' nameIncludes entry');
+    }
+    if (profile.kind === 'subscription') {
+      assert.ok(profile.manualRatio > 0 && profile.manualRatio <= 1, label + ' manualRatio sane');
+      assert.ok(profile.monthlyFee > 0, label + ' monthlyFee sane');
+    }
+    if (profile.asOf) assert.ok(DATE_RE.test(profile.asOf), label + ' asOf format');
+    for (const p of profile.promos || []) {
+      assert.ok(typeof p.match === 'string' && isRule(p.rule), label + ' promo match/rule');
+      assert.ok(p.startsAt == null || DATE_RE.test(p.startsAt), label + ' promo startsAt');
+      assert.ok(p.endsAt == null || DATE_RE.test(p.endsAt), label + ' promo endsAt');
+      assert.ok(p.reason == null || typeof p.reason === 'string', label + ' promo reason');
+    }
+    assert.strictEqual(profile.builtin, undefined, label + ' builtin is injected, not hand-written');
+  }
+});
+
+test('sources: generated src/data/sources.js in sync with data/sources.json', () => {
+  const { buildSourcesModule } = require('../scripts/build-sources.js');
+  const repoRoot = path.join(__dirname, '..');
+  const generated = fs.readFileSync(path.join(repoRoot, 'src', 'data', 'sources.js'), 'utf8');
+  assert.strictEqual(generated, buildSourcesModule(repoRoot),
+    'src/data/sources.js is stale - run: node scripts/build-sources.js');
+  const ctx = { console };
+  vm.createContext(ctx);
+  vm.runInContext(generated, ctx);
+  const sources = ctx.RepriceAA.SOURCES;
+  assert.ok(Array.isArray(sources) && sources.length === sourceDoc.sources.length);
+  sources.forEach(p => assert.ok(p.builtin === true, p.id + ' builtin flag injected'));
+});
+
+// ---- remote preset updates (src/lib/remotesources.js) ----
+
+function loadRemotesources() {
+  const ctx = { console };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', 'remotesources.js'), 'utf8'), ctx);
+  return ctx.RepriceAA.remotesources;
+}
+
+const remotesources = loadRemotesources();
+
+test('remotesources: data/sources.json passes runtime payload validation', () => {
+  const payload = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
+  assert.strictEqual(remotesources.validatePayload(payload), null);
+});
+
+test('remotesources: bad payloads rejected with a reason', () => {
+  assert.ok(remotesources.validatePayload(null), 'null rejected');
+  assert.ok(remotesources.validatePayload({ schema: 2, sources: [] }), 'schema version rejected');
+  assert.ok(remotesources.validatePayload({ schema: 1 }), 'missing sources rejected');
+  assert.ok(remotesources.validatePayload({ schema: 1, sources: [{ id: 'Bad Id!' }] }), 'bad id rejected');
+  assert.ok(remotesources.validatePayload({
+    schema: 1,
+    sources: [
+      { id: 'a', name: 'A', defaultRule: { type: 'multiplier', value: 1 }, nameIncludes: [] },
+      { id: 'a', name: 'A2', defaultRule: { type: 'multiplier', value: 1 }, nameIncludes: [] }
+    ]
+  }), 'duplicate ids rejected');
+  assert.ok(remotesources.validatePayload({
+    schema: 1,
+    sources: [{ id: 'a', name: 'A', defaultRule: { type: 'banana', value: 1 }, nameIncludes: [] }]
+  }), 'unknown rule type rejected');
+  assert.ok(remotesources.validatePayload({
+    schema: 1,
+    sources: [{ id: 'sub', name: 'S', kind: 'subscription', manualRatio: 0, defaultRule: { type: 'multiplier', value: 1 }, nameIncludes: [] }]
+  }), 'subscription with zero ratio rejected');
+});
+
 // ---- userscript build (single source of truth: manifest.json) ----
 
 const { buildUserscript } = require('../scripts/build-userscript.js');
@@ -411,7 +563,10 @@ const userscript = buildUserscript(rootDir);
 test('userscript: header first, version mirrors manifest', () => {
   assert.ok(userscript.startsWith('// ==UserScript==\n'), 'metadata header must come first');
   assert.ok(userscript.includes('// @version      ' + manifest.version + '\n'));
-  assert.ok(userscript.includes('// @grant        none\n'));
+  assert.ok(userscript.includes('// @grant        GM_xmlhttpRequest\n'), 'remote preset transport');
+  for (const c of ['raw.githubusercontent.com', 'fastly.jsdelivr.net', 'testingcf.jsdelivr.net']) {
+    assert.ok(userscript.includes('// @connect      ' + c + '\n'), c);
+  }
   assert.ok(userscript.includes('// ==/UserScript==\n'));
 });
 

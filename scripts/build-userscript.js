@@ -30,7 +30,12 @@ function buildUserscript(repoRoot) {
     .concat(cs.matches.map(m => `// @match        ${m}`))
     .concat([
       `// @run-at       ${cs.run_at.replace(/_/g, '-')}`,
-      '// @grant        none',
+      // GM_xmlhttpRequest carries the remote preset refresh (CSP-safe on the
+      // target page); the @connect list mirrors src/lib/remotesources.js.
+      '// @grant        GM_xmlhttpRequest',
+      '// @connect      raw.githubusercontent.com',
+      '// @connect      fastly.jsdelivr.net',
+      '// @connect      testingcf.jsdelivr.net',
       '// @license      MIT',
       `// @homepageURL  ${REPO_URL}`,
       `// @supportURL   ${REPO_URL}/issues`,

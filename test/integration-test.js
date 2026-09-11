@@ -161,11 +161,12 @@ async function main() {
   };
   ctx.window = ctx;
   ctx.globalThis = ctx;
+  ctx.__RAA_DISABLE_REMOTE__ = true;   // keep integration test offline
   vm.createContext(ctx);
 
   for (const f of [
     'src/lib/pricing.js', 'src/lib/pareto.js', 'src/lib/storage.js', 'src/lib/colors.js',
-    'src/lib/registry.js',
+    'src/lib/registry.js', 'src/lib/remotesources.js', 'src/data/sources.js',
     'src/content/extract.js', 'src/content/state.js', 'src/content/chart-integration.js'
   ]) {
     run(f, ctx);
