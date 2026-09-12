@@ -1,11 +1,10 @@
 # RepriceAA
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-46_passing-brightgreen?style=flat-square" alt="tests">
-  <img src="https://img.shields.io/badge/network_requests-0-red?style=flat-square" alt="network requests">
-  <img src="https://img.shields.io/badge/permissions-storage_only-green?style=flat-square" alt="permissions">
-  <img src="https://img.shields.io/badge/rule_types-4-purple?style=flat-square" alt="rule types">
-  <img src="https://img.shields.io/badge/build-none-blue?style=flat-square" alt="build">
+  <a href="../../releases"><img src="https://img.shields.io/github/v/release/yingyx/reprice-artificial-analysis?style=flat-square" alt="release"></a>
+  <img src="https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/privacy-no_network_·_storage_only-green?style=flat-square" alt="privacy">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
 </p>
 
 <p align="center">
@@ -88,20 +87,9 @@ No build step, no dependencies, plain JavaScript.
 Once loaded, visit any [artificialanalysis.ai](https://artificialanalysis.ai) page and click the
 purple launcher in the bottom-right corner.
 
-## How it fits together
-
-```
-AA page ──→ extract models ──→ pricing engine ──→ re-priced scatter panel
-                │                    │
-                ↓                    ↓
-         local registry       source rules ──→ best-of / fallback chains
-                │                    │
-                └────── chrome.storage / localStorage (userscript) ──────┘
-```
-
 ## Privacy
 
-Zero network requests. Zero analytics. One permission (`storage`); profiles and the model cache
+Zero network requests, zero analytics. One permission (`storage`): profiles and the model cache
 never leave your browser.
 
 ## Development
@@ -110,14 +98,10 @@ never leave your browser.
 node test/run-tests.js
 ```
 
-46 unit, integration, and smoke tests — zero dependencies, including the userscript build.
+55 unit, integration, and smoke tests — zero dependencies, including the userscript build.
 
 <br>
 
 <p align="center">
   English · <a href="README.zh-CN.md">简体中文</a>
-</p>
-
-<p align="center">
-  <sub>MIT — see LICENSE</sub>
 </p>
