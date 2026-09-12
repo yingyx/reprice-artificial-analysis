@@ -1,11 +1,10 @@
 # RepriceAA
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-46_passing-brightgreen?style=flat-square" alt="tests">
-  <img src="https://img.shields.io/badge/network_requests-0-red?style=flat-square" alt="network requests">
-  <img src="https://img.shields.io/badge/permissions-storage_only-green?style=flat-square" alt="permissions">
-  <img src="https://img.shields.io/badge/rule_types-4-purple?style=flat-square" alt="rule types">
-  <img src="https://img.shields.io/badge/build-none-blue?style=flat-square" alt="build">
+  <a href="../../releases"><img src="https://img.shields.io/github/v/release/yingyx/reprice-artificial-analysis?style=flat-square" alt="release"></a>
+  <img src="https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square" alt="tests">
+  <img src="https://img.shields.io/badge/privacy-no_network_·_storage_only-green?style=flat-square" alt="privacy">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
 </p>
 
 <p align="center">
@@ -85,20 +84,9 @@ node scripts/build-userscript.js repriceaa.user.js
 安装完成后，访问任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页面，
 点击右下角的紫色圆钮。
 
-## 整体结构
-
-```
-AA 页面 ──→ 提取模型 ──→ 定价引擎 ──→ 重算后的散点面板
-                │              │
-                ↓              ↓
-          本地模型登记       渠道规则 ──→ best-of / 回退链
-                │              │
-                └── chrome.storage / localStorage（用户脚本）──┘
-```
-
 ## 隐私
 
-零网络请求，零统计埋点。仅申请一个权限（`storage`）；定价配置与模型缓存全部保留在本地浏览器中。
+零网络请求，零统计埋点。仅申请一个权限（`storage`）：定价配置与模型缓存全部保留在本地浏览器中。
 
 ## 开发
 
@@ -106,14 +94,10 @@ AA 页面 ──→ 提取模型 ──→ 定价引擎 ──→ 重算后的�
 node test/run-tests.js
 ```
 
-46 个单元、集成与冒烟测试——零依赖，含用户脚本构建测试。
+55 个单元、集成与冒烟测试——零依赖，含用户脚本构建测试。
 
 <br>
 
 <p align="center">
   <a href="README.md">English</a> · 简体中文
-</p>
-
-<p align="center">
-  <sub>MIT — 详见 LICENSE</sub>
 </p>
