@@ -14,6 +14,20 @@
           "expect": "usage limits table, per-model $/1M prices and monthly usage $ value"
         }
       ]
+    },
+    {
+      "sourceId": "command-code-goat",
+      "label": "Command Code GOAT",
+      "pages": [
+        {
+          "url": "https://commandcode.ai/docs/plans/goat",
+          "expect": "plan price, credit multiplier (7x), included model list, per-model monthly allowances"
+        },
+        {
+          "url": "https://commandcode.ai/pricing",
+          "expect": "per-model effective usage table including limited-time deals (up to 2x/4x)"
+        }
+      ]
     }
   ]
 }
