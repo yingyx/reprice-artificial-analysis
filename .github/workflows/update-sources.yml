@@ -106,7 +106,8 @@ jobs:
           branch: data/update-sources
           delete-branch: true
           labels: needs-review
-          title: 'data: scheduled source preset update'
+          title: 'chore(data): scheduled source preset update'
+          commit-message: 'chore(data): scheduled source preset update'
           body: |
             Automated scheduled update triggered by provider page changes:
             `${{ steps.detect.outputs.changed }}`
