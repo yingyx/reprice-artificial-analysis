@@ -319,10 +319,74 @@
             "type": "multiplier",
             "value": 0.14
           }
+        },
+        {
+          "match": "grok",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "inkling",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "nemotron",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "step",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "tencent",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "mimo",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
         }
       ],
-      "asOf": "2026-09-06",
-      "notes": "$10/mo buys $70 of credits (7x), up to ~$100 with deals. Pattern list approximates included model families; premium-gated models not covered."
+      "promos": [
+        {
+          "match": "minimax",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.21
+          },
+          "reason": "MiniMax M3 -50% deal on GOAT plan: credits doubled to ~$94 effective monthly value",
+          "startsAt": null,
+          "endsAt": null
+        },
+        {
+          "match": "mimo",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.1
+          },
+          "reason": "MiMo V2.5 up to 99% off deal: credits up to 50x (~$100 effective monthly value)",
+          "startsAt": null,
+          "endsAt": null
+        }
+      ],
+      "asOf": "2026-09-12",
+      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.14). Per-model allowances vary: top models (GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B) get full $70; mid-tier $20-$60; new models start at $20. Active deals: MiniMax M3 -50% (2x credits, ~$94 eff.), MiMo V2.5/V2.5 Pro up to 99% off (~$100 eff.). 50 models shown, 70 total with deals, 6 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo."
     },
     {
       "id": "kimi-allegretto",
