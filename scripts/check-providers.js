@@ -67,6 +67,7 @@ async function main() {
   const providers = config.providers || [];  const prev = loadPreviousHashes();
   const next = {};
   const changed = [];
+  const failures = [];
   const lines = [];
 
   for (const p of providers) {
@@ -89,14 +90,18 @@ async function main() {
         const before = prev[page.url];
         next[page.url] = before != null ? before : 'error';
         if (before !== 'error') marks.push('fetch-failed:' + page.url);
-        lines.push('  ! ' + page.url + ' fetch failed: ' + e.message);
+        failures.push(page.url + ' fetch failed: ' + e.message);
       }
     }
     // A source needs the agent when any page changed (or fetch broke) - a
     // stable "error" hash avoids re-firing on permanently dead pages.
     const isChanged = force || marks.length > 0;
-    lines.push((isChanged ? 'x ' : '- ') + p.sourceId + ' (' + p.label + ')'
-      + (marks.length ? ' ' + marks.join(', ') : ' unchanged'));
+    lines.push({
+      sourceId: p.sourceId,
+      label: p.label,
+      status: isChanged ? 'changed' : 'unchanged',
+      detail: marks.length ? marks.join(', ') : 'unchanged'
+    });
     if (isChanged) changed.push(p.sourceId);
   }
 
@@ -128,9 +133,33 @@ async function main() {
   }
 
   console.log('page change detection' + (dryRun ? ' (dry run)' : '') + ':');
-  lines.forEach(l => console.log(l));
+  for (const l of lines) {
+    console.log((l.status === 'changed' ? 'x ' : '- ') + l.sourceId + ' (' + l.label
+      + ') ' + l.detail);
+  }
+  failures.forEach(f => console.log('  ! ' + f));
   console.log('agent model: ' + (agentModel || '(AGENT_MODEL variable not set)'));
   console.log('changed: ' + (changed.join(' ') || '(none)'));
+
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    const summary = [
+      '## Provider page change detection' + (dryRun ? ' (dry run)' : ''),
+      '',
+      '| Status | Source | Label | Detail |',
+      '|--------|--------|-------|--------|'
+    ];
+    for (const l of lines) {
+      summary.push('| ' + l.status + ' | `' + l.sourceId + '` | ' + l.label
+        + ' | ' + String(l.detail).replace(/</g, '&lt;') + ' |');
+    }
+    if (failures.length) {
+      summary.push('', '**Fetch failures**');
+      failures.forEach(f => summary.push('- `' + f + '`'));
+    }
+    summary.push('', 'Agent model: `' + (agentModel || '(AGENT_MODEL variable not set)') + '`');
+    summary.push('', 'Changed sources: ' + (changed.length ? changed.map(c => '`' + c + '`').join(' ') : '(none)'));
+    fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join('\n') + '\n');
+  }
 
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + changed.join(' ') + '\n');
