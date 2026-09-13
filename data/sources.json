@@ -5,27 +5,107 @@
     {
       "id": "opencode-go-example",
       "name": "OpenCode Go (example)",
+      "kind": "subscription",
+      "monthlyFee": 10,
+      "manualRatio": 0.167,
       "defaultRule": {
         "type": "multiplier",
-        "value": 1
+        "value": 0.167
       },
       "rules": {},
       "nameIncludes": [
         {
+          "match": "grok",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
+          }
+        },
+        {
           "match": "glm",
           "rule": {
             "type": "multiplier",
-            "value": 0.3
+            "value": 0.167
+          }
+        },
+        {
+          "match": "gpt",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
+          }
+        },
+        {
+          "match": "kimi",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
+          }
+        },
+        {
+          "match": "longcat",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "mimo",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "minimax",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "muse",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "qwen",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
           }
         },
         {
           "match": "deepseek",
           "rule": {
             "type": "multiplier",
-            "value": 0.45
+            "value": 0.667
+          }
+        },
+        {
+          "match": "hy",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
           }
         }
-      ]
+      ],
+      "promos": [
+        {
+          "match": "deepseek v4.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          },
+          "reason": "DeepSeek V4.1 Flash 4× usage promo: monthly limit raised from $15 to $60",
+          "startsAt": null,
+          "endsAt": null
+        }
+      ],
+      "asOf": "2026-09-13",
+      "notes": "$10/mo subscription for 28 open-source coding models. Per-model monthly usage limits range $15-$60; base ratio 0.167 uses GLM-5.3-Flash $60 limit (10/60). Grok/GPT/Kimi at $15 limit = 0.667; Qwen/Hy at $30 limit = 0.333; DeepSeek V4.1 Flash gets 4× usage (limited time, no end date stated). Limits: 20%/5h, 50%/wk, 100%/mo. Sources: opencode.ai/go, opencode.ai/docs/go."
     },
     {
       "id": "deepseek-offpeak-example",
