@@ -24,6 +24,13 @@
           }
         },
         {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
+          }
+        },
+        {
           "match": "glm",
           "rule": {
             "type": "multiplier",
@@ -38,10 +45,24 @@
           }
         },
         {
-          "match": "kimi",
+          "match": "kimi k3",
           "rule": {
             "type": "multiplier",
             "value": 0.667
+          }
+        },
+        {
+          "match": "kimi k2.7",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "kimi k2.6",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
           }
         },
         {
@@ -49,6 +70,13 @@
           "rule": {
             "type": "multiplier",
             "value": 0.167
+          }
+        },
+        {
+          "match": "mimo v2.5 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
           }
         },
         {
@@ -73,7 +101,49 @@
           }
         },
         {
+          "match": "qwen3.8 max",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.667
+          }
+        },
+        {
+          "match": "qwen3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
+          }
+        },
+        {
+          "match": "qwen3.7 max",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
+          }
+        },
+        {
+          "match": "qwen3.7 plus",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "qwen3.6 plus",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
           "match": "qwen",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
+          }
+        },
+        {
+          "match": "deepseek v4 flash",
           "rule": {
             "type": "multiplier",
             "value": 0.333
@@ -84,6 +154,20 @@
           "rule": {
             "type": "multiplier",
             "value": 0.667
+          }
+        },
+        {
+          "match": "hy4",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
+          }
+        },
+        {
+          "match": "hy3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
           }
         },
         {
@@ -106,8 +190,8 @@
           "endsAt": "2026-09-20"
         }
       ],
-      "asOf": "2026-09-14",
-      "notes": "$10/mo subscription for 27 open-source coding models. Per-model monthly usage limits range $15-$60; base ratio 0.167 uses GLM-5.3-Flash/GLM-5.2/GLM-5.1/Kimi K2.7/Kimi K2.6/LongCat/MiMo/MiniMax/Muse/Qwen3.7 Plus/Qwen3.6 Plus/Hy3 $60 limit (10/60). Grok/GPT/Kimi K3/MiMo V2.5 Pro/Qwen3.8 Max/DeepSeek V4 Pro/DeepSeek V4 Flash Vision at $15 = 0.667; Qwen3.8 Flash/Qwen3.7 Max/DeepSeek V4 Flash/Hy4 preview at $30 = 0.333. DeepSeek V4.1 Flash 4× usage promo ends Sep 20, 2026. Limits: 20%/5h, 50%/wk, 100%/mo. Sources: opencode.ai/go, opencode.ai/docs/go.",
+      "asOf": "2026-09-15",
+      "notes": "$10/mo subscription for 27 open-source coding models. Per-model monthly usage limits: $60 for GLM-5.3-Flash, GLM-5.2, GLM-5.1, Kimi K2.7 Code, Kimi K2.6, LongCat-2.0, MiMo V2.5, MiniMax M3/M2.7/M2.5, Muse Spark 1.3/1.2 Contributor, Qwen3.7 Plus, Qwen3.6 Plus, Hy3; $30 for Qwen3.8 Flash, Qwen3.7 Max, DeepSeek V4 Flash, Hy4 preview; $15 for GLM-5.3, Kimi K3, MiMo V2.5 Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, GPT 5.6 Luna, Grok 4.6. Base ratio 0.167 (10/60). DeepSeek V4.1 Flash has 4× usage promo (ends Sep 20, 2026). Limits: 20%/5h, 50%/wk, 100%/mo. Sources: opencode.ai/go, opencode.ai/docs/go.",
       "builtin": true
     },
     {
@@ -461,6 +545,27 @@
             "type": "multiplier",
             "value": 0.14
           }
+        },
+        {
+          "match": "longcat",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "laguna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
+          "match": "ling",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
         }
       ],
       "promos": [
@@ -495,8 +600,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-14",
-      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.14). Per-model allowances: top models (GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B) get full $70; DeepSeek V4.1 Flash $40-$60; Kimi K2.7 Code $60; MiniMax M3 $47; GLM-5.3 Flash $40; Gemini 3.8/3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30; GPT-5.6 Luna, Qwen3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, DeepSeek V4 Flash Vision $20; new models $20. Active deals: MiniMax M3 -50% (~$47 eff.), MiMo V2.5 -98% (~$100 eff.), MiMo V2.5 Pro -99% (~$200 eff.). 50 models on GOAT, 70 total, 3 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing.",
+      "asOf": "2026-09-15",
+      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.14). Per-model allowances: top models (GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B) get full $70; DeepSeek V4.1 Flash $40-$60; Kimi K2.7 Code $60; MiniMax M3 $47; GLM-5.3 Flash $40; Gemini 3.8/3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30; GPT-5.6 Luna, Qwen3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, DeepSeek V4 Flash Vision $20; new models $20. Free models: Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1 (free while capacity lasts). Active deals: MiniMax M3 -50% (~$47 eff.), MiMo V2.5 -98% (~$100 eff.), MiMo V2.5 Pro -99% (~$200 eff.). 50 models on GOAT, 70 total, 3 free. Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing.",
       "builtin": true
     },
     {
