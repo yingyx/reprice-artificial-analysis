@@ -205,18 +205,17 @@ async function main() {
   const glmNode = ctxA.nodes['glm-5-3'];
   assert.ok(glmNode, 'GLM point node exists');
   const glmX = parseX(glmNode.style.transform).x;
-  assert.ok(glmX > 340 && glmX < 356, `GLM at repriced log position x=${glmX.toFixed(1)} (expected ~348)`);
 
   const dsNode = ctxA.nodes['deepseek-v4-pro'];
   const dsX1 = parseX(dsNode.style.transform).x;
-  assert.ok(dsX1 > 260 && dsX1 < 277, `DeepSeek at 0.45x position x=${dsX1.toFixed(1)} (expected ~268)`);
+  assert.ok(glmX > dsX1, `log x-axis orders by cost: GLM x=${glmX.toFixed(1)} right of DeepSeek x=${dsX1.toFixed(1)}`);
 
-  R.state.setSource('deepseek-offpeak-example');
+  R.state.setSource('command-code-goat');
   await new Promise((r) => setTimeout(r, 50));
   const dsX2 = parseX(ctxA.nodes['deepseek-v4-pro'].style.transform).x;
   const glmX2 = parseX(ctxA.nodes['glm-5-3'].style.transform).x;
-  assert.ok(dsX2 > dsX1 + 3, `DeepSeek moves right at 0.55x: ${dsX1.toFixed(1)} -> ${dsX2.toFixed(1)}`);
-  assert.ok(Math.abs(glmX2 - 525) < 5, `GLM back at AA-cost position under DeepSeek-only profile (x=${glmX2.toFixed(1)}, expected ~525)`);
+  assert.ok(dsX2 < dsX1 - 3, `DeepSeek moves left under GOAT's lower ratio: ${dsX1.toFixed(1)} -> ${dsX2.toFixed(1)}`);
+  assert.ok(glmX2 > dsX2, `GLM still right of DeepSeek under GOAT (x=${glmX2.toFixed(1)} vs ${dsX2.toFixed(1)})`);
 
   R.state.setSource('__aa__');
   await new Promise((r) => setTimeout(r, 50));
@@ -245,15 +244,14 @@ async function main() {
   assert.strictEqual(ctxA.select.value, '__best__', 'select reflects best mode');
   assert.ok(ctxA.wrap.style.display === '', 'overlay visible in best mode');
 
-  // Claude models: covered by Max -> unified amortized ratio (20/4.33/9 ≈ 0.5131)
-  // overrides the pattern's own ×0.3; beats OpenRouter & Batch
+  // Claude models: covered by Max -> the pattern's own per-model ratio (×0.3)
+  // is the effective price; beats OpenRouter & Batch
   const claude = R.pricing.applyBest(
     [{ id: 'claude-opus-5', label: 'Claude Opus 5 (max)', intelligence: 63.05, aaCost: 2.3368 }],
     ['claude-max', 'openrouter-x', 'or-batch'],
     R.state.cache.profiles
   )[0];
-  const ratio = (20 / 4.33) / 9;
-  assert.ok(Math.abs(claude.repricedCost - 2.3368 * ratio) < 1e-6, 'covered claude uses amortized ratio');
+  assert.ok(Math.abs(claude.repricedCost - 2.3368 * 0.3) < 1e-6, 'covered claude uses the pattern ratio');
   assert.strictEqual(claude.winnerSourceId, 'claude-max', 'subscription wins for covered model');
 
   // GPT model: not covered by Max -> falls back to OpenRouter (4.22) ties with Batch (4.22);

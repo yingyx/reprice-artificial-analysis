@@ -590,7 +590,7 @@
         '<input type="number" min="0" step="0.1" id="raa-quota" value="' + (isNum(d.monthlyQuotaTokens) ? d.monthlyQuotaTokens / 1e6 : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Ref blended price ($/M)</span>' +
         '<input type="number" min="0" step="0.1" id="raa-ref" value="' + (isNum(d.refBlendedPrice) ? d.refBlendedPrice : '') + '"' + dis + '></div>';
-      html += '<div class="row"><span class="mname">Manual ratio (overrides)</span>' +
+      html += '<div class="row"><span class="mname">Manual ratio (fallback)</span>' +
         '<input type="number" min="0" step="0.05" id="raa-mratio" value="' + (isNum(d.manualRatio) ? d.manualRatio : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Ratio preview</span>' +
         '<span class="preview" id="raa-ratio-preview">' + (ratio ? pricing.trimNum(ratio) + '\u00D7' : '\u2014') + '</span></div>';
@@ -641,20 +641,18 @@
     html += '<h3>Name matches</h3>';
     var subRatio = d.kind === 'subscription' ? pricing.computeSubscriptionRatio(d) : null;
     if (d.kind === 'subscription' && subRatio !== null) {
-      html += '<div style="font-size:11px;color:#047857;margin:2px 0 4px">Covered models use the amortized ratio \u00D7' +
-        pricing.trimNum(subRatio) + ' (per-model values below are ignored).</div>';
+      html += '<div style="font-size:11px;color:#047857;margin:2px 0 4px">First match wins; pattern values are the per-model prices. Leave a value empty to fall back to the amortized ratio \u00D7' +
+        pricing.trimNum(subRatio) + '.</div>';
     }
     (d.nameIncludes || []).forEach(function (nm, ix) {
       var t = nm.rule && nm.rule.type === 'absolute';
-      var auto = subRatio !== null;
       html += '<div class="row">' +
-        '<input type="text" style="flex:1" placeholder="matches part of model name / slug" data-nm="' + ix + '" data-fld="match" value="' + esc(nm.match) + '"' + (auto ? ' title="Covered models get the amortized ratio"' : '') + dis + '>' +
-        (auto
-          ? '<span class="preview" style="min-width:64px;text-align:right">\u2192 \u00D7' + pricing.trimNum(subRatio) + '</span>'
-          : '<select data-nm="' + ix + '" data-fld="nmType"' + dis + '>' +
-            '<option value="multiplier"' + (!t ? ' selected' : '') + '>\u00D7</option>' +
-            '<option value="absolute"' + (t ? ' selected' : '') + '>$</option></select>' +
-            '<input type="number" min="0" step="0.01" data-nm="' + ix + '" data-fld="nmValue" value="' + ((nm.rule && typeof nm.rule.value === 'number' && isFinite(nm.rule.value)) ? nm.rule.value : 1) + '"' + dis + '>') +
+        '<input type="text" style="flex:1" placeholder="matches part of model name / slug" data-nm="' + ix + '" data-fld="match" value="' + esc(nm.match) + '" title="First match wins; specific patterns first"' + dis + '>' +
+        '<select data-nm="' + ix + '" data-fld="nmType"' + dis + '>' +
+          '<option value="multiplier"' + (!t ? ' selected' : '') + '>\u00D7</option>' +
+          '<option value="absolute"' + (t ? ' selected' : '') + '>$</option></select>' +
+        '<input type="number" min="0" step="0.01" placeholder="plan ratio" title="Empty = plan amortized ratio" data-nm="' + ix + '" data-fld="nmValue" value="' +
+          ((nm.rule && typeof nm.rule.value === 'number' && isFinite(nm.rule.value)) ? nm.rule.value : '') + '"' + dis + '>' +
         '<input type="date" title="Promo ends (optional)" data-nm="' + ix + '" data-fld="nmUntil" value="' + esc(nm.rule && nm.rule.until ? nm.rule.until : '') + '"' + dis + '>' +
         (ro ? '' : '<button class="btn danger" data-delnm="' + ix + '">\u2715</button>') + '</div>';
     });
@@ -761,16 +759,23 @@
         var fld = el.getAttribute('data-fld');
         var nm = state.draft.nameIncludes && state.draft.nameIncludes[ix];
         if (!nm) return;
-        nm.rule = nm.rule || { type: 'multiplier', value: 1 };
         if (fld === 'match') {
           nm.match = el.value;
         } else if (fld === 'nmType') {
+          nm.rule = nm.rule || { type: 'multiplier', value: 1 };
           var pv = nm.rule.value;
           nm.rule.type = el.value;
           nm.rule.value = pv != null && isFinite(pv) ? pv : (el.value === 'multiplier' ? 1 : 0);
         } else if (fld === 'nmValue') {
-          var v = parseFloat(el.value);
-          nm.rule.value = isNaN(v) ? nm.rule.value : Math.max(0, v);
+          if (el.value === '') {
+            // rule-less entry: runtime falls back to the plan's amortized ratio
+            delete nm.rule;
+          } else {
+            var v = parseFloat(el.value);
+            if (!isNaN(v)) {
+              nm.rule = { type: nm.rule && nm.rule.type === 'absolute' ? 'absolute' : 'multiplier', value: Math.max(0, v) };
+            }
+          }
         } else if (fld === 'nmUntil') {
           if (el.value && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) nm.rule.until = el.value;
           else delete nm.rule.until;

@@ -195,8 +195,12 @@
     // rules and the subscription amortized ratio
     var promo = !exact ? matchPromo(source, model.id, model.label, ctx.today) : null;
 
-    // name-match rules, first active match wins
+    // name-match rules, first active match wins. Entries must be ordered
+    // most-specific first (enforced by scripts/build-sources.js): a later
+    // broader pattern must not swallow a model that an earlier specific
+    // pattern prices differently.
     var matched = null;
+    var matchedRaw = null;
     if (Array.isArray(source.nameIncludes)) {
       for (var i = 0; i < source.nameIncludes.length; i++) {
         var entry = source.nameIncludes[i];
@@ -205,16 +209,20 @@
         var hit = (m.indexOf('/') === 0
           ? String(model.id).toLowerCase().indexOf(m.slice(1))
           : String(model.label || '').toLowerCase().indexOf(m)) !== -1;
-        if (hit) {
-          var r = normalizeRule(entry.rule);
-          if (ruleUntilActive(r, ctx.today)) { matched = r; break; }
+        if (hit && ruleUntilActive(normalizeRule(entry.rule), ctx.today)) {
+          matchedRaw = entry.rule;
+          matched = normalizeRule(entry.rule);
+          break;
         }
       }
     }
 
-    if (matched && isSubscription) {
-      // subscription: covered models use the unified amortized ratio when it is
-      // computable; the pattern's own rule value is only a fallback
+    if (matched && isSubscription && matchedRaw == null) {
+      // Coverage-only pattern entry (no rule value): fall back to the
+      // source's amortized ratio. Entries WITH a rule keep their own value -
+      // for maintained subscription presets that value is the per-model
+      // effective price (monthlyFee / per-model monthly allowance), not a
+      // decoration on top of the unified ratio.
       var ratio = computeSubscriptionRatio(source);
       if (ratio !== null) matched = { type: 'multiplier', value: ratio };
     }

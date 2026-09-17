@@ -277,11 +277,11 @@ test('promo: expired endsAt and future startsAt ignored', () => {
   // GO.promos has no endsAt (indefinite) - replace it with the dated one
   const goExpired = Object.assign({}, GO, { promos: [expired] });
   const out2 = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([goExpired], '2027-09-11'));
-  assert.ok(Math.abs(out2.price - 2 * 0.05) < 1e-9, 'falls through to amortized subscription ratio');
+  assert.ok(Math.abs(out2.price - 2 * 0.45) < 1e-9, 'falls through to the pattern rule value (per-model pricing)');
   assert.strictEqual(out2.ruleSource, 'nameMatch', 'no promo provenance');
   const future = Object.assign({}, GO, { promos: [Object.assign({}, GO.promos[0], { startsAt: '2026-12-01' })] });
   const out3 = pricing.resolvePrice(DS(), 'go', pricing.makeCtx([future], '2026-09-20'));
-  assert.ok(Math.abs(out3.price - 2 * 0.05) < 1e-9, 'not started yet');
+  assert.ok(Math.abs(out3.price - 2 * 0.45) < 1e-9, 'not started yet');
 });
 
 test('promo: dated endsAt surfaces the date in the description', () => {
@@ -357,7 +357,7 @@ test('applyBest with no valid sources yields null price', () => {
   assert.ok(out[0].anomalies.indexOf('no-candidate') !== -1);
 });
 
-test('subscription: amortized ratio overrides pattern rule values', () => {
+test('subscription: pattern rule value is the per-model price (beats amortized ratio)', () => {
   const sub = {
     id: 'codex', name: 'Codex Plus', kind: 'subscription',
     monthlyFee: 20, monthlyQuotaTokens: 4.33e6, refBlendedPrice: 9,
@@ -365,17 +365,19 @@ test('subscription: amortized ratio overrides pattern rule values', () => {
     fallbackTo: 'openrouter'
   };
   const out = pricing.applySource([mkModel('gpt-x', 'GPT X', 50, 2)], sub, [...SOURCES, sub]);
-  const expected = 2 * ((20 / 4.33) / 9);
-  assert.ok(Math.abs(out[0].repricedCost - expected) < 1e-9, 'unified ratio applied, not 0.3');
+  assert.ok(Math.abs(out[0].repricedCost - 0.6) < 1e-9, 'pattern value 0.3 wins, not the unified ratio');
 });
 
-test('subscription: pattern rule value used when ratio not computable', () => {
+test('subscription: coverage-only pattern (no rule) falls back to amortized ratio', () => {
   const sub = {
-    id: 'max', kind: 'subscription',
-    nameIncludes: [{ match: 'claude', rule: { type: 'multiplier', value: 0.3 } }]
+    id: 'codex', name: 'Codex Plus', kind: 'subscription',
+    monthlyFee: 20, monthlyQuotaTokens: 4.33e6, refBlendedPrice: 9,
+    nameIncludes: [{ match: 'gpt' }],
+    fallbackTo: 'openrouter'
   };
-  const out = pricing.applySource([mkModel('claude-x', 'Claude X', 50, 2)], sub, [sub]);
-  assert.ok(Math.abs(out[0].repricedCost - 0.6) < 1e-9);
+  const out = pricing.applySource([mkModel('gpt-x', 'GPT X', 50, 2)], sub, [...SOURCES, sub]);
+  const expected = 2 * ((20 / 4.33) / 9);
+  assert.ok(Math.abs(out[0].repricedCost - expected) < 1e-9, 'rule-less entry falls back to unified ratio');
 });
 
 test('computeSubscriptionRatio: amortize, manual override, invalid inputs', () => {
@@ -550,6 +552,48 @@ test('remotesources: bad payloads rejected with a reason', () => {
     schema: 1,
     sources: [{ id: 'sub', name: 'S', kind: 'subscription', manualRatio: 0, defaultRule: { type: 'multiplier', value: 1 }, nameIncludes: [] }]
   }), 'subscription with zero ratio rejected');
+});
+
+// ---- provider page change detection (scripts/check-providers.js) ----
+
+const checkProviders = require('../scripts/check-providers.js');
+
+test('check-providers: price signals exclude noise (timestamps, counters)', () => {
+  const noisy = 'Last updated: Sep 16, 2026 349 releases shipped 104k developers '
+    + 'Join 100K+ developers v1.54.0 © 2026 PR #101864';
+  assert.deepStrictEqual(checkProviders.extractPriceSignals(noisy), []);
+});
+
+test('check-providers: price signals capture currency, percent, multipliers, free', () => {
+  const toks = checkProviders.extractPriceSignals(
+    '$0.15 $70 50% 20%/5h 4x \u00d7 7\u00d7 multiplier Free ~$100 eff.');
+  assert.ok(toks.indexOf('$0.15') !== -1);
+  assert.ok(toks.indexOf('$70') !== -1);
+  assert.ok(toks.indexOf('50%') !== -1);
+  assert.ok(toks.indexOf('20%') !== -1);
+  assert.ok(toks.indexOf('4x') !== -1);
+  assert.ok(toks.indexOf('free') !== -1);
+  assert.ok(toks.indexOf('7\u00d7') !== -1);
+});
+
+test('check-providers: signal hash is order-insensitive, empty yields null', () => {
+  assert.strictEqual(
+    checkProviders.hashPriceSignals(['$1', '$2', 'free']),
+    checkProviders.hashPriceSignals(['free', '$2', '$1']));
+  assert.strictEqual(checkProviders.hashPriceSignals([]), null);
+});
+
+test('check-providers: v1 flat-hash state migrates to v2 without price knowledge', () => {
+  const pages = checkProviders.loadPages({ 'https://x.example': 'abcdef1234567890' });
+  assert.deepStrictEqual(pages, {
+    'https://x.example': { full: 'abcdef1234567890', price: null, tokens: 0, drift: 0 }
+  });
+  const v2 = checkProviders.loadPages({ version: 2, pages: { 'https://y.example': { full: 'f', price: 'p', tokens: 3, drift: 1 } } });
+  assert.strictEqual(v2['https://y.example'].drift, 1);
+});
+
+test('check-providers: drift limit requires repeated full-only changes', () => {
+  assert.strictEqual(checkProviders.DRIFT_LIMIT, 2);
 });
 
 // ---- userscript build (single source of truth: manifest.json) ----

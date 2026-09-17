@@ -23,6 +23,27 @@ function isDate(v) {
   return v == null || DATE_RE.test(v);
 }
 
+// First match wins, so a later pattern that is matched by everything an
+// earlier broader pattern already catches can never apply. The concrete
+// failure mode is "mimo-v2.5-pro" placed after "mimo": the specific entry
+// becomes dead code and its value never reaches the runtime.
+function checkShadowing(entries, where) {
+  const seen = [];
+  for (const entry of entries) {
+    const m = String(entry.match).toLowerCase();
+    if (seen.indexOf(m) !== -1) {
+      throw new Error(where + ': duplicate match pattern: "' + entry.match + '"');
+    }
+    for (const prev of seen) {
+      if (m.indexOf(prev) !== -1) {
+        throw new Error(where + ': pattern "' + entry.match + '" is shadowed by the earlier, broader pattern "'
+          + prev + '" - order entries most-specific first');
+      }
+    }
+    seen.push(m);
+  }
+}
+
 function validateProfile(profile, where) {
   if (!profile || typeof profile !== 'object') throw new Error(where + ': not an object');
   if (typeof profile.id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(profile.id)) {
@@ -38,11 +59,17 @@ function validateProfile(profile, where) {
     || profile.nameIncludes.some(e => typeof e.match !== 'string' || !isRule(e.rule)))) {
     throw new Error(where + ': invalid nameIncludes entry');
   }
+  if (Array.isArray(profile.nameIncludes)) {
+    checkShadowing(profile.nameIncludes, where + ' nameIncludes');
+  }
   if (profile.promos && (!Array.isArray(profile.promos)
     || profile.promos.some(p => !p || typeof p.match !== 'string' || !isRule(p.rule)
       || !isDate(p.startsAt) || !isDate(p.endsAt)
       || (p.reason != null && typeof p.reason !== 'string')))) {
     throw new Error(where + ': invalid promos entry');
+  }
+  if (Array.isArray(profile.promos)) {
+    checkShadowing(profile.promos, where + ' promos');
   }
 }
 

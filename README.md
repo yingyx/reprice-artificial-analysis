@@ -33,7 +33,7 @@ cost-optimal frontier no longer reflects your situation.
 | | AA list-price chart | RepriceAA |
 |---|---|---|
 | Price basis | published $/M tokens | your effective price |
-| Subscription plans | not modeled | amortized per model |
+| Subscription plans | not modeled | per-model effective price (allowance-aware) |
 | Multiple providers | one number | compared, cheapest wins |
 | Cost-optimal frontier | list-price Pareto | *your* Pareto |
 
@@ -45,7 +45,7 @@ RepriceAA adds a side panel and integrates with the native chart on any
 [artificialanalysis.ai](https://artificialanalysis.ai) page:
 
 - **4 rule types** — `multiplier` (`0.5x`), `absolute` (`$3/task`), `formula` (`aaCost * 0.8 + 0.2`), `exclude`
-- **Subscription amortization** — monthly fee + token quota → automatic effective price per covered model
+- **Subscription amortization** — monthly fee + per-model allowance → per-model effective price; the plan's amortized ratio is the fallback for models without a specific allowance
 - **Best-of mode** — each model priced across all enabled sources; cheapest wins, with provenance
 - **Fallback chains** — uncovered models fall through to another source (loops detected, depth capped at 3)
 - **Time-limited rules** — `until: 2026-12-31` for promotional pricing that expires automatically

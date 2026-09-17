@@ -167,25 +167,6 @@
       "builtin": true
     },
     {
-      "id": "deepseek-offpeak-example",
-      "name": "DeepSeek Off-Peak (example)",
-      "defaultRule": {
-        "type": "multiplier",
-        "value": 1
-      },
-      "rules": {},
-      "nameIncludes": [
-        {
-          "match": "deepseek",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.55
-          }
-        }
-      ],
-      "builtin": true
-    },
-    {
       "id": "codex-plus",
       "name": "Codex Plus (ChatGPT)",
       "kind": "subscription",
@@ -449,6 +430,13 @@
           }
         },
         {
+          "match": "deepseek-v4-flash-fast",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.14
+          }
+        },
+        {
           "match": "deepseek",
           "rule": {
             "type": "multiplier",
@@ -531,16 +519,19 @@
             "type": "multiplier",
             "value": 0.14
           }
-        },
-        {
-          "match": "deepseek-v4-flash-fast",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.14
-          }
         }
       ],
       "promos": [
+        {
+          "match": "mimo-v2.5-pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.05
+          },
+          "reason": "MiMo V2.5 Pro -99% deal: effective value ~$200 on GOAT plan",
+          "startsAt": null,
+          "endsAt": null
+        },
         {
           "match": "minimax",
           "rule": {
@@ -558,16 +549,6 @@
             "value": 0.1
           },
           "reason": "MiMo V2.5 -98% deal: effective value ~$100 on GOAT plan",
-          "startsAt": null,
-          "endsAt": null
-        },
-        {
-          "match": "mimo-v2.5-pro",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.05
-          },
-          "reason": "MiMo V2.5 Pro -99% deal: effective value ~$200 on GOAT plan",
           "startsAt": null,
           "endsAt": null
         }
