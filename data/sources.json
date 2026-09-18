@@ -375,143 +375,437 @@
       "name": "Command Code GOAT",
       "kind": "subscription",
       "monthlyFee": 10,
-      "manualRatio": 0.14,
+      "manualRatio": 0.5,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.14
+        "value": 0.5
       },
       "rules": {},
       "nameIncludes": [
         {
+          "match": "glm-5.3 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.25
+          }
+        },
+        {
+          "match": "glm-5.2 fast",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "glm-5.2",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
+          }
+        },
+        {
           "match": "glm-5.3",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
+          }
+        },
+        {
+          "match": "glm-5.1",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
           }
         },
         {
           "match": "glm",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
-          "match": "qwen3.8 max",
+          "match": "qwen 3.8 max",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "qwen3.7 max",
+          "match": "qwen 3.8 omni flash",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
+          }
+        },
+        {
+          "match": "qwen 3.8 27b",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
+          }
+        },
+        {
+          "match": "qwen 3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "qwen 3.8",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "qwen 3.7 max",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.303
+          }
+        },
+        {
+          "match": "qwen 3.7 plus",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.303
+          }
+        },
+        {
+          "match": "qwen 3.7 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "qwen 3.7",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.303
+          }
+        },
+        {
+          "match": "qwen 3.6 plus",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.303
+          }
+        },
+        {
+          "match": "qwen 3.6",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
           }
         },
         {
           "match": "qwen",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "deepseek-v4-flash-fast",
+          "match": "kimi k3",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "deepseek",
+          "match": "kimi k2.7 code",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "minimax",
+          "match": "kimi k2.7",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "muse",
+          "match": "kimi k2.6",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "gemini",
+          "match": "kimi k2.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
+          }
+        },
+        {
+          "match": "kimi k2",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
           }
         },
         {
           "match": "kimi",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "gpt",
+          "match": "mimo v2.5 pro",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
-          "match": "grok",
+          "match": "mimo v2.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
-          }
-        },
-        {
-          "match": "inkling",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.14
-          }
-        },
-        {
-          "match": "nemotron",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.14
-          }
-        },
-        {
-          "match": "step",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.14
-          }
-        },
-        {
-          "match": "tencent",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.14
+            "value": 0.333
           }
         },
         {
           "match": "mimo",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.333
+          }
+        },
+        {
+          "match": "deepseek v4.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "deepseek v4 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "deepseek v4 flash fast",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "deepseek v4 flash vision",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "deepseek v4 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "deepseek v4",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "deepseek",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "grok 4.6",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "grok 4.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "grok",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "gpt-5.6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
+          }
+        },
+        {
+          "match": "gpt-5.6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "gpt",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
+          }
+        },
+        {
+          "match": "gemini 3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.25
+          }
+        },
+        {
+          "match": "gemini 3.7 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.25
+          }
+        },
+        {
+          "match": "gemini",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.25
+          }
+        },
+        {
+          "match": "minimax m3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.213
+          }
+        },
+        {
+          "match": "minimax m2.7",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "minimax m2.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "minimax",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.213
+          }
+        },
+        {
+          "match": "muse spark 1.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "muse spark 1.2",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "muse",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "inkling small",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "inkling",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "nemotron",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "step 3.7 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "step 3.5 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "step",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "tencent hy4",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "tencent hy3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
+          }
+        },
+        {
+          "match": "tencent",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.143
           }
         }
       ],
       "promos": [
         {
-          "match": "mimo-v2.5-pro",
+          "match": "mimo v2.5 pro",
           "rule": {
             "type": "multiplier",
             "value": 0.05
@@ -521,17 +815,17 @@
           "endsAt": null
         },
         {
-          "match": "minimax",
+          "match": "minimax m3",
           "rule": {
             "type": "multiplier",
-            "value": 0.21
+            "value": 0.213
           },
           "reason": "MiniMax M3 -50% deal: effective credits ~$47/mo on GOAT plan",
           "startsAt": null,
           "endsAt": null
         },
         {
-          "match": "mimo",
+          "match": "mimo v2.5",
           "rule": {
             "type": "multiplier",
             "value": 0.1
@@ -541,8 +835,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-16",
-      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.14). Per-model monthly credits: top models (GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B) get full $70; DeepSeek V4.1 Flash $40-$60; Kimi K2.7 Code $60; MiniMax M3 $47; GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30; GPT-5.6 Luna, Qwen3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, DeepSeek V4 Flash Vision Exp $20; new models $20. Active deals: MiniMax M3 -50% (~$47 eff., ratio 0.21), MiMo V2.5 -98% (~$100 eff., ratio 0.1), MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). 50 models on GOAT, 70 total, 3 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing."
+      "asOf": "2026-09-18",
+      "notes": "$10/mo buys $70 of credits (7x base multiplier). Per-model monthly credits: GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B get full $70; DeepSeek V4 Flash, DeepSeek V4.1 Flash $60; Kimi K2.7 Code $60; MiniMax M3 $47 (before -50% deal); GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30 (before -98% deal); all new models and older models $20 (GPT-5.6 Luna, Qwen 3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, Qwen 3.8 Omni Flash, Qwen 3.8 Max 0902, Tencent Hy4 Preview, Qwen 3.8 Flash, DeepSeek V4 Flash Vision exp, DeepSeek V4 Flash Fast, GLM-5.3, Muse Spark 1.3/1.2, Kimi K3, Kimi K2.7 Code HighSpeed, Grok 4.5/4.6, GLM-5.2 Fast, Inkling/Inkling Small, Step 3.7/3.5 Flash, Nemotron 3 Ultra, Qwen 3.7 Flash, Qwen 3.6 Max Preview, MiniMax M2.7/M2.5, Kimi K2.6/K2.5, GLM-5.1/GLM-5). Active deals: MiniMax M3 -50% (~$47 eff., ratio 0.213), MiMo V2.5 -98% (~$100 eff., ratio 0.1), MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). DeepSeek V4.1 Flash 4× promo removed (no longer on page). 51 models on GOAT, 71 total, 3 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing."
     },
     {
       "id": "kimi-allegretto",
