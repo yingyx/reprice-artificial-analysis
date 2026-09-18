@@ -4,11 +4,21 @@ name: Update sources
 # hash, and only when something changed, run the opencode agent to refresh
 # data/sources.json. Agent output opens a PR for human review; a run that
 # changes no data just refreshes the hash state file directly on main.
+# Runs are serialized by the concurrency group, but that does not cover the
+# window where the previous run's PR is still awaiting review: a queued run
+# would check out a main without the pending merge and produce a conflicting
+# duplicate PR. The race guard below skips the whole cycle while a preset PR
+# is open; the next run after the merge picks up any residual page changes.
 
 on:
   schedule:
     - cron: '30 3 * * *'
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ignore guards and run the agent even if a preset PR is open'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
@@ -41,21 +51,36 @@ jobs:
           AGENT_BASE_URL: ${{ vars.AGENT_BASE_URL }}
         run: node scripts/check-providers.js
 
+      # A queued run starts after the previous job finished but possibly
+      # before its PR was reviewed and merged; without this guard it would
+      # branch off the pre-merge base and conflict with the open PR.
+      - name: Skip if a preset PR is already awaiting review
+        id: race
+        if: steps.detect.outputs.changed != '' && inputs.force != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh pr list --head data/update-sources --state open --json number -q 'length' || echo 0)
+          if [ "$open" != "0" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::A data/update-sources PR is already open; skipping this cycle. Residual page changes are picked up by the next run after it merges."
+          fi
+
       - name: Cache opencode
-        if: steps.detect.outputs.changed != ''
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
         uses: actions/cache@v6
         with:
           path: ~/.opencode/bin
           key: opencode-${{ runner.os }}-${{ runner.arch }}-latest
 
       - name: Install opencode
-        if: steps.detect.outputs.changed != ''
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
         run: |
           curl -fsSL https://opencode.ai/install | bash
           echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
 
       - name: Run data agent
-        if: steps.detect.outputs.changed != ''
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
         env:
           # Generic key secret; which provider consumes it is decided by the
           # AGENT_* variables above and wired into opencode via
@@ -75,13 +100,13 @@ jobs:
             "$(cat .github/update-sources-prompt.md)"
 
       - name: Validate generated data
-        if: steps.detect.outputs.changed != ''
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
         run: |
           node scripts/build-sources.js
           node test/run-tests.js
 
       - name: Check whether data actually changed
-        if: steps.detect.outputs.changed != ''
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
         id: diff
         run: |
           if git diff --quiet -- data/sources.json; then
@@ -91,7 +116,7 @@ jobs:
           fi
 
       - name: Refresh page hashes (agent made no data change)
-        if: steps.detect.outputs.changed != '' && steps.diff.outputs.data_changed == 'false'
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true' && steps.diff.outputs.data_changed == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -100,7 +125,7 @@ jobs:
           git push
 
       - name: Create pull request (data changed)
-        if: steps.detect.outputs.changed != '' && steps.diff.outputs.data_changed == 'true'
+        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true' && steps.diff.outputs.data_changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           branch: data/update-sources
