@@ -554,6 +554,35 @@ const SRC = (id, asOf, name) => ({
   defaultRule: { type: 'multiplier', value: 0.1 }, rules: {}, nameIncludes: [], asOf
 });
 
+test('remotesources: stale payload cannot downgrade a source (monotonic asOf)', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18')]);
+  await R.state.applyRemoteSources([SRC('go', '2026-09-16')]);
+  assert.strictEqual(R.SOURCES.length, 1);
+  assert.strictEqual(R.SOURCES[0].asOf, '2026-09-18', 'kept the newer current copy');
+});
+
+test('remotesources: newer remote payload applies; bundled-only sources retained', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18'), SRC('claude', '2026-09-01')]);
+  await R.state.applyRemoteSources([SRC('go', '2026-09-20'), SRC('kimi', '2026-09-19')]);
+  const ids = Array.from(R.SOURCES, s => s.id + ':' + s.asOf).sort();
+  assert.deepStrictEqual(ids, ['claude:2026-09-01', 'go:2026-09-20', 'kimi:2026-09-19']);
+});
+
+test('remotesources: equal asOf resolves to the current bundled copy', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18')]);
+  await R.state.applyRemoteSources([SRC('go', '2026-09-18', 'Stale Mirror Name')]);
+  assert.strictEqual(R.SOURCES[0].name, 'go', 'tie kept the current preset');
+});
+
+test('remotesources: cache-bust targets jsDelivr mirrors with a UTC-day stamp', () => {
+  assert.strictEqual(
+    remotesources.cacheBustFor('https://raw.githubusercontent.com/x/y/main/data/sources.json'),
+    'https://raw.githubusercontent.com/x/y/main/data/sources.json',
+    'raw.githubusercontent has short cache - untouched');
+  const busted = remotesources.cacheBustFor('https://fastly.jsdelivr.net/gh/x/y@main/data/sources.json');
+  assert.ok(/^https:\/\/fastly\.jsdelivr\.net\/gh\/x\/y@main\/data\/sources\.json\?t=\d{4}-\d{2}-\d{2}$/.test(busted));
+});
+
 test('state: first run defaults Auto-best to every built-in source', async () => {
   const R = loadStateModule([SRC('go', '2026-09-18'), SRC('claude', '2026-09-01')]);
   await R.state.load();

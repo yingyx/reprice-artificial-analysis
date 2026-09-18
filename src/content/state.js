@@ -240,9 +240,32 @@
   // Remote preset updates (src/lib/remotesources.js): swap the bundled
   // preset definitions for a validated remote payload and re-seed state so
   // ratio/promo/model-list changes reach users without a release.
+  //
+  // Monotonic guard: mirrors (jsDelivr) and the stored cache can serve
+  // payloads that predate the bundled snapshot (or the payload last
+  // applied). Each source carries `asOf`; a remote entry older than the
+  // one currently active must never replace it, and sources the stale
+  // payload does not know about stay in place. Real updates always bump
+  // `asOf` (agent contract), so this only ever rejects stale copies.
   function applyRemoteSources(remoteSources) {
     if (!Array.isArray(remoteSources) || !remoteSources.length) return Promise.resolve(false);
-    RAA.SOURCES = remoteSources;
+    var current = {};
+    (RAA.SOURCES || []).forEach(function (s) { if (s && typeof s.id === 'string') current[s.id] = s; });
+    var merged = [];
+    var seen = {};
+    remoteSources.forEach(function (s) {
+      if (!s || typeof s.id !== 'string') return;
+      var cur = current[s.id];
+      // ties (same asOf) resolve to the current copy: a stale mirror that
+      // replays an already-shipped payload must not displace it.
+      var stale = cur && cur.asOf && s.asOf && String(s.asOf) <= String(cur.asOf);
+      merged.push(stale ? cur : s);
+      seen[s.id] = true;
+    });
+    Object.keys(current).forEach(function (id) {
+      if (!seen[id]) merged.push(current[id]);
+    });
+    RAA.SOURCES = merged;
     return load().then(function () {
       notify('source');
       return true;

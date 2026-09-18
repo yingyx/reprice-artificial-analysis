@@ -460,7 +460,8 @@
     if (!rs || !el || !btn) return;
     rs.getStatus().then(function (st) {
       if (st.where === 'remote' || st.where === 'cache') {
-        el.textContent = 'presets: remote' + (st.generatedAt ? ' (' + st.generatedAt + ')' : '')
+        var from = st.generatedAt || (st.lastGoodUrl ? st.lastGoodUrl.replace(/^https:\/\//, '').split('/')[0] : '');
+        el.textContent = 'presets: ' + st.where + (from ? ' (' + from + ')' : '')
           + ', checked ' + formatAgeAgo(st.fetchedAt)
           + (st.lastError ? ' \u26A0 ' + st.lastError : '');
       } else {

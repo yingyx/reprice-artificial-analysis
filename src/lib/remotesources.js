@@ -87,11 +87,23 @@
     return (viaGM ? viaGM(url) : fetchViaPage(url));
   }
 
-  function tryUrls(urls) {
-    return urls.reduce(function (chain, url) {
-      return chain.catch(function () { return fetchText(url).then(function (text) { return { url: url, text: text }; }); });
-    }, Promise.reject());
-  }
+// Cache-busting stamp (UTC date) appended to branch-based mirror URLs.
+// jsDelivr treats different query strings as different resources, so this
+// forces each day's first fetch past any edge that still holds a
+// days-old copy of @main while keeping within-day caching intact.
+function cacheBustFor(url) {
+  if (url.indexOf('jsdelivr') === -1) return url;
+  return url + '?t=' + new Date().toISOString().slice(0, 10);
+}
+
+function tryUrls(urls) {
+  return urls.reduce(function (chain, url) {
+    return chain.catch(function () {
+      var target = cacheBustFor(url);
+      return fetchText(target).then(function (text) { return { url: target, text: text }; });
+    });
+  }, Promise.reject());
+}
 
   function readCache() {
     return storageApi.get([storageApi.KEYS.remoteSources]).then(function (res) {
@@ -188,6 +200,7 @@
   RAA.remotesources = {
     REMOTE_URLS: REMOTE_URLS,
     TTL_MS: TTL_MS,
+    cacheBustFor: cacheBustFor,
     validatePayload: validatePayload,
     maybeRefresh: maybeRefresh,
     getStatus: getStatus,
