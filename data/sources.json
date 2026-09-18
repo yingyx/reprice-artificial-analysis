@@ -375,137 +375,165 @@
       "name": "Command Code GOAT",
       "kind": "subscription",
       "monthlyFee": 10,
-      "manualRatio": 0.14,
+      "manualRatio": 0.143,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.14
+        "value": 0.143
       },
       "rules": {},
       "nameIncludes": [
         {
+          "match": "glm-5.3-flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.25
+          }
+        },
+        {
           "match": "glm-5.3",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "glm",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "qwen3.8 max",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "qwen3.7 max",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.303
           }
         },
         {
           "match": "qwen",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
+          }
+        },
+        {
+          "match": "deepseek v4.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          }
+        },
+        {
+          "match": "deepseek v4 flash vision",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
+          "match": "deepseek v4 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
           }
         },
         {
           "match": "deepseek-v4-flash-fast",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "deepseek",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "minimax",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "muse",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "gemini",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "kimi",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "gpt",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "grok",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "inkling",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "nemotron",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "step",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.5
           }
         },
         {
           "match": "tencent",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.143
           }
         },
         {
           "match": "mimo",
           "rule": {
             "type": "multiplier",
-            "value": 0.14
+            "value": 0.333
           }
         }
       ],
@@ -514,9 +542,9 @@
           "match": "mimo-v2.5-pro",
           "rule": {
             "type": "multiplier",
-            "value": 0.05
+            "value": 0.1
           },
-          "reason": "MiMo V2.5 Pro -99% deal: effective value ~$200 on GOAT plan",
+          "reason": "MiMo V2.5 Pro -99% deal: effective value ~$100 on GOAT plan (credits 5x from $20 to ~$100)",
           "startsAt": null,
           "endsAt": null
         },
@@ -536,13 +564,13 @@
             "type": "multiplier",
             "value": 0.1
           },
-          "reason": "MiMo V2.5 -98% deal: effective value ~$100 on GOAT plan",
+          "reason": "MiMo V2.5 -98% deal: effective value ~$100 on GOAT plan (credits 5x from $30 to ~$100)",
           "startsAt": null,
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-16",
-      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.14). Per-model monthly credits: top models (GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B) get full $70; DeepSeek V4.1 Flash $40-$60; Kimi K2.7 Code $60; MiniMax M3 $47; GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30; GPT-5.6 Luna, Qwen3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, DeepSeek V4 Flash Vision Exp $20; new models $20. Active deals: MiniMax M3 -50% (~$47 eff., ratio 0.21), MiMo V2.5 -98% (~$100 eff., ratio 0.1), MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). 50 models on GOAT, 70 total, 3 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing."
+      "asOf": "2026-09-18",
+      "notes": "$10/mo buys $70 of credits (7x base multiplier = 0.143). Per-model monthly credits: GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B get full $70; DeepSeek V4 Flash, DeepSeek V4.1 Flash $60; Kimi K2.7 Code $60; MiniMax M3 $47; GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash $40; Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33; MiMo V2.5 $30; GPT-5.6 Luna, Qwen 3.8 Max, Qwen 3.8 Max 0902, DeepSeek V4 Pro, MiMo V2.5 Pro, DeepSeek V4 Flash Vision Exp, new models $20. Active deals: MiniMax M3 -50% (~$47 eff., ratio 0.21), MiMo V2.5 -98% (~$100 eff., ratio 0.1), MiMo V2.5 Pro -99% (~$100 eff., ratio 0.1). 51 models on GOAT, 71 total, 3 free (Ling 3.0 Flash Sante, LongCat 2.0, Laguna S 2.1). Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing."
     },
     {
       "id": "kimi-allegretto",
