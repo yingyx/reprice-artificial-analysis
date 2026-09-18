@@ -43,6 +43,43 @@ earlier broader one (or duplicated). Always order most-specific first:
 
 If the build fails with a shadow/duplicate error, fix the order it names.
 
+## Pattern precision (must-verify step)
+
+Patterns must describe ONLY the models the plan actually includes, as they
+appear on Artificial Analysis. A family catch-all (`"muse"`, `"gpt"`,
+`"hy"`, `"qwen"`) silently reprices unrelated AA models and is the single
+most damaging data error - e.g. `"muse"` prices Muse Glimmer and the
+regular Muse Spark 1.3 (not in the plan) at the plan's ratio, and `"gpt"`
+covers GPT-5.6 Sol even when the plan only includes Luna.
+
+Rules:
+
+- Derive patterns per model from the plan page's included-models list,
+  matching the AA label (which often carries suffixes like `(max)`,
+  `(0902)`, `(high)` - your substring must sit before those). A
+  family-level pattern is acceptable ONLY when every AA model it can match
+  is in the plan AND shares the same allowance (e.g. `"claude"` for a
+  Claude plan that covers all Claude models).
+- If the plan includes only a discounted variant (e.g. Muse Spark 1.3
+  **Contributor**) while AA also lists the regular model, cover ONLY the
+  variant (`"muse spark 1.3 contributor"`); the regular model must stay
+  uncovered. Models absent from AA entirely stay uncovered too -
+  uncovered = AA list price; never approximate by family resemblance.
+- Free models (e.g. Union Alpha Free, Laguna S 2.1) get no pattern.
+
+Verification loop (mandatory before running the build):
+
+1. Fetch `https://artificialanalysis.ai/models` and read the ld+json
+   `<script type="application/ld+json">` blocks; collect the `label`
+   values - these are the exact strings your patterns run against.
+2. For each pattern, list every AA label whose lowercase contains it.
+3. Every matched label must be a plan-included model (ignoring the
+   label's bracket/date suffixes). Any hit outside the plan list means the
+   pattern is too broad: narrow it to the exact included model's name.
+4. The build also prints warnings for short or digit-less patterns
+   (`broad pattern ...`): treat each one as a prompt to double-check the
+   pattern's hit-set, not just noise.
+
 ## Procedure
 
 1. Read `data/providers.json` to map each changed source id to its page URLs.

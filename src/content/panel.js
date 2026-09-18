@@ -644,6 +644,19 @@
       html += '<div style="font-size:11px;color:#047857;margin:2px 0 4px">First match wins; pattern values are the per-model prices. Leave a value empty to fall back to the amortized ratio \u00D7' +
         pricing.trimNum(subRatio) + '.</div>';
     }
+    if (Array.isArray(d.promos) && d.promos.length) {
+      var today = pricing.todayStr();
+      d.promos.forEach(function (p) {
+        var rule = p && p.rule;
+        if (!p || !p.match || !rule) return;
+        var active = !pricing.promoActive || pricing.promoActive(p, today);
+        html += '<div class="row" style="font-size:11px;color:#047857">' +
+          '<span class="mname" title="' + esc(p.reason || '') + '">promo \u00b7 ' + esc(p.match) + '</span>' +
+          '<span class="preview" style="text-align:right">' + (active
+            ? '\u2192 \u00d7' + pricing.trimNum(rule.value) + (p.endsAt ? ' (until ' + p.endsAt + ')' : ' (limited time)')
+            : 'expired') + '</span></div>';
+      });
+    }
     (d.nameIncludes || []).forEach(function (nm, ix) {
       var t = nm.rule && nm.rule.type === 'absolute';
       html += '<div class="row">' +
@@ -674,10 +687,19 @@
       var id = el.getAttribute('data-prev');
       var model = null;
       state.models.forEach(function (m) { if (m.id === id) model = m; });
-      var profileLike = { defaultRule: d.defaultRule, rules: d.rules, nameIncludes: d.nameIncludes };
       if (!model) { el.textContent = ''; return; }
-      var out = pricing.priceModel(model, profileLike);
-      el.textContent = fmtMoney(out.repricedCost);
+      // Same resolution path as the chart (exact rules, promos, subscription
+      // per-model values, amortized fallback). The legacy priceModel path
+      // ignored promos entirely, which made the editor claim prices the
+      // chart never shows.
+      var src = JSON.parse(JSON.stringify(d));
+      if (!src.id) src.id = '__draft__';
+      var out = pricing.resolvePrice(model, src.id, pricing.makeCtx([src]));
+      var v = out && typeof out.price === 'number' && isFinite(out.price) ? out.price : null;
+      el.textContent = v == null ? '\u2014' : fmtMoney(v);
+      if (out && out.promo) {
+        el.title = 'promo: ' + (out.promo.reason || '') + (out.promo.endsAt ? ' (until ' + out.promo.endsAt + ')' : '');
+      }
     });
   }
 

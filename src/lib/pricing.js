@@ -417,6 +417,7 @@
     todayStr: todayStr,
     normalizeRule: normalizeRule,
     ruleUntilActive: ruleUntilActive,
+    promoActive: promoActive,
     resolveRule: resolveRule,
     resolvePrice: resolvePrice,
     makeCtx: makeCtx,

@@ -73,6 +73,13 @@
       if (prefs.mode === 'aa' || prefs.mode === 'repriced' || prefs.mode === 'best') state.sourceMode = prefs.mode;
       if (Array.isArray(prefs.enabledSourceIds)) {
         cache.enabledSourceIds = prefs.enabledSourceIds.filter(function (id) { return typeof id === 'string'; });
+      } else {
+        // First run (preference never written): Auto-best starts from every
+        // built-in source so the mode works out of the box. An explicitly
+        // stored list - even empty - is always respected as-is.
+        cache.enabledSourceIds = (RAA.SOURCES || [])
+          .map(function (s) { return s && s.id; })
+          .filter(function (id) { return id && goneIds.indexOf(id) === -1; });
       }
       cache.logScale = prefs.logScale !== false;
       cache.panelOpen = !!prefs.panelOpen;

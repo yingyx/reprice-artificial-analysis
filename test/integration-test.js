@@ -274,10 +274,11 @@ async function main() {
   // ---- coding plan preset library sanity ----
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const expected = {
+    'opencode-go-example': 0.167,
     'codex-plus': 0.26, 'codex-pro-5x': 0.26, 'codex-pro-20x': 0.13,
     'claude-pro': 0.03, 'claude-max-5x': 0.03, 'claude-max-20x': 0.015,
     'glm-coding-lite': 0.05, 'glm-coding-pro': 0.04, 'glm-coding-max': 0.035,
-    'command-code-goat': 0.14, 'kimi-allegretto': 0.005
+    'command-code-goat': 0.5, 'kimi-allegretto': 0.005
   };
   for (const [id, ratio] of Object.entries(expected)) {
     const p = R.state.cache.profiles.find(q => q.id === id);

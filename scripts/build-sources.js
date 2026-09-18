@@ -73,6 +73,24 @@ function validateProfile(profile, where) {
   }
 }
 
+// Broad patterns (short or without any digit/version token) are the classic
+// source of "non-plan model repriced at the plan ratio" errors. They are
+// legal when the plan genuinely includes the whole family (claude, codex
+// plans), so this is a warning for reviewers, never a build failure.
+function lintPatternWarnings(profiles) {
+  const warnings = [];
+  for (const profile of profiles) {
+    for (const entry of profile.nameIncludes || []) {
+      const m = String(entry.match);
+      if (m.length < 5 || !/\d/.test(m)) {
+        warnings.push(profile.id + ': broad pattern "' + m
+          + '" - keep only if every AA model it matches is in the plan');
+      }
+    }
+  }
+  return warnings;
+}
+
 function loadSourceProfiles(repoRoot) {
   const doc = JSON.parse(fs.readFileSync(path.join(repoRoot, SOURCES_PATH), 'utf8'));
   if (!doc || doc.schema !== 1 || !Array.isArray(doc.sources)) {
@@ -92,6 +110,8 @@ function loadSourceProfiles(repoRoot) {
 
 function buildSourcesModule(repoRoot) {
   const profiles = loadSourceProfiles(repoRoot);
+  const warnings = lintPatternWarnings(profiles);
+  warnings.forEach(w => console.warn('warn - ' + w));
   const body = profiles
     .map(p => '    ' + JSON.stringify(p, null, 2).replace(/\n/g, '\n    '))
     .join(',\n');
@@ -110,7 +130,7 @@ function buildSourcesModule(repoRoot) {
   ].join('\n');
 }
 
-module.exports = { buildSourcesModule, loadSourceProfiles };
+module.exports = { buildSourcesModule, loadSourceProfiles, lintPatternWarnings };
 
 if (require.main === module) {
   const root = path.join(__dirname, '..');

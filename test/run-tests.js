@@ -505,7 +505,8 @@ test('sources: document shape with ordered, unique, valid entries', () => {
 test('sources: generated src/data/sources.js in sync with data/sources.json', () => {
   const { buildSourcesModule } = require('../scripts/build-sources.js');
   const repoRoot = path.join(__dirname, '..');
-  const generated = fs.readFileSync(path.join(repoRoot, 'src', 'data', 'sources.js'), 'utf8');
+  const generated = fs.readFileSync(path.join(repoRoot, 'src', 'data', 'sources.js'), 'utf8')
+    .replace(/\r\n/g, '\n'); // EOL-normalize: autocrlf checkouts differ from the LF build output
   assert.strictEqual(generated, buildSourcesModule(repoRoot),
     'src/data/sources.js is stale - run: node scripts/build-sources.js');
   const ctx = { console };
@@ -526,6 +527,65 @@ function loadRemotesources() {
 }
 
 const remotesources = loadRemotesources();
+
+// state.js sandbox: storage stub + a preset snapshot, mirroring loadRegistry
+function loadStateModule(SOURCES, seed) {
+  const store = {};
+  if (seed) Object.keys(seed).forEach(k => { store[k] = seed[k]; });
+  const ctx = {
+    console: { debug() { }, log() { }, warn() { }, error() { } },
+    localStorage: {
+      getItem: (k) => (k in store ? store[k] : null),
+      setItem: (k, v) => { store[k] = String(v); }
+    },
+    setTimeout, clearTimeout
+  };
+  ctx.window = ctx;
+  ctx.RepriceAA = { SOURCES: JSON.parse(JSON.stringify(SOURCES)) };
+  vm.createContext(ctx);
+  for (const f of ['storage.js', '../content/state.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', f), 'utf8'), ctx);
+  }
+  return ctx.RepriceAA;
+}
+
+const SRC = (id, asOf, name) => ({
+  id, name: name || id, kind: 'subscription', manualRatio: 0.1,
+  defaultRule: { type: 'multiplier', value: 0.1 }, rules: {}, nameIncludes: [], asOf
+});
+
+test('state: first run defaults Auto-best to every built-in source', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18'), SRC('claude', '2026-09-01')]);
+  await R.state.load();
+  assert.deepStrictEqual(Array.from(R.state.getEnabledSourceIds()).sort(), ['claude', 'go']);
+});
+
+test('state: deleted builtins excluded from the default Auto-best set', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18'), SRC('claude', '2026-09-01')], {
+    'repriceaa.deletedBuiltinIds': JSON.stringify(['claude'])
+  });
+  await R.state.load();
+  assert.deepStrictEqual(Array.from(R.state.getEnabledSourceIds()), ['go']);
+});
+
+test('state: explicitly emptied Auto-best list stays empty', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18')], {
+    'repriceaa.prefs': JSON.stringify({ enabledSourceIds: [] })
+  });
+  await R.state.load();
+  assert.deepStrictEqual(Array.from(R.state.getEnabledSourceIds()), []);
+});
+
+test('build-sources: broad-pattern lint flags short/digit-less patterns only', () => {
+  const { lintPatternWarnings } = require('../scripts/build-sources.js');
+  const warns = lintPatternWarnings([
+    { id: 'a', nameIncludes: [{ match: 'hy', rule: { type: 'multiplier', value: 1 } }, { match: 'gpt-5.6 luna', rule: { type: 'multiplier', value: 1 } }] },
+    { id: 'b', nameIncludes: [{ match: 'muse spark 1.3 contributor', rule: { type: 'multiplier', value: 1 } }] }
+  ]);
+  assert.deepStrictEqual(warns, [
+    'a: broad pattern "hy" - keep only if every AA model it matches is in the plan'
+  ]);
+});
 
 test('remotesources: data/sources.json passes runtime payload validation', () => {
   const payload = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
