@@ -583,6 +583,13 @@ test('remotesources: cache-bust targets jsDelivr mirrors with a UTC-day stamp', 
   assert.ok(/^https:\/\/fastly\.jsdelivr\.net\/gh\/x\/y@main\/data\/sources\.json\?t=\d{4}-\d{2}-\d{2}$/.test(busted));
 });
 
+test('remotesources: forced refresh bypasses the edge cache with a nonce', () => {
+  const a = remotesources.cacheBustFor('https://fastly.jsdelivr.net/gh/x/y@main/data/sources.json', true);
+  assert.ok(/\?t=\d{13,}$/.test(a), a);
+  assert.ok(a !== remotesources.cacheBustFor('https://fastly.jsdelivr.net/gh/x/y@main/data/sources.json'),
+    'background stamp (UTC day) differs from the forced nonce');
+});
+
 test('state: first run defaults Auto-best to every built-in source', async () => {
   const R = loadStateModule([SRC('go', '2026-09-18'), SRC('claude', '2026-09-01')]);
   await R.state.load();

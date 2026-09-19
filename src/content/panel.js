@@ -453,22 +453,30 @@
     return Math.floor(s / 86400) + 'd ago';
   }
 
+  // Highest asOf across the active preset set - the version the user is
+  // actually on, regardless of where it came from.
+  function activePresetVersion() {
+    var max = '';
+    (RAA.SOURCES || []).forEach(function (s) {
+      if (s && typeof s.asOf === 'string' && s.asOf > max) max = s.asOf;
+    });
+    return max;
+  }
+
   function renderPresetFreshness() {
     var rs = RAA.remotesources;
-    var el = document.getElementById('raa-fresh-status');
-    var btn = document.getElementById('raa-fresh-refresh');
-    if (!rs || !el || !btn) return;
+    var el = shadowRoot && shadowRoot.getElementById('raa-fresh-status');
+    if (!rs || !el) return;
+    var version = activePresetVersion();
     rs.getStatus().then(function (st) {
-      if (st.where === 'remote' || st.where === 'cache') {
-        var from = st.generatedAt || (st.lastGoodUrl ? st.lastGoodUrl.replace(/^https:\/\//, '').split('/')[0] : '');
-        el.textContent = 'presets: ' + st.where + (from ? ' (' + from + ')' : '')
-          + ', checked ' + formatAgeAgo(st.fetchedAt)
-          + (st.lastError ? ' \u26A0 ' + st.lastError : '');
-      } else {
-        el.textContent = 'presets: bundled snapshot' + (st.lastError ? ' (refresh failed: ' + st.lastError + ')' : '');
-      }
+      var where = st.where === 'builtin'
+        ? (st.lastError ? 'bundled (refresh failed: ' + st.lastError + ')' : 'bundled')
+        : st.where + (st.lastGoodUrl ? ' \u00b7 ' + st.lastGoodUrl.replace(/^https:\/\//, '').split('/')[0] : '');
+      el.textContent = 'presets: ' + (version ? version + ' \u00b7 ' : '') + where
+        + (st.fetchedAt ? ' \u00b7 checked ' + formatAgeAgo(st.fetchedAt) : '')
+        + (st.lastError ? ' \u26a0 ' + st.lastError : '');
     }).catch(function () {
-      el.textContent = 'presets: bundled snapshot';
+      el.textContent = 'presets: ' + (version ? version + ' \u00b7 ' : '') + 'bundled';
     });
   }
 

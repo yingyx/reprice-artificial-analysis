@@ -87,19 +87,21 @@
     return (viaGM ? viaGM(url) : fetchViaPage(url));
   }
 
-// Cache-busting stamp (UTC date) appended to branch-based mirror URLs.
-// jsDelivr treats different query strings as different resources, so this
-// forces each day's first fetch past any edge that still holds a
-// days-old copy of @main while keeping within-day caching intact.
-function cacheBustFor(url) {
+// Cache-busting stamp appended to branch-based mirror URLs. jsDelivr
+// treats different query strings as different resources: a UTC-day stamp
+// forces each day's first fetch past any edge holding a days-old copy of
+// @main while keeping within-day caching intact; a forced refresh (panel
+// button) uses a one-time nonce so it always bypasses the edge cache.
+function cacheBustFor(url, force) {
   if (url.indexOf('jsdelivr') === -1) return url;
-  return url + '?t=' + new Date().toISOString().slice(0, 10);
+  var stamp = force ? String(Date.now()) : new Date().toISOString().slice(0, 10);
+  return url + '?t=' + stamp;
 }
 
-function tryUrls(urls) {
+function tryUrls(urls, force) {
   return urls.reduce(function (chain, url) {
     return chain.catch(function () {
-      var target = cacheBustFor(url);
+      var target = cacheBustFor(url, force);
       return fetchText(target).then(function (text) { return { url: target, text: text }; });
     });
   }, Promise.reject());
@@ -136,7 +138,7 @@ function tryUrls(urls) {
         lastError = null;
         return { applied: false, status: status('cache', cached) };
       }
-      return tryUrls(orderUrls(cached && cached.lastGoodUrl))
+      return tryUrls(orderUrls(cached && cached.lastGoodUrl), force)
         .then(function (hit) {
           var payload;
           try { payload = JSON.parse(hit.text); } catch (e) { throw new Error('invalid JSON'); }
