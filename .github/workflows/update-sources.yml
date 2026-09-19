@@ -19,6 +19,14 @@ on:
         description: 'Ignore guards and run the agent even if a preset PR is open'
         required: false
         default: 'false'
+      sources:
+        description: 'Space-separated source ids to run the agent for, regardless of page changes'
+        required: false
+        default: ''
+      brief:
+        description: 'Optional task context passed verbatim to the agent (research findings, plan changes...)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -46,9 +54,13 @@ jobs:
           # and variables > Actions > Variables): AGENT_MODEL ('provider/model',
           # required when a page changed), optional AGENT_PROVIDER_ID and
           # AGENT_BASE_URL (endpoint override; models.dev usually suffices).
+          # FORCE_SOURCES (from the dispatch input) adds source ids to the
+          # agent task regardless of page-change detection - for sources
+          # whose providers publish no hash-detectable pages.
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           AGENT_PROVIDER_ID: ${{ vars.AGENT_PROVIDER_ID }}
           AGENT_BASE_URL: ${{ vars.AGENT_BASE_URL }}
+          FORCE_SOURCES: ${{ inputs.sources }}
         run: node scripts/check-providers.js
 
       # A queued run starts after the previous job finished but possibly
@@ -96,7 +108,7 @@ jobs:
           opencode run \
             --model "${{ steps.detect.outputs.model }}" \
             --auto \
-            "Changed source ids: ${{ steps.detect.outputs.changed }}." \
+            "Changed source ids: ${{ steps.detect.outputs.changed }}. Task context: ${{ inputs.brief }}" \
             "$(cat .github/update-sources-prompt.md)"
 
       - name: Validate generated data
@@ -104,6 +116,7 @@ jobs:
         run: |
           node scripts/build-sources.js
           node test/run-tests.js
+          node scripts/check-patterns.js || echo "::warning::pattern cross-check skipped (AA page fetch failed)"
 
       - name: Check whether data actually changed
         if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'

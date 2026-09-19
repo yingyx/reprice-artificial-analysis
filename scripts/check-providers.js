@@ -115,6 +115,12 @@ async function main() {
   const warnings = [];
   const lines = [];
 
+  // Force-listed source ids (dispatch input): the agent task fires for
+  // them regardless of page changes - for providers that publish no
+  // hash-detectable pages. Unknown ids pass through so a manually
+  // dispatched research task can be briefed on any source.
+  const forceSources = (process.env.FORCE_SOURCES || '').split(/\s+/).filter(Boolean);
+
   for (const p of providers) {
     const marks = [];
     const tokenCounts = [];
@@ -172,6 +178,18 @@ async function main() {
         + ' (' + tokenCounts.join('+') + ' price tokens)'
     });
     if (isChanged) changed.push(p.sourceId);
+  }
+
+  for (const id of forceSources) {
+    if (!changed.includes(id)) changed.push(id);
+    if (!providers.some(p => p.sourceId === id)) {
+      lines.push({
+        sourceId: id,
+        label: '(forced)',
+        status: 'changed',
+        detail: 'no provider pages - agent researches its own sources'
+      });
+    }
   }
 
   // Agent runtime config comes from repo variables (Settings > Secrets and
