@@ -616,6 +616,83 @@ test('build-sources: broad-pattern lint flags short/digit-less patterns only', (
   ]);
 });
 
+test('pricing: pattern matching is punctuation-insensitive (plan vs AA spelling)', () => {
+  const sub = {
+    id: 'go', name: 'Go', kind: 'subscription',
+    nameIncludes: [
+      { match: 'gpt 5.6 luna', rule: { type: 'multiplier', value: 0.667 } },
+      { match: 'minimax m3', rule: { type: 'multiplier', value: 0.167 } },
+      { match: 'longcat-2.0', rule: { type: 'multiplier', value: 0.167 } }
+    ]
+  };
+  const labels = [
+    ['GPT-5.6 Luna (max)', 0.667],
+    ['MiniMax-M3', 0.167],
+    ['LongCat 2.0', 0.167],
+    ['GLM-5.3-Flash', null]
+  ];
+  for (const [label, expected] of labels) {
+    const out = pricing.applySource([mkModel('x', label, 50, 2)], sub, [sub]);
+    if (expected === null) {
+      assert.strictEqual(out[0].repricedCost, 2, label + ' stays uncovered');
+    } else {
+      assert.ok(Math.abs(out[0].repricedCost - 2 * expected) < 1e-9, label + ' matched');
+    }
+  }
+});
+
+test('build-sources: punctuation-equivalent patterns count as duplicates', () => {
+  const { loadSourceProfiles } = require('../scripts/build-sources.js');
+  const doc = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
+  doc.sources[0].nameIncludes.push({ match: 'gpt 5.6 luna', rule: { type: 'multiplier', value: 0.5 } });
+  const orig = fs.readFileSync;
+  fs.readFileSync = (p, ...rest) => (String(p).endsWith('sources.json') && String(p).indexOf('data') !== -1
+    ? JSON.stringify(doc) : orig(p, ...rest));
+  try {
+    loadSourceProfiles('.');
+    assert.ok(false, 'expected duplicate-pattern failure');
+  } catch (e) {
+    assert.ok(/duplicate match pattern/.test(e.message), e.message);
+  } finally {
+    fs.readFileSync = orig;
+  }
+});
+
+// ---- pattern cross-check against the AA model registry ----
+
+const checkPatterns = require('../scripts/check-patterns.js');
+
+test('check-patterns: extracts ld+json labels and embedded registry names', () => {
+  const html = '<script type="application/ld+json">{"name":"IQ","data":[{"label":"GPT-5.6 Luna (max)"}]}</script>'
+    + '<script>x</script>';
+  const names = checkPatterns.extractAaModelNames(html);
+  assert.ok(names.indexOf('GPT-5.6 Luna (max)') !== -1);
+});
+
+test('check-patterns: zero-hit patterns flagged, dash/space spellings match', () => {
+  const names = ['GPT-5.6 Luna (max)', 'MiniMax-M3', 'Muse Glimmer (high)'];
+  const { lines, zeroHitCount } = checkPatterns.auditPatterns([
+    {
+      id: 'a',
+      nameIncludes: [
+        { match: 'gpt 5.6 luna', rule: { type: 'multiplier', value: 1 } },
+        { match: 'minimax m3', rule: { type: 'multiplier', value: 1 } },
+        { match: 'muse spark 1.3 contributor', rule: { type: 'multiplier', value: 1 } }
+      ]
+    }
+  ], names);
+  assert.strictEqual(zeroHitCount, 1, 'only the AA-absent pattern is flagged');
+  assert.strictEqual(lines.length, 1);
+  assert.ok(lines[0].indexOf('muse spark 1.3 contributor') !== -1, lines.join('\n'));
+});
+
+test('check-patterns: id-based patterns are not label-audited', () => {
+  const names = ['Kimi K3 (max)'];
+  const { zeroHitCount } = checkPatterns.auditPatterns(
+    [{ id: 'a', nameIncludes: [{ match: '/kimi-k3', rule: { type: 'multiplier', value: 1 } }] }], names);
+  assert.strictEqual(zeroHitCount, 0, 'slash patterns are id-matched, not audited against names');
+});
+
 test('remotesources: data/sources.json passes runtime payload validation', () => {
   const payload = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
   assert.strictEqual(remotesources.validatePayload(payload), null);

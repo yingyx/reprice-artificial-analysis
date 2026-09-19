@@ -26,21 +26,24 @@ function isDate(v) {
 // First match wins, so a later pattern that is matched by everything an
 // earlier broader pattern already catches can never apply. The concrete
 // failure mode is "mimo-v2.5-pro" placed after "mimo": the specific entry
-// becomes dead code and its value never reaches the runtime.
+// becomes dead code and its value never reaches the runtime. Comparison is
+// punctuation-insensitive (matchKey), consistent with the runtime matcher,
+// so "gpt-5.6 luna" and "gpt 5.6 luna" count as duplicates too.
 function checkShadowing(entries, where) {
+  const key = m => String(m).toLowerCase().replace(/[\s\-_.]+/g, '');
   const seen = [];
   for (const entry of entries) {
-    const m = String(entry.match).toLowerCase();
-    if (seen.indexOf(m) !== -1) {
+    const m = key(entry.match);
+    if (seen.some(s => s.raw === m)) {
       throw new Error(where + ': duplicate match pattern: "' + entry.match + '"');
     }
     for (const prev of seen) {
-      if (m.indexOf(prev) !== -1) {
+      if (m.indexOf(prev.raw) !== -1) {
         throw new Error(where + ': pattern "' + entry.match + '" is shadowed by the earlier, broader pattern "'
-          + prev + '" - order entries most-specific first');
+          + prev.display + '" - order entries most-specific first');
       }
     }
-    seen.push(m);
+    seen.push({ raw: m, display: String(entry.match) });
   }
 }
 

@@ -33,17 +33,26 @@
     return true;
   }
 
+  // Pattern matching is punctuation-insensitive: plan pages spell models
+  // "GPT 5.6 Luna" / "MiniMax M3" while AA labels read "GPT-5.6 Luna" /
+  // "MiniMax-M3" (and AA itself mixes both, e.g. "LongCat 2.0" vs
+  // "LongCat-2.0"). Lowercase + strip spaces/dashes/dots/underscores on
+  // both sides so either spelling matches.
+  function matchKey(s) {
+    return String(s).toLowerCase().replace(/[\s\-_.]+/g, '');
+  }
+
   function matchPromo(source, modelId, label, today) {
     if (!source || !Array.isArray(source.promos)) return null;
-    var idLower = String(modelId).toLowerCase();
-    var labelLower = String(label || '').toLowerCase();
+    var idKey = matchKey(modelId);
+    var labelKey = matchKey(label || '');
     for (var i = 0; i < source.promos.length; i++) {
       var p = source.promos[i];
       if (!p || !p.match || !p.rule) continue;
-      var m = String(p.match).toLowerCase();
+      var m = String(p.match);
       var hit = (m.indexOf('/') === 0
-        ? idLower.indexOf(m.slice(1))
-        : labelLower.indexOf(m)) !== -1;
+        ? idKey.indexOf(matchKey(m.slice(1)))
+        : labelKey.indexOf(matchKey(m))) !== -1;
       if (hit && promoActive(p, today)) return p;
     }
     return null;
@@ -72,13 +81,13 @@
 
   function nameMatchValue(profile, modelId, label) {
     if (!profile || !Array.isArray(profile.nameIncludes)) return null;
-    var idLower = String(modelId).toLowerCase();
-    var labelLower = String(label).toLowerCase();
+    var idKey = matchKey(modelId);
+    var labelKey = matchKey(label);
     for (var i = 0; i < profile.nameIncludes.length; i++) {
       var entry = profile.nameIncludes[i];
       if (!entry || !entry.match) continue;
-      var m = entry.match.toLowerCase();
-      if ((m.indexOf('/') === 0 ? idLower.indexOf(m.slice(1)) : labelLower.indexOf(m)) !== -1) {
+      var m = matchKey(entry.match);
+      if ((m.indexOf('/') === 0 ? idKey.indexOf(m.slice(1)) : labelKey.indexOf(m)) !== -1) {
         return entry.rule;
       }
     }
@@ -205,10 +214,10 @@
       for (var i = 0; i < source.nameIncludes.length; i++) {
         var entry = source.nameIncludes[i];
         if (!entry || !entry.match) continue;
-        var m = entry.match.toLowerCase();
+        var m = matchKey(entry.match);
         var hit = (m.indexOf('/') === 0
-          ? String(model.id).toLowerCase().indexOf(m.slice(1))
-          : String(model.label || '').toLowerCase().indexOf(m)) !== -1;
+          ? matchKey(model.id).indexOf(m.slice(1))
+          : matchKey(model.label).indexOf(m)) !== -1;
         if (hit && ruleUntilActive(normalizeRule(entry.rule), ctx.today)) {
           matchedRaw = entry.rule;
           matched = normalizeRule(entry.rule);
@@ -415,6 +424,7 @@
   root.RepriceAA.pricing = {
     num: num,
     todayStr: todayStr,
+    matchKey: matchKey,
     normalizeRule: normalizeRule,
     ruleUntilActive: ruleUntilActive,
     promoActive: promoActive,
