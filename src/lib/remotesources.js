@@ -21,11 +21,37 @@
   var MAX_SOURCES = 100;
 
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  var RULE_TYPES = ['multiplier', 'absolute', 'percentOff', 'formula', 'exclude'];
+  var RULE_TYPES = ['multiplier', 'absolute', 'formula', 'exclude'];
+  var SAFE_FORMULA_RE = /^[0-9A-Za-z_+\-*/%().,\s]+$/;
+  var MAX_FORMULA_LEN = 240;
+
+  // Runtime rules never accept anything the pricing engine would silently
+  // reinterpret, so validation mirrors src/lib/pricing.js normalizeRule:
+  // values are finite and non-negative, formulas must parse, and percentOff
+  // is not a runtime rule type (the UI converts it before storage).
+  function isFormulaSafe(expr) {
+    if (typeof expr !== 'string' || !expr.trim() || expr.length > MAX_FORMULA_LEN) return false;
+    if (RAA.pricing && typeof RAA.pricing.isFormulaSafe === 'function') {
+      return RAA.pricing.isFormulaSafe(expr);
+    }
+    return SAFE_FORMULA_RE.test(expr);
+  }
 
   function isRule(r) {
-    return r && typeof r === 'object' && RULE_TYPES.indexOf(r.type) !== -1
-      && (r.type === 'exclude' || r.type === 'formula' || typeof r.value === 'number');
+    if (!r || typeof r !== 'object' || RULE_TYPES.indexOf(r.type) === -1) return false;
+    if (r.type === 'exclude') return true;
+    if (r.type === 'formula') return isFormulaSafe(r.expr);
+    return typeof r.value === 'number' && isFinite(r.value) && r.value >= 0;
+  }
+
+  function isOptionalRuleMap(map) {
+    if (map == null) return true;
+    if (typeof map !== 'object' || Array.isArray(map)) return false;
+    return Object.keys(map).every(function (k) { return isRule(map[k]); });
+  }
+
+  function isOptionalDate(v) {
+    return v == null || (typeof v === 'string' && DATE_RE.test(v));
   }
 
   // Same guarantees as the CI schema tests: a remote payload that fails
@@ -42,13 +68,33 @@
       if (seen[p.id]) return 'duplicate id: ' + p.id;
       seen[p.id] = true;
       if (typeof p.name !== 'string' || !p.name) return 'bad name @' + p.id;
-      var dr = p.defaultRule;
-      if (!dr || typeof dr !== 'object' || RULE_TYPES.indexOf(dr.type) === -1) return 'bad defaultRule @' + p.id;
+      // asOf feeds the monotonic-version guard in state.applyRemoteSources;
+      // a payload without it could silently replace newer presets.
+      if (typeof p.asOf !== 'string' || !DATE_RE.test(p.asOf)) return 'bad asOf @' + p.id;
+      if (!isRule(p.defaultRule)) return 'bad defaultRule @' + p.id;
+      if (!isOptionalRuleMap(p.rules)) return 'bad rules @' + p.id;
       if (!Array.isArray(p.nameIncludes)) return 'missing nameIncludes @' + p.id;
       for (var j = 0; j < p.nameIncludes.length; j++) {
         var e = p.nameIncludes[j];
-        if (!e || typeof e.match !== 'string' || !e.rule) return 'bad nameIncludes @' + p.id;
+        if (!e || typeof e.match !== 'string' || !e.match || !isRule(e.rule)) {
+          return 'bad nameIncludes @' + p.id;
+        }
       }
+      if (p.promos != null) {
+        if (!Array.isArray(p.promos)) return 'bad promos @' + p.id;
+        for (var k = 0; k < p.promos.length; k++) {
+          var po = p.promos[k];
+          if (!po || typeof po.match !== 'string' || !po.match || !isRule(po.rule)) {
+            return 'bad promo rule @' + p.id;
+          }
+          if (!isOptionalDate(po.startsAt) || !isOptionalDate(po.endsAt)) {
+            return 'bad promo date @' + p.id;
+          }
+          if (po.reason != null && typeof po.reason !== 'string') return 'bad promo reason @' + p.id;
+        }
+      }
+      if (p.fallbackTo != null && typeof p.fallbackTo !== 'string') return 'bad fallbackTo @' + p.id;
+      if (p.basedOn != null && typeof p.basedOn !== 'string') return 'bad basedOn @' + p.id;
       if (p.kind === 'subscription' && !(p.manualRatio > 0)) return 'bad manualRatio @' + p.id;
     }
     return null;

@@ -2,7 +2,9 @@
   'use strict';
 
   var EPS = 1e-9;
-  var MAX_CHAIN_DEPTH = 3;
+  // Safety cap only - real cycles are caught by the visited-source set in
+  // resolvePrice, so legitimately deep basedOn/fallbackTo chains resolve too.
+  var MAX_CHAIN_DEPTH = 20;
   var MAX_FORMULA_LEN = 240;
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -82,6 +84,23 @@
     }
     if (rule && typeof rule.until === 'string' && DATE_RE.test(rule.until)) {
       out.until = rule.until;
+    }
+    return out;
+  }
+
+  // Preserves the rule-less "coverage-only" form: for subscription sources
+  // such an entry prices at the plan's amortized ratio, and may carry its own
+  // entry-level `until` without being turned into an explicit ×1 rule.
+  function normalizeNameInclude(entry) {
+    if (!entry || typeof entry.match !== 'string' || !entry.match.trim()) return null;
+    var out = { match: entry.match.trim() };
+    if (entry.rule != null) {
+      out.rule = normalizeRule(entry.rule);
+      if (!out.rule.until && typeof entry.until === 'string' && DATE_RE.test(entry.until)) {
+        out.rule.until = entry.until;
+      }
+    } else if (typeof entry.until === 'string' && DATE_RE.test(entry.until)) {
+      out.until = entry.until;
     }
     return out;
   }
@@ -324,13 +343,10 @@
 
   // Resolves the price of one model under one source. Returns a result object
   // with { price, ruleDescription, ruleType, ruleValue, ruleSource, sourceId, anomalies }.
-  function resolvePrice(model, sourceId, ctx, depth, anomalies) {
+  function resolvePrice(model, sourceId, ctx, depth, anomalies, visited) {
     if (depth === undefined) depth = 0;
     anomalies = anomalies || [];
-    if (depth > MAX_CHAIN_DEPTH) {
-      anomalies.push('chain-loop');
-      return identityResult(model, anomalies);
-    }
+    visited = visited || [];
     if (!ctx || !ctx.sourcesById) ctx = makeCtx([], ctx && ctx.today);
 
     if (!num(model.aaCost)) {
@@ -342,6 +358,12 @@
     if (!source) {
       return identityResult(model, anomalies);
     }
+
+    if (visited.indexOf(source.id) !== -1 || depth >= MAX_CHAIN_DEPTH) {
+      anomalies.push('chain-loop');
+      return identityResult(model, anomalies);
+    }
+    var chain = visited.concat([source.id]);
 
     var isSubscription = source.kind === 'subscription';
 
@@ -368,7 +390,7 @@
         var hit = (m.indexOf('/') === 0
           ? matchKey(model.id).indexOf(m.slice(1))
           : matchKey(model.label).indexOf(m)) !== -1;
-        if (hit && ruleUntilActive(normalizeRule(entry.rule), ctx.today)) {
+        if (hit && ruleUntilActive(entry.rule || entry, ctx.today)) {
           matchedRaw = entry.rule;
           matched = normalizeRule(entry.rule);
           break;
@@ -410,7 +432,7 @@
 
     if (own.type === 'exclude') {
       if (source.fallbackTo && ctx.sourcesById[source.fallbackTo]) {
-        return resolvePrice(model, source.fallbackTo, ctx, depth + 1, anomalies);
+        return resolvePrice(model, source.fallbackTo, ctx, depth + 1, anomalies, chain);
       }
       return identityResult(model, anomalies);
     }
@@ -418,7 +440,7 @@
     // base price for the op: parent price for derived sources, aaCost otherwise
     var base = aaCost;
     if (source.basedOn && ctx.sourcesById[source.basedOn]) {
-      var parent = resolvePrice(model, source.basedOn, ctx, depth + 1, anomalies);
+      var parent = resolvePrice(model, source.basedOn, ctx, depth + 1, anomalies, chain);
       if (parent.price === null) {
         return identityResult(model, anomalies);
       }
@@ -451,6 +473,7 @@
       ruleValue: own.type === 'formula' ? null : own.value,
       ruleSource: ownIsDefault ? 'default' : (promo ? 'promo' : (exact ? 'override' : 'nameMatch')),
       sourceId: source.id,
+      estimate: isSubscription && !exact ? 'full-quota' : undefined,
       promo: promo ? { reason: promo.reason || null, endsAt: promo.endsAt || null } : undefined,
       anomalies: anomalies
     };
@@ -470,6 +493,7 @@
         ruleValue: res.ruleValue,
         ruleSource: res.ruleSource,
         sourceId: res.sourceId,
+        estimate: res.estimate,
         anomalies: res.anomalies
       });
     });
@@ -497,7 +521,8 @@
             price: res.price,
             ruleDescription: res.ruleDescription,
             anomalies: res.anomalies,
-            identity: res.sourceId === null
+            identity: res.sourceId === null,
+            estimate: res.estimate
           });
         }
       });
@@ -520,6 +545,7 @@
         ruleDescription: winner ? winner.ruleDescription : null,
         winnerSourceId: winner ? winner.sourceId : null,
         winnerSourceName: winner ? winner.sourceName : null,
+        estimate: winner ? winner.estimate : undefined,
         candidates: candidates,
         anomalies: winner ? winner.anomalies : ['no-candidate']
       });
@@ -533,7 +559,9 @@
     var quota = profile.monthlyQuotaTokens;
     var ref = profile.refBlendedPrice;
     if (!(num(fee) && fee > 0 && num(quota) && quota > 0 && num(ref) && ref > 0)) return null;
-    var amortizedPerMillion = fee / (quota / 1e6);
+    var util = num(profile.utilization) && profile.utilization > 0 && profile.utilization <= 1
+      ? profile.utilization : 1;
+    var amortizedPerMillion = fee / ((quota * util) / 1e6);
     if (!isFinite(amortizedPerMillion) || amortizedPerMillion <= 0) return null;
     return amortizedPerMillion / ref;
   }
@@ -576,6 +604,7 @@
     todayStr: todayStr,
     matchKey: matchKey,
     normalizeRule: normalizeRule,
+    normalizeNameInclude: normalizeNameInclude,
     ruleUntilActive: ruleUntilActive,
     promoActive: promoActive,
     resolveRule: resolveRule,

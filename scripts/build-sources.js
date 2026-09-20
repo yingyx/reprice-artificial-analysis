@@ -12,11 +12,23 @@ const path = require('path');
 
 const SOURCES_PATH = path.join('data', 'sources.json');
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const RULE_TYPES = ['multiplier', 'absolute', 'percentOff', 'formula', 'exclude'];
+const RULE_TYPES = ['multiplier', 'absolute', 'formula', 'exclude'];
+const SAFE_FORMULA_RE = /^[0-9A-Za-z_+\-*/%().,\s]+$/;
+const MAX_FORMULA_LEN = 240;
+
+// Mirrors the runtime rule contract (src/lib/pricing.js normalizeRule and
+// src/lib/remotesources.js isRule): malformed values must fail the build
+// instead of being silently clamped or reinterpreted at runtime.
+function isFormulaSafe(expr) {
+  return typeof expr === 'string' && !!expr.trim() && expr.length <= MAX_FORMULA_LEN
+    && SAFE_FORMULA_RE.test(expr);
+}
 
 function isRule(r) {
-  return r && typeof r === 'object' && RULE_TYPES.indexOf(r.type) !== -1
-    && (r.type === 'exclude' || r.type === 'formula' || typeof r.value === 'number');
+  if (!r || typeof r !== 'object' || RULE_TYPES.indexOf(r.type) === -1) return false;
+  if (r.type === 'exclude') return true;
+  if (r.type === 'formula') return isFormulaSafe(r.expr);
+  return typeof r.value === 'number' && isFinite(r.value) && r.value >= 0;
 }
 
 function isDate(v) {
@@ -53,6 +65,9 @@ function validateProfile(profile, where) {
     throw new Error(where + ': missing/invalid id');
   }
   if (typeof profile.name !== 'string' || !profile.name) throw new Error(where + ': missing name');
+  if (typeof profile.asOf !== 'string' || !DATE_RE.test(profile.asOf)) {
+    throw new Error(where + ': missing/invalid asOf (monotonic preset guard)');
+  }
   if (!isRule(profile.defaultRule)) throw new Error(where + ': invalid defaultRule');
   if (profile.rules && (typeof profile.rules !== 'object'
     || Object.values(profile.rules).some(r => !isRule(r)))) {

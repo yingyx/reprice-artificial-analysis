@@ -227,6 +227,40 @@ test('fallback cycle detected and guarded', () => {
   assert.ok(out[0].anomalies.indexOf('chain-loop') !== -1);
 });
 
+test('fallback chain deeper than the old depth-3 cap resolves without a false loop', () => {
+  const n = 6;
+  const sources = [];
+  for (let i = 0; i < n; i++) {
+    sources.push(i === n - 1
+      ? { id: 's' + i, defaultRule: { type: 'multiplier', value: 0.5 } }
+      : { id: 's' + i, kind: 'subscription', fallbackTo: 's' + (i + 1) });
+  }
+  const out = pricing.applySource([mkModel('m', 'M', 50, 2)], sources[0], sources);
+  assert.ok(Math.abs(out[0].repricedCost - 1) < 1e-9);
+  assert.ok(out[0].anomalies.indexOf('chain-loop') === -1, 'deep but acyclic');
+});
+
+test('basedOn chain deeper than the old depth-3 cap resolves without a false loop', () => {
+  const sources = [{ id: 'root', kind: 'usage', defaultRule: { type: 'multiplier', value: 2 } }];
+  let prev = 'root';
+  for (let i = 0; i < 5; i++) {
+    sources.push({ id: 'd' + i, kind: 'usage', basedOn: prev, defaultRule: { type: 'multiplier', value: 0.5 } });
+    prev = 'd' + i;
+  }
+  const out = pricing.applySource([mkModel('m', 'M', 50, 2)], sources[sources.length - 1], sources);
+  assert.ok(Math.abs(out[0].repricedCost - 0.125) < 1e-9);
+  assert.ok(out[0].anomalies.indexOf('chain-loop') === -1, 'deep but acyclic');
+});
+
+test('a source cycle is still reported as chain-loop', () => {
+  const a = { id: 'a', kind: 'usage', basedOn: 'b', defaultRule: { type: 'multiplier', value: 0.5 } };
+  const b = { id: 'b', kind: 'usage', basedOn: 'a', defaultRule: { type: 'multiplier', value: 0.5 } };
+  const out = pricing.applySource([mkModel('m', 'M', 50, 2)], a, [a, b]);
+  // a -> b -> a(visited) terminates at AA list price, then each parent op applies
+  assert.strictEqual(out[0].repricedCost, 0.5);
+  assert.ok(out[0].anomalies.indexOf('chain-loop') !== -1);
+});
+
 test('until: active rule applies, expired rule skipped', () => {
   const src = {
     id: 'promo', name: 'Promo',
@@ -420,6 +454,58 @@ test('computeSubscriptionRatio: amortize, manual override, invalid inputs', () =
   assert.strictEqual(pricing.computeSubscriptionRatio({ kind: 'usage', monthlyFee: 20, monthlyQuotaTokens: 1, refBlendedPrice: 9 }), null);
 });
 
+test('computeSubscriptionRatio: utilization scales the amortized ratio', () => {
+  const base = { kind: 'subscription', monthlyFee: 20, monthlyQuotaTokens: 4.33e6, refBlendedPrice: 9 };
+  const full = pricing.computeSubscriptionRatio(base);
+  const half = pricing.computeSubscriptionRatio(Object.assign({}, base, { utilization: 0.5 }));
+  assert.ok(Math.abs(half - full * 2) < 1e-9, 'half quota use doubles the effective ratio');
+  assert.strictEqual(
+    pricing.computeSubscriptionRatio(Object.assign({}, base, { utilization: 1.5 })),
+    full, 'out-of-range utilization ignored');
+  assert.strictEqual(
+    pricing.computeSubscriptionRatio(Object.assign({}, base, { utilization: 0 })),
+    full, 'zero utilization ignored');
+});
+
+test('subscription prices carry a full-quota estimate flag', () => {
+  const sub = {
+    id: 's', kind: 'subscription', manualRatio: 0.2,
+    nameIncludes: [{ match: 'claude', rule: { type: 'multiplier', value: 0.3 } }]
+  };
+  const viaSource = pricing.applySource([mkModel('claude-x', 'Claude X', 50, 2)], sub, [sub]);
+  assert.strictEqual(viaSource[0].estimate, 'full-quota');
+  const viaUsage = pricing.applySource([mkModel('a', 'A', 50, 2)], OPENROUTER, SOURCES);
+  assert.strictEqual(viaUsage[0].estimate, undefined);
+  const viaBest = pricing.applyBest([mkModel('claude-x', 'Claude X', 50, 2)], ['s'], [sub]);
+  assert.strictEqual(viaBest[0].estimate, 'full-quota');
+});
+
+test('normalizeNameInclude: rule-less coverage-only entries survive with and without until', () => {
+  const j = (v) => JSON.stringify(v);
+  assert.strictEqual(j(pricing.normalizeNameInclude({ match: ' claude ' })), j({ match: 'claude' }));
+  assert.strictEqual(
+    j(pricing.normalizeNameInclude({ match: 'claude', until: '2026-12-31' })),
+    j({ match: 'claude', until: '2026-12-31' }));
+  assert.strictEqual(
+    j(pricing.normalizeNameInclude({ match: 'claude', rule: { type: 'multiplier', value: 0.3 }, until: '2026-12-31' })),
+    j({ match: 'claude', rule: { type: 'multiplier', value: 0.3, until: '2026-12-31' } }));
+  assert.strictEqual(pricing.normalizeNameInclude({ match: '   ' }), null);
+});
+
+test('subscription: rule-less entry with entry-level until expires to fallback', () => {
+  const sub = {
+    id: 'sub', name: 'Sub', kind: 'subscription', manualRatio: 0.2,
+    nameIncludes: [{ match: 'claude', until: '2026-12-31' }],
+    fallbackTo: 'or'
+  };
+  const or = { id: 'or', name: 'OR', kind: 'usage', defaultRule: { type: 'multiplier', value: 1 } };
+  const model = mkModel('claude-x', 'Claude X', 50, 2);
+  const active = pricing.resolvePrice(model, 'sub', pricing.makeCtx([sub, or], '2026-06-01'));
+  assert.ok(Math.abs(active.price - 0.4) < 1e-9, 'amortized ratio while covered');
+  const expired = pricing.resolvePrice(model, 'sub', pricing.makeCtx([sub, or], '2027-01-01'));
+  assert.ok(Math.abs(expired.price - 2) < 1e-9, 'expired coverage falls back');
+});
+
 test('normalizeRule: unknown type without value falls back; preserves valid until', () => {
   // percentOff is converted to multiplier at the UI layer before storage
   const j = (v) => JSON.stringify(v);
@@ -486,11 +572,40 @@ test('registry: on-page refresh overwrites stale intelligence and version', () =
   assert.strictEqual(astra._cached, undefined);
 });
 
+test('registry: on-page model missing aaCost is not backfilled from cache', () => {
+  const reg = loadRegistry();
+  reg.upsertModels([{ id: 'astra-max', label: 'Astra Max', intelligence: 61, aaCost: 0.9 }], '4.2');
+  const out = reg.merge([{ id: 'astra-max', label: 'Astra Max', intelligence: 61, aaCost: null }], '4.2');
+  const m = out.find(x => x.id === 'astra-max');
+  assert.strictEqual(m.aaCost, null, 'stale cached price must not be re-stamped as current');
+  assert.strictEqual(m._cached, undefined, 'on-page model is not marked cached');
+});
+
+test('registry: on-page model missing intelligence is not backfilled either', () => {
+  const reg = loadRegistry();
+  reg.upsertModels([{ id: 'x', label: 'X', intelligence: 61, aaCost: 1 }], '4.2');
+  const out = reg.merge([{ id: 'x', label: 'X', intelligence: null, aaCost: 1 }], '4.2');
+  assert.strictEqual(out.find(m => m.id === 'x').intelligence, null);
+});
+
+test('registry: detail upsert without a price does not resurrect the cached one', () => {
+  const reg = loadRegistry();
+  reg.upsertModels([{ id: 'x', label: 'X', intelligence: 61, aaCost: 0.9 }], '4.2');
+  reg.upsertModels([{ id: 'x', label: 'X', intelligence: 61, aaCost: null }], '4.2');
+  const out = reg.merge([{ id: 'other', label: 'Other', intelligence: 50, aaCost: 1 }], '4.2');
+  const x = out.find(m => m.id === 'x');
+  assert.ok(x && x._cached, 'still cached for off-page use');
+  assert.strictEqual(x.aaCost, null, 'stale price was not resurrected');
+});
+
 // ---- source presets (data/sources.json -> generated src/data/sources.js) ----
 
-const RULE_TYPES = ['multiplier', 'absolute', 'percentOff', 'formula', 'exclude'];
+const RULE_TYPES = ['multiplier', 'absolute', 'formula', 'exclude'];
+const SAFE_FORMULA_RE = /^[0-9A-Za-z_+\-*/%().,\s]+$/;
 const isRule = (r) => r && typeof r === 'object' && RULE_TYPES.indexOf(r.type) !== -1
-  && (r.type === 'exclude' || r.type === 'formula' || typeof r.value === 'number');
+  && (r.type === 'exclude'
+    || (r.type === 'formula' && typeof r.expr === 'string' && !!r.expr.trim() && SAFE_FORMULA_RE.test(r.expr))
+    || (typeof r.value === 'number' && isFinite(r.value) && r.value >= 0));
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function loadSourceDoc() {
@@ -549,7 +664,9 @@ test('sources: generated src/data/sources.js in sync with data/sources.json', ()
 function loadRemotesources() {
   const ctx = { console };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', 'remotesources.js'), 'utf8'), ctx);
+  for (const f of ['pricing.js', 'remotesources.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', f), 'utf8'), ctx);
+  }
   return ctx.RepriceAA.remotesources;
 }
 
@@ -599,6 +716,15 @@ test('remotesources: equal asOf resolves to the current bundled copy', async () 
   const R = loadStateModule([SRC('go', '2026-09-18')]);
   await R.state.applyRemoteSources([SRC('go', '2026-09-18', 'Stale Mirror Name')]);
   assert.strictEqual(R.SOURCES[0].name, 'go', 'tie kept the current preset');
+});
+
+test('remotesources: undated payload cannot replace a dated current copy', async () => {
+  const R = loadStateModule([SRC('go', '2026-09-18')]);
+  const undated = SRC('go', undefined, 'Undated Mirror');
+  delete undated.asOf;
+  await R.state.applyRemoteSources([undated]);
+  assert.strictEqual(R.SOURCES[0].name, 'go', 'missing asOf treated as stale');
+  assert.strictEqual(R.SOURCES[0].asOf, '2026-09-18');
 });
 
 test('remotesources: cache-bust targets jsDelivr mirrors with a UTC-day stamp', () => {
@@ -752,6 +878,32 @@ test('remotesources: bad payloads rejected with a reason', () => {
     schema: 1,
     sources: [{ id: 'sub', name: 'S', kind: 'subscription', manualRatio: 0, defaultRule: { type: 'multiplier', value: 1 }, nameIncludes: [] }]
   }), 'subscription with zero ratio rejected');
+});
+
+test('remotesources: payload rules must match runtime semantics', () => {
+  const base = {
+    id: 'a', name: 'A', asOf: '2026-09-20',
+    defaultRule: { type: 'multiplier', value: 1 }, rules: {}, nameIncludes: []
+  };
+  const check = (patch) => remotesources.validatePayload({
+    schema: 1, sources: [Object.assign({}, base, patch)]
+  });
+  assert.ok(check({ defaultRule: { type: 'percentOff', value: 20 } }), 'percentOff is not a runtime rule');
+  assert.ok(check({ defaultRule: { type: 'multiplier', value: -1 } }), 'negative multiplier rejected');
+  assert.ok(check({ defaultRule: { type: 'multiplier' } }), 'missing multiplier value rejected');
+  assert.ok(check({ defaultRule: { type: 'absolute', value: '1' } }), 'string value rejected');
+  assert.ok(check({ defaultRule: { type: 'formula' } }), 'formula without expr rejected');
+  assert.ok(check({ defaultRule: { type: 'formula', expr: 'aaCost +' } }), 'unparseable formula rejected');
+  assert.ok(check({ defaultRule: { type: 'formula', expr: 'aaCost; globalThis.x = 1' } }), 'injection rejected');
+  assert.ok(check({ nameIncludes: [{ match: 'x', rule: { type: 'percentOff', value: 20 } }] }), 'bad nameIncludes rule rejected');
+  assert.ok(check({ nameIncludes: [{ match: 'x' }] }), 'nameIncludes without rule rejected');
+  assert.ok(check({ rules: { m: { type: 'multiplier', value: '0.5' } } }), 'bad override rule rejected');
+  assert.ok(check({ promos: [{ match: 'x', rule: { type: 'multiplier', value: -1 } }] }), 'bad promo rule rejected');
+  assert.ok(check({ promos: [{ match: 'x', rule: { type: 'multiplier', value: 0.5 }, endsAt: 'tomorrow' }] }), 'bad promo date rejected');
+  assert.ok(check({ asOf: undefined }), 'missing asOf rejected');
+  assert.ok(check({ asOf: '2026/09/20' }), 'malformed asOf rejected');
+  assert.strictEqual(check({ defaultRule: { type: 'formula', expr: 'aaCost * 0.5 + base' } }), null, 'valid formula accepted');
+  assert.strictEqual(check({ nameIncludes: [{ match: 'x', rule: { type: 'exclude' } }] }), null, 'exclude accepted');
 });
 
 // ---- provider page change detection (scripts/check-providers.js) ----

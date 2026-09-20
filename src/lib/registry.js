@@ -63,11 +63,16 @@
       if (!m || typeof m.id !== 'string') return;
       pageIds[m.id] = true;
       var prev = cache[m.id];
+      // The current page is the source of truth: when it shows the model but
+      // not a price/index value, keep it null (and let the UI flag the model
+      // as incomplete) instead of forwarding a stale cached value with a
+      // refreshed lastSeen/version stamp. Cached values only ever surface as
+      // `_cached` fallbacks for models the current page does not carry.
       cache[m.id] = {
         id: m.id,
         label: m.label || (prev && prev.label) || m.id,
-        intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
-        aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
+        intelligence: num(m.intelligence) ? m.intelligence : null,
+        aaCost: num(m.aaCost) ? m.aaCost : null,
         provider: m.provider || (prev ? prev.provider : null),
         ver: pageVersion != null ? pageVersion : ((prev && prev.ver) || null),
         lastSeen: now
@@ -101,11 +106,14 @@
     (models || []).forEach(function (m) {
       if (!m || typeof m.id !== 'string') return;
       var prev = cache[m.id];
+      // Same authoritative semantics as merge(): an upsert payload that lacks
+      // a price must not resurrect a previous one (the page may have changed
+      // shape); the model is re-marked incomplete instead.
       cache[m.id] = {
         id: m.id,
         label: m.label || (prev && prev.label) || m.id,
-        intelligence: num(m.intelligence) ? m.intelligence : (prev ? prev.intelligence : null),
-        aaCost: num(m.aaCost) ? m.aaCost : (prev ? prev.aaCost : null),
+        intelligence: num(m.intelligence) ? m.intelligence : null,
+        aaCost: num(m.aaCost) ? m.aaCost : null,
         provider: m.provider || (prev ? prev.provider : null),
         ver: version != null ? version : ((prev && prev.ver) || null),
         lastSeen: now

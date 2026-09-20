@@ -257,8 +257,10 @@
       if (!s || typeof s.id !== 'string') return;
       var cur = current[s.id];
       // ties (same asOf) resolve to the current copy: a stale mirror that
-      // replays an already-shipped payload must not displace it.
-      var stale = cur && cur.asOf && s.asOf && String(s.asOf) <= String(cur.asOf);
+      // replays an already-shipped payload must not displace it. A payload
+      // with no asOf at all is treated as stale too - remote validation
+      // requires the field, so this only guards non-validated callers.
+      var stale = cur && cur.asOf && (!s.asOf || String(s.asOf) <= String(cur.asOf));
       merged.push(stale ? cur : s);
       seen[s.id] = true;
     });
