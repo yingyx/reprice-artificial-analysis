@@ -303,6 +303,33 @@ test('formula rule evaluates with aaCost and base', () => {
   assert.ok(Math.abs(out[0].repricedCost - 1.01) < 1e-9);
 });
 
+test('formula: whitelist parser rejects code execution attempts', () => {
+  const attacks = [
+    '(function(){ return 42; })()',
+    'this.constructor.constructor("return 1")()',
+    '`${1}`',
+    'aaCost; globalThis.__pwned = true',
+    'require("fs")',
+    'process.exit(1)'
+  ];
+  for (const expr of attacks) {
+    assert.strictEqual(pricing.evalFormula(expr, { aaCost: 1, base: 1 }), null, expr);
+    assert.ok(!pricing.isFormulaSafe(expr), 'unsafe: ' + expr);
+    const src = { id: 'f', defaultRule: { type: 'formula', expr: expr } };
+    const out = pricing.applySource([mkModel('a', 'A', 50, 2)], src, [src]);
+    assert.strictEqual(out[0].repricedCost, 2, 'falls back to base: ' + expr);
+    assert.ok(out[0].anomalies.indexOf('formula-error') !== -1);
+  }
+});
+
+test('formula: whitelisted helpers, constants and precedence still evaluate', () => {
+  assert.ok(Math.abs(pricing.evalFormula('min(aaCost, base) + round(0.4)', { aaCost: 2, base: 1 }) - 1) < 1e-9);
+  assert.ok(Math.abs(pricing.evalFormula('Math.max(aaCost * 2, 5)', { aaCost: 2, base: 1 }) - 5) < 1e-9);
+  assert.ok(Math.abs(pricing.evalFormula('-(aaCost - base) % 3', { aaCost: 4, base: 1 }) - 0) < 1e-9);
+  assert.ok(Math.abs(pricing.evalFormula('PI', { aaCost: 1, base: 1 }) - Math.PI) < 1e-9);
+  assert.strictEqual(pricing.evalFormula('aaCost > 1 ? 1 : 0', { aaCost: 2, base: 1 }), null);
+});
+
 test('formula error falls back to base with anomaly', () => {
   const src = { id: 'f', defaultRule: { type: 'formula', expr: 'aaCost + oops)' } };
   const out = pricing.applySource([mkModel('a', 'A', 50, 2)], src, [src]);

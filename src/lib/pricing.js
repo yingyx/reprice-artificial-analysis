@@ -3,7 +3,14 @@
 
   var EPS = 1e-9;
   var MAX_CHAIN_DEPTH = 3;
+  var MAX_FORMULA_LEN = 240;
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+  var FORMULA_FUNCS = {
+    abs: Math.abs, ceil: Math.ceil, floor: Math.floor, round: Math.round,
+    min: Math.min, max: Math.max, pow: Math.pow, sqrt: Math.sqrt,
+    log: Math.log, exp: Math.exp
+  };
 
   function num(v) {
     return typeof v === 'number' && isFinite(v);
@@ -129,13 +136,156 @@
     return s;
   }
 
+  function isKnownFunc(name) {
+    var key = name.indexOf('Math.') === 0 ? name.slice(5) : name;
+    return Object.prototype.hasOwnProperty.call(FORMULA_FUNCS, key);
+  }
+
+  function isKnownFormulaName(name) {
+    return name === 'aaCost' || name === 'base' || name === 'PI' || name === 'E'
+      || name === 'Math.PI' || name === 'Math.E';
+  }
+
+  // Formula expressions run in the content-script origin and remote preset
+  // payloads may be attacker-controlled, so expressions are parsed with a
+  // strict whitelist grammar instead of new Function: numbers, aaCost/base,
+  // + - * / %, parentheses, unary sign, and the Math-like helpers below.
+  // Anything else (member access, calls, property tricks) fails the parse.
+  function parseFormula(expr) {
+    var src = String(expr == null ? '' : expr);
+    if (!src.trim() || src.length > MAX_FORMULA_LEN) throw new Error('bad formula');
+    var pos = 0;
+
+    function fail() { throw new Error('bad formula'); }
+    function ws() { while (pos < src.length && /\s/.test(src.charAt(pos))) pos++; }
+    function eat(ch) { ws(); if (src.charAt(pos) !== ch) fail(); pos++; }
+
+    function parseArgs() {
+      var args = [];
+      ws();
+      if (src.charAt(pos) !== ')') {
+        args.push(parseAddSub());
+        ws();
+        while (src.charAt(pos) === ',') {
+          pos++;
+          args.push(parseAddSub());
+          ws();
+        }
+      }
+      if (src.charAt(pos) !== ')') fail();
+      pos++;
+      return args;
+    }
+
+    function parsePrimary() {
+      ws();
+      var c = src.charAt(pos);
+      if (c === '(') {
+        pos++;
+        var inner = parseAddSub();
+        eat(')');
+        return inner;
+      }
+      var numMatch = /^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/.exec(src.slice(pos));
+      if (numMatch) {
+        pos += numMatch[0].length;
+        return { t: 'num', v: parseFloat(numMatch[0]) };
+      }
+      var nameMatch = /^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*/.exec(src.slice(pos));
+      if (nameMatch) {
+        pos += nameMatch[0].length;
+        ws();
+        if (src.charAt(pos) === '(') {
+          pos++;
+          if (!isKnownFunc(nameMatch[0])) fail();
+          return { t: 'call', name: nameMatch[0], args: parseArgs() };
+        }
+        if (!isKnownFormulaName(nameMatch[0])) fail();
+        return { t: 'var', name: nameMatch[0] };
+      }
+      fail();
+    }
+
+    function parseUnary() {
+      ws();
+      var c = src.charAt(pos);
+      if (c === '+' || c === '-') {
+        pos++;
+        return { t: 'unary', op: c, arg: parseUnary() };
+      }
+      return parsePrimary();
+    }
+
+    function parseMulDiv() {
+      var node = parseUnary();
+      for (;;) {
+        ws();
+        var c = src.charAt(pos);
+        if (c !== '*' && c !== '/' && c !== '%') return node;
+        pos++;
+        node = { t: 'binary', op: c, l: node, r: parseUnary() };
+      }
+    }
+
+    function parseAddSub() {
+      var node = parseMulDiv();
+      for (;;) {
+        ws();
+        var c = src.charAt(pos);
+        if (c !== '+' && c !== '-') return node;
+        pos++;
+        node = { t: 'binary', op: c, l: node, r: parseMulDiv() };
+      }
+    }
+
+    var ast = parseAddSub();
+    ws();
+    if (pos !== src.length) fail();
+    return ast;
+  }
+
+  function evalAst(node, vars) {
+    if (node.t === 'num') return node.v;
+    if (node.t === 'var') {
+      if (node.name === 'aaCost' || node.name === 'base') return vars[node.name];
+      if (node.name === 'PI' || node.name === 'Math.PI') return Math.PI;
+      if (node.name === 'E' || node.name === 'Math.E') return Math.E;
+      throw new Error('unknown identifier');
+    }
+    if (node.t === 'call') {
+      var fn = node.name.indexOf('Math.') === 0
+        ? FORMULA_FUNCS[node.name.slice(5)] : FORMULA_FUNCS[node.name];
+      if (typeof fn !== 'function') throw new Error('unknown function');
+      return fn.apply(null, node.args.map(function (a) { return evalAst(a, vars); }));
+    }
+    if (node.t === 'unary') {
+      var u = evalAst(node.arg, vars);
+      return node.op === '-' ? -u : u;
+    }
+    var l = evalAst(node.l, vars);
+    var r = evalAst(node.r, vars);
+    if (node.op === '+') return l + r;
+    if (node.op === '-') return l - r;
+    if (node.op === '*') return l * r;
+    if (node.op === '/') return l / r;
+    return l % r;
+  }
+
   function evalFormula(expr, vars) {
     try {
-      var fn = new Function('aaCost', 'base', '"use strict"; return (' + expr + ');');
-      var v = fn(vars.aaCost, vars.base);
+      var v = evalAst(parseFormula(expr), vars || {});
       return typeof v === 'number' && isFinite(v) ? Math.max(0, v) : null;
     } catch (e) {
       return null;
+    }
+  }
+
+  function isFormulaSafe(expr) {
+    try {
+      parseFormula(expr);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -434,6 +584,7 @@
     describeRule: describeRule,
     trimNum: trimNum,
     evalFormula: evalFormula,
+    isFormulaSafe: isFormulaSafe,
     computeSubscriptionRatio: computeSubscriptionRatio,
     priceModel: priceModel,
     applyProfile: applyProfile,
