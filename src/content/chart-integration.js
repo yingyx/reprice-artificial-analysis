@@ -560,6 +560,9 @@
         rows += row('Pricing Source', esc(profileName));
         rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription) + '</span>');
       }
+      if (m.estimate) {
+        rows += row('Estimate', 'assumes full plan quota used');
+      }
       var shownCands = (Array.isArray(m.candidates) ? m.candidates : [])
         .filter(function (c) { return !c.identity; });
       if (shownCands.length > 1) {
@@ -614,6 +617,11 @@
       var enabledIds = RAA.state.getEnabledSourceIds();
       priced = RAA.pricing.applyBest(merged, enabledIds, RAA.state.cache.profiles);
       profileName = 'Auto-best (' + enabledIds.length + ' source' + (enabledIds.length === 1 ? '' : 's') + ')';
+    } else if (mode === 'repriced') {
+      // Single-source mode must use the same resolver as Auto-best: applyProfile
+      // is the legacy path and skips coverage/fallbackTo/basedOn/promos/until.
+      priced = RAA.pricing.applySource(merged, profile, RAA.state.cache.profiles);
+      profileName = profile.name;
     } else {
       priced = RAA.pricing.applyProfile(merged, profile);
       profileName = profile.name;

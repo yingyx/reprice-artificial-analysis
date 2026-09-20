@@ -41,10 +41,6 @@
     return p;
   }
 
-  function pricedModels(profile) {
-    return pricing.applyProfile(state.allModels, profile || activeProfileOrIdentity());
-  }
-
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -84,7 +80,11 @@
     if (stateApi.getSourceMode() === 'best') {
       return pricing.applyBest(state.allModels, stateApi.getEnabledSourceIds(), stateApi.cache.profiles);
     }
-    return pricedModels(activeProfileOrIdentity());
+    var profile = activeProfileOrIdentity();
+    if (stateApi.getSourceMode() === 'repriced') {
+      return pricing.applySource(state.allModels, profile, stateApi.cache.profiles);
+    }
+    return pricing.applyProfile(state.allModels, profile);
   }
 
   var css = [
@@ -253,6 +253,7 @@
       } else {
         tip += '\nRule (' + profile.name + '): ' + p.m.ruleDescription;
       }
+      if (p.m.estimate) tip += '\n\u2248 assumes full plan quota used';
       var anom = anomalySummary(p.m.anomalies);
       if (anom) tip += '\n\u26A0 ' + anom;
       tip += (sav === null ? '' : '\nvs AA: ' + (sav >= 0 ? '-' : '+') + Math.abs(Math.round(sav * 100)) + '%');
@@ -292,6 +293,7 @@
       '<span class="kv">AA Cost / Task <span>' + fmtMoney(m.aaCost) + '</span></span>' +
       '<span class="kv">Repriced Cost <span>' + fmtMoney(m.repricedCost) + '</span></span><br>' +
       pricingLine +
+      (m.estimate ? '<span class="kv">Estimate <span>assumes full plan quota used</span></span>' : '') +
       (sav === null ? '' :
         '<span class="save-pct">' + (sav >= 0 ? '\u2212' : '+') + Math.abs(Math.round(sav * 100)) + '% vs AA</span>') +
       (anom ? '<br><span style="color:#b45309">\u26A0 ' + esc(anom) + '</span>' : '') +
@@ -601,6 +603,8 @@
         '<input type="number" min="0" step="0.1" id="raa-ref" value="' + (isNum(d.refBlendedPrice) ? d.refBlendedPrice : '') + '"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Manual ratio (fallback)</span>' +
         '<input type="number" min="0" step="0.05" id="raa-mratio" value="' + (isNum(d.manualRatio) ? d.manualRatio : '') + '"' + dis + '></div>';
+      html += '<div class="row"><span class="mname" title="1 = you use the whole monthly quota; 0.5 = half of it">Quota utilization (0\u20131)</span>' +
+        '<input type="number" min="0" max="1" step="0.05" id="raa-util" value="' + (isNum(d.utilization) ? d.utilization : '') + '" placeholder="1"' + dis + '></div>';
       html += '<div class="row"><span class="mname">Ratio preview</span>' +
         '<span class="preview" id="raa-ratio-preview">' + (ratio ? pricing.trimNum(ratio) + '\u00D7' : '\u2014') + '</span></div>';
     }
@@ -651,7 +655,7 @@
     var subRatio = d.kind === 'subscription' ? pricing.computeSubscriptionRatio(d) : null;
     if (d.kind === 'subscription' && subRatio !== null) {
       html += '<div style="font-size:11px;color:#047857;margin:2px 0 4px">First match wins; pattern values are the per-model prices. Leave a value empty to fall back to the amortized ratio \u00D7' +
-        pricing.trimNum(subRatio) + '.</div>';
+        pricing.trimNum(subRatio) + '. Subscription ratios are theoretical effective costs assuming the full monthly quota is used; set utilization below 1 for lighter use.</div>';
     }
     if (Array.isArray(d.promos) && d.promos.length) {
       var today = pricing.todayStr();
@@ -675,7 +679,7 @@
           '<option value="absolute"' + (t ? ' selected' : '') + '>$</option></select>' +
         '<input type="number" min="0" step="0.01" placeholder="plan ratio" title="Empty = plan amortized ratio" data-nm="' + ix + '" data-fld="nmValue" value="' +
           ((nm.rule && typeof nm.rule.value === 'number' && isFinite(nm.rule.value)) ? nm.rule.value : '') + '"' + dis + '>' +
-        '<input type="date" title="Promo ends (optional)" data-nm="' + ix + '" data-fld="nmUntil" value="' + esc(nm.rule && nm.rule.until ? nm.rule.until : '') + '"' + dis + '>' +
+        '<input type="date" title="Promo ends (optional)" data-nm="' + ix + '" data-fld="nmUntil" value="' + esc((nm.rule && nm.rule.until) || nm.until || '') + '"' + dis + '>' +
         (ro ? '' : '<button class="btn danger" data-delnm="' + ix + '">\u2715</button>') + '</div>';
     });
     if (!ro) {
@@ -751,6 +755,7 @@
     bindNum('raa-quota', 'monthlyQuotaTokens', function (v) { return v * 1e6; });
     bindNum('raa-ref', 'refBlendedPrice');
     bindNum('raa-mratio', 'manualRatio');
+    bindNum('raa-util', 'utilization');
 
     var fbSel = rootEl.querySelector('#raa-fb');
     if (fbSel) {
@@ -799,17 +804,31 @@
           nm.rule.value = pv != null && isFinite(pv) ? pv : (el.value === 'multiplier' ? 1 : 0);
         } else if (fld === 'nmValue') {
           if (el.value === '') {
-            // rule-less entry: runtime falls back to the plan's amortized ratio
+            // rule-less entry: runtime falls back to the plan's amortized ratio.
+            // Move any end date to the entry level so clearing the value does
+            // not silently turn the entry into an explicit ×1 rule.
+            if (nm.rule && nm.rule.until) nm.until = nm.rule.until;
             delete nm.rule;
           } else {
             var v = parseFloat(el.value);
             if (!isNaN(v)) {
-              nm.rule = { type: nm.rule && nm.rule.type === 'absolute' ? 'absolute' : 'multiplier', value: Math.max(0, v) };
+              var kind = nm.rule && nm.rule.type === 'absolute' ? 'absolute' : 'multiplier';
+              var until = (nm.rule && nm.rule.until) || nm.until;
+              nm.rule = { type: kind, value: Math.max(0, v) };
+              if (until) nm.rule.until = until;
+              delete nm.until;
             }
           }
         } else if (fld === 'nmUntil') {
-          if (el.value && /^\d{4}-\d{2}-\d{2}$/.test(el.value)) nm.rule.until = el.value;
-          else delete nm.rule.until;
+          var date = el.value && /^\d{4}-\d{2}-\d{2}$/.test(el.value) ? el.value : null;
+          if (nm.rule) {
+            if (date) nm.rule.until = date; else delete nm.rule.until;
+            delete nm.until;
+          } else if (date) {
+            nm.until = date;
+          } else {
+            delete nm.until;
+          }
         }
         updatePreviews(rootEl);
       };
@@ -904,22 +923,21 @@
       nameIncludes: []
     };
     (d.nameIncludes || []).forEach(function (nm) {
-      if (nm.match && nm.match.trim()) {
-        var rule = pricing.normalizeRule(nm.rule);
-        clean.nameIncludes.push({ match: nm.match.trim(), rule: rule });
-      }
+      var entry = pricing.normalizeNameInclude(nm);
+      if (entry) clean.nameIncludes.push(entry);
     });
     if (clean.kind === 'subscription') {
       clean.monthlyFee = isNum(d.monthlyFee) && d.monthlyFee > 0 ? d.monthlyFee : null;
       clean.monthlyQuotaTokens = isNum(d.monthlyQuotaTokens) && d.monthlyQuotaTokens > 0 ? d.monthlyQuotaTokens : null;
       clean.refBlendedPrice = isNum(d.refBlendedPrice) && d.refBlendedPrice > 0 ? d.refBlendedPrice : null;
       clean.manualRatio = isNum(d.manualRatio) && d.manualRatio > 0 ? d.manualRatio : null;
+      clean.utilization = isNum(d.utilization) && d.utilization > 0 && d.utilization <= 1 ? d.utilization : null;
       clean.fallbackTo = d.fallbackTo && d.fallbackTo !== d.id ? d.fallbackTo : null;
       if (!clean.nameIncludes.length) {
         alert('Add at least one name match to mark models covered by the plan.');
         return;
       }
-      if (!pricing.computeSubscriptionRatio(clean) && !clean.nameIncludes.some(function (nm) { return nm.rule.type !== 'multiplier' || nm.rule.value !== 1; })) {
+      if (!pricing.computeSubscriptionRatio(clean) && !clean.nameIncludes.some(function (nm) { return nm.rule && (nm.rule.type !== 'multiplier' || nm.rule.value !== 1); })) {
         if (!confirm('The amortized ratio cannot be computed (fill monthly fee / quota / reference price, or set a manual ratio). Save anyway?')) return;
       }
     } else {

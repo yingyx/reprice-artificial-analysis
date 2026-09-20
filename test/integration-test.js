@@ -127,6 +127,7 @@ async function main() {
     { label: 'GPT-5.6 Sol (max)', intelligenceIndex: 60.92, costPerIntelligenceIndexTask: 1.0056, detailsUrl: '/models/gpt-5-6-sol' },
     { label: 'GLM-5.3 (max)', intelligenceIndex: 59.51, costPerIntelligenceIndexTask: 0.6829, detailsUrl: '/models/glm-5-3' },
     { label: 'DeepSeek V4 Pro 0813 (max)', intelligenceIndex: 53.19, costPerIntelligenceIndexTask: 0.2652, detailsUrl: '/models/deepseek-v4-pro' },
+    { label: 'DeepSeek V4.1 Flash (max)', intelligenceIndex: 54.5, costPerIntelligenceIndexTask: 2, detailsUrl: '/models/deepseek-v4-1-flash' },
     { label: 'GPT-5.6 Luna (max)', intelligenceIndex: 52.31, costPerIntelligenceIndexTask: 0.0486, detailsUrl: '/models/gpt-5-6-luna' }
   ];
   const scripts = [
@@ -209,6 +210,28 @@ async function main() {
   const dsNode = ctxA.nodes['deepseek-v4-pro'];
   const dsX1 = parseX(dsNode.style.transform).x;
   assert.ok(glmX > dsX1, `log x-axis orders by cost: GLM x=${glmX.toFixed(1)} right of DeepSeek x=${dsX1.toFixed(1)}`);
+
+  // ---- single-source mode must resolve through the same engine as Auto-best ----
+  // Regression guard: this mode used the legacy applyProfile path, which ignored
+  // subscription coverage, fallbackTo/basedOn, promos and until.
+  const profileList = R.state.cache.profiles;
+  Object.keys(ctxA.dataById).forEach((id) => {
+    const shown = ctxA.dataById[id];
+    const expected = R.pricing.resolvePrice(shown, 'opencode-go-example', R.pricing.makeCtx(profileList));
+    assert.strictEqual(shown.repricedCost, expected.price, id + ' chart price equals resolvePrice');
+  });
+  const goProfile = profileList.find(p => p.id === 'opencode-go-example');
+  const claudeShown = ctxA.dataById['claude-opus-5'];
+  assert.strictEqual(claudeShown.repricedCost, 2.3368,
+    'uncovered Claude keeps the AA list price under single-source mode');
+  assert.strictEqual(claudeShown.estimate, undefined, 'uncovered model is not a subscription estimate');
+  const dsFlash = ctxA.dataById['deepseek-v4-1-flash'];
+  const dsPromo = (goProfile.promos || []).find(p => p.match === 'deepseek v4.1 flash');
+  const dsPromoActive = !!(dsPromo && R.pricing.promoActive(dsPromo, R.pricing.todayStr()));
+  const dsExpected = 2 * (dsPromoActive ? dsPromo.rule.value : 0.667);
+  assert.ok(Math.abs(dsFlash.repricedCost - dsExpected) < 1e-9,
+    'promo-aware DeepSeek V4.1 Flash price, got ' + dsFlash.repricedCost);
+  assert.strictEqual(dsFlash.estimate, 'full-quota', 'subscription price labelled as full-quota estimate');
 
   R.state.setSource('command-code-goat');
   await new Promise((r) => setTimeout(r, 50));
