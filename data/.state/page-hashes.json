@@ -8,21 +8,21 @@
       "drift": 0
     },
     "https://opencode.ai/docs/go": {
-      "full": "338a799147996d6c",
+      "full": "b68d37341af10dec",
       "price": "8d003cdec1896735",
       "tokens": 210,
-      "drift": 0
+      "drift": 1
     },
     "https://commandcode.ai/docs/plans/goat": {
-      "full": "d4da19e885a1130f",
-      "price": "15a04209cc19f0f1",
-      "tokens": 610,
+      "full": "a4da92803c46f93c",
+      "price": "af0a4ae48197a5c6",
+      "tokens": 603,
       "drift": 0
     },
     "https://commandcode.ai/pricing": {
-      "full": "f4492b7b0643e138",
-      "price": "d617fed160d0e387",
-      "tokens": 217,
+      "full": "8588c0a6455630e9",
+      "price": "73033e34904c3649",
+      "tokens": 203,
       "drift": 0
     }
   }

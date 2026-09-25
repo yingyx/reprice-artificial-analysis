@@ -1002,6 +1002,16 @@
           "endsAt": "2026-09-27"
         },
         {
+          "match": "deepseek v4.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          },
+          "reason": "DeepSeek V4.1 Flash -50% deal: $40 → $60 effective credits through Sep 28, 2026",
+          "startsAt": null,
+          "endsAt": "2026-09-28"
+        },
+        {
           "match": "mimo v2.5 pro",
           "rule": {
             "type": "multiplier",
@@ -1032,8 +1042,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-22",
-      "notes": "$10/mo buys $70 of credits (7x base multiplier). Per-model monthly credits: GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B get full $70 (ratio 0.143); DeepSeek V4 Flash, DeepSeek V4.1 Flash, Kimi K2.7 Code $60 (0.167); LongCat 2.0 $50 (0.2); MiniMax M3 $47 before -50% deal (0.213); GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash $40 (0.25); Qwen 3.7 Max/Plus, Qwen 3.6 Plus $33 (0.303); MiMo V2.5, MiMo V2.6 Flash $30 (0.333); all new and older models $20 (0.5): GPT-5.6 Luna, Qwen 3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, MiMo V2.6 Pro, Qwen 3.8 Omni Flash, Qwen 3.8 Max 0902, Tencent Hy4 Preview, Qwen 3.8 Flash, DeepSeek V4 Flash Vision exp, DeepSeek V4 Flash Fast, GLM-5.3, GLM-5.3 FlashX, Muse Spark 1.3/1.2, Muse Spark 1.3/1.2 Contributor, Kimi K3, Kimi K2.7 Code HighSpeed, Grok 4.7/4.5/4.6, GLM-5.2 Fast, Inkling/Inkling Small, Step 5 Preview/3.7/3.5 Flash, Nemotron 3 Ultra, Qwen 3.7 Flash, Qwen 3.6 Max Preview, MiniMax M2.7/M2.5, Kimi K2.6/K2.5, GLM-5.1/GLM-5; MiMo V2.6 Pro UltraSpeed $10 (1.0). Active deals: Grok 4.7 -40% (~$35 eff., ratio 0.294, ends Sep 27), MiniMax M3 -50% (~$47 eff., ratio 0.213), MiMo V2.5 -98% (~$100 eff., ratio 0.1), MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). 53 paid + 2 free models on GOAT (65 total). New models since last update: MiMo V2.6 Flash, MiMo V2.6 Pro, MiMo V2.6 Pro UltraSpeed, Grok 4.7, Step 5 Preview, Qwen 3.8 Omni Flash, Qwen 3.8 Max 0902, Muse Spark 1.3/1.2 Contributor, Kimi K2.7 Code HighSpeed. Free models: Ling 3.0 Flash Sante, Laguna S 2.1. Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing.",
+      "asOf": "2026-09-25",
+      "notes": "$10/mo buys $70 of credits (7x base multiplier). Per-model monthly credits from docs: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (ratio 0.143); $60 for DeepSeek V4 Flash, Kimi K2.7 Code (0.167); $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213, with -50% deal); $40 for GLM-5.3 Flash, Gemini 3.8 Flash (0.25); $33 for Qwen 3.7 Max/Plus, Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $20 for all new and older models (0.5): GPT-5.6 Luna, Qwen 3.8 Max, DeepSeek V4 Pro, MiMo V2.5 Pro, MiMo V2.6 Pro, Qwen 3.8 Omni Flash, Qwen 3.8 Max 0902, Tencent Hy4 Preview, Qwen 3.8 Flash, DeepSeek V4 Flash Vision exp, DeepSeek V4 Flash Fast, GLM-5.3, GLM-5.3 FlashX, Muse Spark 1.3/1.2, Muse Spark 1.3/1.2 Contributor, Kimi K3, Kimi K2.7 Code HighSpeed, Grok 4.5/4.6, GLM-5.2 Fast, Inkling/Inkling Small, Step 5 Preview/3.7/3.5 Flash, Nemotron 3 Ultra, Qwen 3.7 Flash, Qwen 3.6 Max Preview, MiniMax M2.7/M2.5, Kimi K2.6/K2.5, GLM-5.1/GLM-5; MiMo V2.6 Pro UltraSpeed $10 (1.0). Active deals: Grok 4.7 -40% (base $20, promo $35, ratio 0.294, ends Sep 27); DeepSeek V4.1 Flash -50% (base $40, promo $60, ratio 0.167, ends Sep 28); MiniMax M3 -50% (~$47 eff., ratio 0.213); MiMo V2.5 -98% (~$100 eff., ratio 0.1); MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). 57 paid + 3 free models on GOAT (60 total). New models since last update: GPT-6 Luna, MiMo V2.6 Flash, MiMo V2.6 Pro, MiMo V2.6 Pro UltraSpeed, Grok 4.7, Step 5 Preview, Qwen 3.8 Omni Flash, Qwen 3.8 Max 0902, Muse Spark 1.3/1.2 Contributor, Kimi K2.7 Code HighSpeed. Free models: Ling 3.0 Flash Sante, Laguna S 2.1, Jev. Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing.",
       "builtin": true
     },
     {
