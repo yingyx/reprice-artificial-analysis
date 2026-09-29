@@ -1022,4 +1022,14 @@ test('userscript: runs in a bare page-like sandbox (no chrome.storage)', () => {
     }));
 });
 
+test('registry: unchanged page snapshot does not overwrite a completed detail fetch', () => {
+  const registry = loadRegistry();
+  const page = [{ id: 'm', label: 'M', intelligence: 50, aaCost: null }];
+  registry.merge(page, '4.3.2');
+  registry.upsertModels([{ id: 'm', label: 'M', intelligence: 50, aaCost: 2 }], '4.3.2');
+  assert.strictEqual(registry.merge(page, '4.3.2')[0].aaCost, 2);
+  assert.strictEqual(registry.merge(page.slice(), '4.3.2')[0].aaCost, null,
+    'a genuinely new page snapshot remains authoritative');
+});
+
 console.log(passed + ' tests passed');

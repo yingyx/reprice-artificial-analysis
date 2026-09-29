@@ -180,6 +180,10 @@ async function main() {
 
   await new Promise((r) => setTimeout(r, 50));
   const R = ctx.RepriceAA;
+  const extraction1 = R.extract.extractModelsDetailed(doc);
+  assert.strictEqual(R.extract.extractModelsDetailed(doc), extraction1, 'unchanged serialized data reuses extraction');
+  scripts[0].textContent += ' ';
+  assert.notStrictEqual(R.extract.extractModelsDetailed(doc), extraction1, 'changed scripts invalidate extraction cache');
   const contexts = R.integration._contexts();
   assert.strictEqual(contexts.length, 1, 'one context created for anchor');
   const ctxA = contexts[0];

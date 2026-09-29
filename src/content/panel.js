@@ -1176,7 +1176,12 @@
   }
 
   function observePageChanges() {
-    var mo = new MutationObserver(scheduleRefresh);
+    var mo = new MutationObserver(function (records) {
+      if (records.some(function (r) {
+        var el = r.target.nodeType === 1 ? r.target : r.target.parentElement;
+        return !el || !el.closest || !el.closest('.raa-bar, .raa-chartwrap, #repriceaa-host');
+      })) scheduleRefresh();
+    });
     mo.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('popstate', scheduleRefresh);
   }

@@ -118,6 +118,7 @@
     return parts.join('');
   }
 
+  var flightCache = new WeakMap();
   function flightText(doc) {
     var scripts;
     try {
@@ -131,7 +132,13 @@
       if (t.indexOf('__next_f') === -1) continue;
       parts.push(t);
     }
-    return flightChunksFromString(parts.join('\n'));
+    var cached = flightCache.get(doc);
+    if (cached && parts.length === cached.parts.length && parts.every(function (p, i) { return p === cached.parts[i]; })) {
+      return cached.text;
+    }
+    var text = flightChunksFromString(parts.join('\n'));
+    flightCache.set(doc, { parts: parts, text: text });
+    return text;
   }
 
   function modelBoundary(text, from) {
@@ -244,8 +251,14 @@
       });
   }
 
+  var detailedCache = new WeakMap();
   function extractModelsDetailed(doc) {
     doc = doc || document;
+    var serialized = flightText(doc);
+    var ldTexts = Array.prototype.map.call(doc.querySelectorAll('script[type="application/ld+json"]'), function (s) { return s.textContent; });
+    var cached = detailedCache.get(doc);
+    if (cached && cached.serialized === serialized && ldTexts.length === cached.ldTexts.length &&
+      ldTexts.every(function (t, i) { return t === cached.ldTexts[i]; })) return cached.result;
     var flight = [];
     try {
       flight = extractFlightModels(doc);
@@ -269,15 +282,17 @@
     var withCost = models.filter(function (m) { return num(m.aaCost); }).length;
     var chartIds = Object.create(null);
     var pairs = /"id":"([^"\\]+)","slug":"([a-z0-9._-]+)"/g;
-    var pair, serialized = flightText(doc);
+    var pair;
     while ((pair = pairs.exec(serialized))) chartIds[pair[1]] = pair[2];
-    return {
+    var result = {
       models: models,
       chartIds: chartIds,
       source: source,
       indexVersion: extractIndexVersion(doc),
       coverage: { total: models.length, withCost: withCost }
     };
+    detailedCache.set(doc, { serialized: serialized, ldTexts: ldTexts, result: result });
+    return result;
   }
 
   function extractModels(doc) {

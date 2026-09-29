@@ -16,6 +16,8 @@
   var cache = null;
   var loadPromise = null;
   var saveTimer = null;
+  var lastPageModels = null;
+  var lastPageVersion = null;
 
   function load() {
     if (loadPromise) return loadPromise;
@@ -59,9 +61,11 @@
     if (!cache) cache = {};
     var now = Date.now();
     var pageIds = {};
+    var changed = pageModels !== lastPageModels || pageVersion !== lastPageVersion;
     (pageModels || []).forEach(function (m) {
       if (!m || typeof m.id !== 'string') return;
       pageIds[m.id] = true;
+      if (!changed) return;
       var prev = cache[m.id];
       // The current page is the source of truth: when it shows the model but
       // not a price/index value, keep it null (and let the UI flag the model
@@ -96,7 +100,9 @@
     out.sort(function (a, b) {
       return (b.intelligence != null ? b.intelligence : -1) - (a.intelligence != null ? a.intelligence : -1);
     });
-    scheduleSave();
+    if (changed) scheduleSave();
+    lastPageModels = pageModels;
+    lastPageVersion = pageVersion;
     return out;
   }
 

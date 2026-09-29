@@ -80,6 +80,10 @@
 
   function measurePlot(ctx) {
     var block = findBlockEl(ctx.anchor);
+    if (ro && ctx.plotEl && ctx.plotEl !== block) {
+      ro.unobserve(ctx.plotEl);
+      roTracked.delete(ctx.plotEl);
+    }
     ctx.plotEl = block;
     if (block) trackPlot(block);
     if (!block) return null;
@@ -185,7 +189,12 @@
 
   function pruneContexts() {
     contexts = contexts.filter(function (ctx) {
-      return document.documentElement.contains(ctx.anchor);
+      var connected = document.documentElement.contains(ctx.anchor);
+      if (!connected && ro && ctx.plotEl) {
+        ro.unobserve(ctx.plotEl);
+        roTracked.delete(ctx.plotEl);
+      }
+      return connected;
     });
   }
 
@@ -550,7 +559,8 @@
         rows += row('Won by', '<span class="rule">' + esc(m.winnerSourceName) + '</span>');
         rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription || '') + '</span>');
       } else {
-        rows += row('Pricing Source', esc(profileName));
+        var actualSource = m.sourceId && RAA.state.getProfileById(m.sourceId);
+        rows += row('Pricing Source', esc(actualSource ? actualSource.name : 'Artificial Analysis'));
         rows += row('Rule', '<span class="rule">' + esc(m.ruleDescription) + '</span>');
       }
       if (m.estimate) {
@@ -817,6 +827,7 @@
 
     var fpts = [];
     priced.forEach(function (m, i) { if (frontierIdx[i]) fpts.push(m); });
+    fpts.sort(function (a, b) { return a.repricedCost - b.repricedCost; });
     if (fpts.length > 1) {
       ctx.path.setAttribute('d', 'M' + fpts.map(function (m) {
         return lay.sx(m.repricedCost).toFixed(1) + ',' + lay.sy(m.intelligence).toFixed(1);
@@ -904,16 +915,16 @@
       }
       return false;
     }
+    var positions = priced.map(function (m) { return { x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) }; });
+    var density = Object.create(null);
+    priced.forEach(function (m, i) {
+      density[m.id] = positions.filter(function (p) {
+        var dx = p.x - positions[i].x, dy = p.y - positions[i].y;
+        return dx * dx + dy * dy < 3600;
+      }).length;
+    });
     var sorted = priced.slice().sort(function (a, b) {
-      var ax = lay.sx(a.repricedCost), ay = lay.sy(a.intelligence);
-      var bx = lay.sx(b.repricedCost), by = lay.sy(b.intelligence);
-      var da = 0, db = 0;
-      priced.forEach(function (o) {
-        var ox = lay.sx(o.repricedCost), oy = lay.sy(o.intelligence);
-        if (Math.hypot(ox - ax, oy - ay) < 60) da++;
-        if (Math.hypot(ox - bx, oy - by) < 60) db++;
-      });
-      if (da !== db) return db - da;
+      if (density[a.id] !== density[b.id]) return density[b.id] - density[a.id];
       return a.intelligence === b.intelligence
         ? a.repricedCost - b.repricedCost
         : b.intelligence - a.intelligence;
@@ -1104,7 +1115,7 @@
     mo = new MutationObserver(function (records) {
       var relevant = records.some(function (r) {
         var el = r.target.nodeType === 1 ? r.target : r.target.parentElement;
-        return !el || !el.closest || !el.closest('.raa-bar, .raa-chartwrap, #raa-root');
+        return !el || !el.closest || !el.closest('.raa-bar, .raa-chartwrap, #repriceaa-host');
       });
       if (relevant) scheduleScan(120);
     });
