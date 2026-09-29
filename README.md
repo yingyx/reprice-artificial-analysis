@@ -37,6 +37,12 @@ cost-optimal frontier no longer reflects your situation.
 | Multiple providers | one number | compared, cheapest wins |
 | Cost-optimal frontier | list-price Pareto | *your* Pareto |
 
+The **by Model Release** task-cost chart also supports repricing. Each reasoning/effort
+variant retains its own cost and score, with connecting lines within each release.
+The native release selector controls which points are shown. Missing variants are
+loaded once from public release detail pages and cached for the current index version;
+the original AA chart stays visible while those details are unavailable or loading.
+
 *(Illustrative — the comparison depends on the rates you configure.)*
 
 ## Features

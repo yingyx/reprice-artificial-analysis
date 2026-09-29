@@ -52,7 +52,8 @@
   }
 
   // Only task-cost charts have the units and model semantics we reprice.
-  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"]';
+  var RELEASE_ANCHOR = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
+  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"], [id="' + RELEASE_ANCHOR + '"]';
 
   function findAnchors(doc) {
     try {
@@ -169,6 +170,7 @@
   function createContext(anchorEl) {
     var ctx = {
       anchor: anchorEl,
+      isRelease: anchorEl.getAttribute('id') === RELEASE_ANCHOR,
       bar: null,
       select: null,
       prov: null,
@@ -387,6 +389,8 @@
       ctx.gLbl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ctx.svg.appendChild(ctx.gAxis);
       ctx.svg.appendChild(ctx.path);
+      ctx.gReleases = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      ctx.svg.appendChild(ctx.gReleases);
       ctx.svg.appendChild(ctx.gPts);
       ctx.svg.appendChild(ctx.gLbl);
       ctx.wrap.appendChild(ctx.svg);
@@ -622,11 +626,69 @@
     return ids;
   }
 
+  var releaseDetails = Object.create(null);
+  var releaseRequests = Object.create(null);
+  var releaseVersion = null;
+
+  function releaseBundle(ctx, bundle) {
+    if (releaseVersion !== bundle.indexVersion) {
+      releaseVersion = bundle.indexVersion;
+      releaseDetails = Object.create(null);
+      releaseRequests = Object.create(null);
+    }
+    var data = bundle.releaseData || { models: [], releases: [] };
+    var models = Object.create(null), chartIds = Object.create(null);
+    data.models.forEach(function (m) { models[m.id] = m; });
+    Object.keys(releaseDetails).forEach(function (id) {
+      releaseDetails[id].forEach(function (m) { models[m.id] = m; });
+    });
+    Object.keys(models).forEach(function (id) { chartIds[models[id].chartId] = id; });
+    var plot = findPlotEl(ctx.anchor);
+    var dots = plot ? Array.prototype.slice.call(plot.querySelectorAll('[data-chart-item-id]')).filter(function (dot) {
+      return dot.getAttribute('opacity') !== '0.25';
+    }) : [];
+    var groups = Object.create(null);
+    dots.forEach(function (dot) {
+      var m = models[chartIds[dot.getAttribute('data-chart-item-id')]];
+      if (m) groups[m.releaseId] = true;
+    });
+    // New selections may not be in the small initialData payload. Native release
+    // labels identify which public detail pages to load, never their coordinates.
+    var labels = plot ? Array.prototype.map.call(plot.querySelectorAll('text'), function (el) { return el.textContent.trim(); }) : [];
+    data.releases.forEach(function (release) {
+      if (labels.indexOf(release.label) !== -1) groups[release.id] = true;
+    });
+    Object.keys(groups).forEach(function (id) {
+      if (releaseDetails[id] || typeof root.fetch !== 'function') return;
+      var request = releaseRequests[id];
+      if (request && (request.pending || Date.now() - request.at < 60000)) return;
+      var token = { pending: true, at: Date.now() };
+      releaseRequests[id] = token;
+      root.fetch('/models/releases/' + encodeURIComponent(id)).then(function (r) {
+        if (!r.ok) throw new Error('Release detail unavailable');
+        return r.text();
+      }).then(function (html) {
+        if (releaseRequests[id] !== token) return;
+        var extracted = RAA.extract.extractReleaseDataFromHtml(html).models.filter(function (m) { return m.releaseId === id; });
+        if (!extracted.length) throw new Error('Release variants unavailable');
+        releaseDetails[id] = extracted;
+      }).catch(function () { /* Keep the native chart visible when data is unavailable. */ }).then(function () {
+        token.pending = false;
+        scheduleScan(0);
+      });
+    });
+    return {
+      models: Object.keys(models).map(function (id) { return models[id]; }), chartIds: chartIds,
+      loading: dots.some(function (dot) { return !chartIds[dot.getAttribute('data-chart-item-id')]; })
+    };
+  }
+
   function computePriced(ctx) {
     var bundle = RAA.extract.extractModelsDetailed(document);
-    var merged = RAA.registry.merge(bundle.models, bundle.indexVersion);
-    var selectedIds = nativeSelectedIds(ctx, bundle);
-    if (selectedIds === null) selectedIds = urlSelectedIds();
+    var release = ctx.isRelease ? releaseBundle(ctx, bundle) : null;
+    var merged = release ? release.models : RAA.registry.merge(bundle.models, bundle.indexVersion);
+    var selectedIds = nativeSelectedIds(ctx, release || bundle);
+    if (selectedIds === null) selectedIds = release ? [] : urlSelectedIds();
     if (selectedIds) {
       var wanted = {};
       selectedIds.forEach(function (id) { wanted[id] = true; });
@@ -668,6 +730,7 @@
       });
     });
     return {
+      loading: release && release.loading,
       priced: finalPriced,
       profileName: profileName,
       mode: mode,
@@ -822,6 +885,21 @@
     }
 
     drawAxes(ctx, lay, priced);
+
+    var groups = Object.create(null);
+    if (ctx.isRelease) priced.forEach(function (m) {
+      (groups[m.releaseId] || (groups[m.releaseId] = [])).push(m);
+    });
+    ctx.gReleases.innerHTML = Object.keys(groups).map(function (id) {
+      var points = groups[id].slice().sort(function (a, b) {
+        return a.aaCost - b.aaCost || a.intelligence - b.intelligence;
+      });
+      if (points.length < 2) return '';
+      return '<path fill="none" stroke="' + esc(RAA.colors.colorFor(points[0].label, points[0].id, points[0].provider)) +
+        '" stroke-width="1.5" opacity="' + (isHighlighted(points[0]) ? '1' : '0.15') + '" d="M' + points.map(function (m) {
+          return lay.sx(m.repricedCost).toFixed(1) + ',' + lay.sy(m.intelligence).toFixed(1);
+        }).join(' L') + '"/>';
+    }).join('');
 
     var frontierIdx = {};
     RAA.pareto.paretoFrontierIndices(
@@ -1065,7 +1143,15 @@
       return;
     }
     var bundle = computePriced(ctx);
-    maybeFetchMissing(bundle);
+    if (!ctx.isRelease) maybeFetchMissing(bundle);
+    if (bundle.loading) {
+      if (ctx.wrap) ctx.wrap.style.display = 'none';
+      ctx.prov.textContent = 'Release variants unavailable or loading · showing original AA chart';
+      ctx.prov.style.display = '';
+      ctx._provLabel = null;
+      ctx.lastSig = '';
+      return;
+    }
     // refresh the badge on every scan: at page launch the native chart and the
     // async model-detail fetches land late, so the a/b counts must self-update
     updateProv(ctx, bundle, countNativeDots(ctx.anchor));

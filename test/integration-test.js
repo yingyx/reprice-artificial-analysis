@@ -118,7 +118,7 @@ function makeDoc(ldJsonScripts) {
   };
   doc.querySelector = (sel) => (doc.querySelectorAll(sel)[0] || null);
   doc.addEventListener = () => {};
-  return { doc, anchor, plot };
+  return { doc, anchor, plot, release };
 }
 
 function run(file, ctx) {
@@ -140,7 +140,7 @@ async function main() {
     { textContent: JSON.stringify({ '@type': 'Dataset', name: 'COST', data: models.map(m => ({ label: m.label, costPerIntelligenceIndexTask: m.costPerIntelligenceIndexTask, detailsUrl: m.detailsUrl })) }) }
   ];
 
-  const { doc, anchor, plot } = makeDoc(scripts);
+  const { doc, anchor, plot, release } = makeDoc(scripts);
 
   const localStorageStub = (() => {
     const store = {};
@@ -185,7 +185,7 @@ async function main() {
   scripts[0].textContent += ' ';
   assert.notStrictEqual(R.extract.extractModelsDetailed(doc), extraction1, 'changed scripts invalidate extraction cache');
   const contexts = R.integration._contexts();
-  assert.strictEqual(contexts.length, 1, 'one context created for anchor');
+  assert.strictEqual(contexts.length, 2, 'normal and release charts have separate contexts');
   const ctxA = contexts[0];
 
   assert.ok(anchor.children.some(c => c.classList._set.has('raa-bar')), 'price source bar mounted');
@@ -337,6 +337,68 @@ async function main() {
   ctx.location.search = '?models=not-loaded';
   R.integration.renderAllBars();
   assert.strictEqual(Object.keys(ctxA.dataById).length, 0, 'missing slug does not restore all models');
+  ctx.location.search = '';
+  R.extract.extractModelsDetailed = originalExtract;
+
+  // Release variants share a group, never a cost or identity. Exercise the same
+  // chunk boundaries and nested evaluation objects used by the live Flight data.
+  const variant = (id, cost, effort) => ({ id: 'uuid-' + id, slug: id, name: id,
+    shortName: id, release: { slug: 'claude-test', name: 'Claude Test' },
+    effort: { level: effort }, intelligenceIndex: 40 + effort,
+    intelligenceIndexCostPerTask: { cost: { total: cost } },
+    intelligenceIndexEvaluations: [{ slug: 'nested', name: 'Nested', intelligenceIndex: 99 }],
+    creator: { name: 'Anthropic' } });
+  const flight = 'a:' + JSON.stringify({ initialData: [variant('claude-low', 1, 1), variant('claude-high', 3, 2)] }) + '\n';
+  const html = 'self.__next_f.push([1,' + JSON.stringify(flight.slice(0, 250)) + ']);' +
+    'self.__next_f.push([1,' + JSON.stringify(flight.slice(250)) + ']);';
+  const releaseData = R.extract.extractReleaseDataFromHtml(html);
+  assert.strictEqual(releaseData.models.length, 2, 'release variants do not collapse');
+  assert.strictEqual(releaseData.models[1].aaCost, 3, 'nested evaluations do not corrupt variant cost');
+  assert.strictEqual(releaseData.models[0].releaseId, 'claude-test');
+  const releasePlot = makeElement('div');
+  releasePlot.className = 'recharts-responsive-container';
+  releasePlot.rect = plot.rect;
+  release.rect = anchor.rect;
+  release.appendChild(releasePlot);
+  let releaseIds = ['uuid-claude-low', 'uuid-claude-high'];
+  let releaseReferences = [];
+  releasePlot.querySelectorAll = sel => sel === '[data-chart-item-id]' ? releaseIds.concat(releaseReferences).map(id => ({
+    getAttribute: key => key === 'data-chart-item-id' ? id : (releaseReferences.includes(id) ? '0.25' : '1')
+  })) : [];
+  R.extract.extractModelsDetailed = d => Object.assign({}, originalExtract(d), { releaseData });
+  ctx.location.search = '?models=unrelated';
+  R.integration.renderAllBars();
+  const ctxRelease = contexts[1];
+  assert.deepStrictEqual(Object.keys(ctxRelease.dataById), ['claude-low', 'claude-high'], 'release selection ignores global model URL');
+  assert.ok(ctxRelease.gReleases.innerHTML.includes('<path'), 'same-release variants are connected');
+  releaseIds = ['uuid-claude-high'];
+  releaseReferences = ['uuid-claude-low'];
+  R.integration.renderAllBars();
+  assert.deepStrictEqual(Object.keys(ctxRelease.dataById), ['claude-high'], 'release reference dots stay excluded');
+  assert.strictEqual(ctxRelease.gReleases.innerHTML, '', 'single variant has no stale connector');
+  releaseIds = ['unknown'];
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxRelease.wrap.style.display, 'none', 'missing variant data preserves native chart');
+  let detailCalls = 0;
+  ctx.location.search = '';
+  ctx.fetch = async url => {
+    detailCalls++;
+    assert.strictEqual(url, '/models/releases/claude-test');
+    return { ok: true, text: async () => html };
+  };
+  R.extract.extractModelsDetailed = d => Object.assign({}, originalExtract(d), {
+    releaseData: { models: releaseData.models.slice(0, 1), releases: releaseData.releases }
+  });
+  releaseIds = ['uuid-claude-low', 'uuid-claude-high'];
+  releaseReferences = [];
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxRelease.wrap.style.display, 'none', 'native chart remains during async hydration');
+  await new Promise(resolve => setTimeout(resolve, 100));
+  R.integration.renderAllBars();
+  assert.deepStrictEqual(Object.keys(ctxRelease.dataById), ['claude-low', 'claude-high'], 'detail fetch restores every selected variant');
+  assert.strictEqual(ctxRelease.wrap.style.display, '', 'complete hydrated overlay is displayed');
+  assert.strictEqual(detailCalls, 1, 'release detail requests are deduplicated and cached');
+  delete ctx.fetch;
   ctx.location.search = '';
   R.extract.extractModelsDetailed = originalExtract;
 

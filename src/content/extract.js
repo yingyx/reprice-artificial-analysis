@@ -252,6 +252,42 @@
   }
 
   var detailedCache = new WeakMap();
+  // Parse complete Flight records instead of matching across nested model objects.
+  // Release variants keep their own slug, UUID and cost; the release is only a group.
+  function extractReleaseData(text) {
+    var models = Object.create(null), releases = Object.create(null);
+    function visit(value) {
+      if (!value || typeof value !== 'object') return;
+      if (!Array.isArray(value) && SLUG_RE.test(value.slug || '') && value.name) {
+        if (value.id && value.release && value.release.slug) {
+          var cost = value.intelligenceIndexCostPerTask;
+          models[value.slug] = {
+            id: value.slug, chartId: value.id, label: value.shortName || value.name,
+            intelligence: value.intelligenceIndex, aaCost: cost && cost.cost ? cost.cost.total : null,
+            provider: value.creator && value.creator.name,
+            releaseId: value.release.slug, releaseLabel: value.release.name,
+            effort: value.effort && value.effort.level
+          };
+          releases[value.release.slug] = { id: value.release.slug, label: value.release.name };
+        } else if (!value.id && value.creator && value.releaseDate) {
+          releases[value.slug] = { id: value.slug, label: value.name };
+        }
+      }
+      Object.keys(value).forEach(function (key) { visit(value[key]); });
+    }
+    String(text || '').split('\n').forEach(function (line) {
+      var colon = line.indexOf(':');
+      if (colon < 0) return;
+      try { visit(JSON.parse(line.slice(colon + 1))); } catch (e) { }
+    });
+    return { models: Object.keys(models).map(function (id) { return models[id]; }),
+      releases: Object.keys(releases).map(function (id) { return releases[id]; }) };
+  }
+
+  function extractReleaseDataFromHtml(html) {
+    return extractReleaseData(flightChunksFromString(String(html || '')));
+  }
+
   function extractModelsDetailed(doc) {
     doc = doc || document;
     var serialized = flightText(doc);
@@ -279,6 +315,8 @@
       models = mergeModelLists(ldjson, flight);
       source = ldjson.length ? 'ldjson' : (flight.length ? 'flight' : 'none');
     }
+    var releaseData = extractReleaseData(serialized);
+    models = mergeModelLists(releaseData.models, models);
     var withCost = models.filter(function (m) { return num(m.aaCost); }).length;
     var chartIds = Object.create(null);
     var pairs = /"id":"([^"\\]+)","slug":"([a-z0-9._-]+)"/g;
@@ -286,6 +324,7 @@
     while ((pair = pairs.exec(serialized))) chartIds[pair[1]] = pair[2];
     var result = {
       models: models,
+      releaseData: releaseData,
       chartIds: chartIds,
       source: source,
       indexVersion: extractIndexVersion(doc),
@@ -301,6 +340,7 @@
 
   root.RepriceAA = root.RepriceAA || {};
   root.RepriceAA.extract = {
+    extractReleaseDataFromHtml: extractReleaseDataFromHtml,
     parseLdJsonDatasets: parseLdJsonDatasets,
     pickBestDataset: pickBestDataset,
     extractFromLdJson: extractFromLdJson,
