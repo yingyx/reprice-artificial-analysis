@@ -267,8 +267,13 @@
       source = ldjson.length ? 'ldjson' : (flight.length ? 'flight' : 'none');
     }
     var withCost = models.filter(function (m) { return num(m.aaCost); }).length;
+    var chartIds = Object.create(null);
+    var pairs = /"id":"([^"\\]+)","slug":"([a-z0-9._-]+)"/g;
+    var pair, serialized = flightText(doc);
+    while ((pair = pairs.exec(serialized))) chartIds[pair[1]] = pair[2];
     return {
       models: models,
+      chartIds: chartIds,
       source: source,
       indexVersion: extractIndexVersion(doc),
       coverage: { total: models.length, withCost: withCost }

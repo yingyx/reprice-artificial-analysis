@@ -53,6 +53,7 @@ function makeElement(tag) {
       return all ? out : (r || null);
     },
     _matches(n, sel) {
+      if (sel.includes(',')) return sel.split(',').some(s => el._matches(n, s.trim()));
       const m = /^([a-z]+)\.([a-z-]+)$/i.exec(sel);
       if (m) return n.tagName === m[1].toUpperCase() && n.classList._set.has(m[2]);
       if (sel.startsWith('.')) return n.classList._set.has(sel.slice(1));
@@ -139,7 +140,7 @@ async function main() {
     { textContent: JSON.stringify({ '@type': 'Dataset', name: 'COST', data: models.map(m => ({ label: m.label, costPerIntelligenceIndexTask: m.costPerIntelligenceIndexTask, detailsUrl: m.detailsUrl })) }) }
   ];
 
-  const { doc, anchor } = makeDoc(scripts);
+  const { doc, anchor, plot } = makeDoc(scripts);
 
   const localStorageStub = (() => {
     const store = {};
@@ -293,6 +294,40 @@ async function main() {
 
   assert.ok(ctxA.gAxis._innerHTML.indexOf('Auto-best') !== -1, 'axis label mentions Auto-best');
   assert.ok(ctxA.nodes['glm-5-3'], 'GLM point still rendered in best mode');
+
+  const logAxes = ctxA.gAxis._innerHTML;
+  R.state.setLogScale(false);
+  assert.notStrictEqual(ctxA.gAxis._innerHTML, logAxes, 'scale preference redraws axes');
+  R.state.setLogScale(true);
+  const originalExtract = R.extract.extractModelsDetailed;
+  R.extract.extractModelsDetailed = function (d) {
+    const result = originalExtract(d);
+    result.chartIds = { 'uuid-glm': 'glm-5-3', 'uuid-claude': 'claude-opus-5' };
+    return result;
+  };
+  let nativeIds = ['uuid-glm'];
+  const originalQuery = plot.querySelectorAll;
+  plot.querySelectorAll = function (sel) {
+    return sel === '[data-chart-item-id]' ? nativeIds.map(id => ({ getAttribute: () => id })) : originalQuery(sel);
+  };
+  R.integration.renderAllBars();
+  assert.deepStrictEqual(Object.keys(ctxA.dataById), ['glm-5-3'], 'native selection controls overlay');
+  nativeIds = ['uuid-claude'];
+  R.integration.renderAllBars();
+  assert.deepStrictEqual(Object.keys(ctxA.dataById), ['claude-opus-5'], 'same-size selection replacement updates overlay');
+  nativeIds = ['unknown-uuid'];
+  R.integration.renderAllBars();
+  assert.strictEqual(Object.keys(ctxA.dataById).length, 0, 'unknown selection does not display unrelated models');
+  plot.querySelectorAll = originalQuery;
+  ctx.URLSearchParams = URLSearchParams;
+  ctx.location = { search: '?models=' };
+  R.integration.renderAllBars();
+  assert.strictEqual(Object.keys(ctxA.dataById).length, 0, 'empty selection stays empty');
+  ctx.location.search = '?models=not-loaded';
+  R.integration.renderAllBars();
+  assert.strictEqual(Object.keys(ctxA.dataById).length, 0, 'missing slug does not restore all models');
+  ctx.location.search = '';
+  R.extract.extractModelsDetailed = originalExtract;
 
   R.state.setSource('__aa__');
   await new Promise((r) => setTimeout(r, 50));

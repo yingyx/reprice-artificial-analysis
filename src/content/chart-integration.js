@@ -109,9 +109,9 @@
   function urlSelectedIds() {
     try {
       var v = new URLSearchParams(root.location.search).get('models');
-      if (!v) return null;
+      if (v === null) return null;
       var ids = v.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-      return ids.length ? ids : null;
+      return ids;
     } catch (e) {
       return null;
     }
@@ -591,15 +591,34 @@
     return '<div class="row"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
   }
 
-  function computePriced() {
+  function nativeSelectedIds(ctx, bundle) {
+    var plot = findPlotEl(ctx.anchor);
+    if (!plot) return null;
+    var dots = plot.querySelectorAll('[data-chart-item-id]');
+    if (!dots.length) {
+      var selector = ctx.anchor.querySelector('[role="combobox"]');
+      return selector && /^0\s+of\s/.test((selector.textContent || '').trim()) ? [] : null;
+    }
+    var ids = [];
+    for (var i = 0; i < dots.length; i++) {
+      var key = dots[i].getAttribute('data-chart-item-id');
+      var id = bundle.chartIds && bundle.chartIds[key];
+      // Unknown native points must not silently expand into the entire registry.
+      if (id && ids.indexOf(id) === -1) ids.push(id);
+    }
+    return ids;
+  }
+
+  function computePriced(ctx) {
     var bundle = RAA.extract.extractModelsDetailed(document);
     var merged = RAA.registry.merge(bundle.models, bundle.indexVersion);
-    var selectedIds = urlSelectedIds();
+    var selectedIds = nativeSelectedIds(ctx, bundle);
+    if (selectedIds === null) selectedIds = urlSelectedIds();
     if (selectedIds) {
       var wanted = {};
       selectedIds.forEach(function (id) { wanted[id] = true; });
       var filtered = merged.filter(function (m) { return wanted[m.id]; });
-      if (filtered.length) merged = filtered;
+      merged = filtered;
     } else {
       merged = merged.filter(function (m) { return !m._cached; });
     }
@@ -668,8 +687,8 @@
       var models = RAA.extract.extractFlightModelsFromHtml(html);
       var target = null;
       models.forEach(function (mm) { if (mm.id === id) target = mm; });
-      if (models.length) {
-        RAA.registry.upsertModels(models, RAA.extract.extractIndexVersionFromText(html));
+      if (target && isNum(target.aaCost) && isNum(target.intelligence)) {
+        RAA.registry.upsertModels([target], RAA.extract.extractIndexVersionFromText(html));
         fetchState[id] = 'done';
         renderAllBars();
       } else {
@@ -710,12 +729,12 @@
 
   function dataSig(bundle, nativeDots, box) {
     var head = (box ? 'R' + box.w + 'x' + box.h + '@' + box.left + ',' + box.top : 'P') +
-      '|' + bundle.profileName + '|' + bundle.source + '|' +
+      '|' + RAA.state.isLogScale() + '|' + bundle.mode + '|' + bundle.profileName + '|' + bundle.source + '|' +
       (bundle.selectedIds ? bundle.selectedIds.join(',') : '') + '|' +
       (nativeDots == null ? '?' : nativeDots) + '|' +
       (highlight ? highlight.name : '') + '|';
     return head + bundle.priced.map(function (m) {
-      return m.id + ':' + m.intelligence + ':' + m.repricedCost;
+      return JSON.stringify(m);
     }).join(';');
   }
 
@@ -1027,7 +1046,11 @@
       return;
     }
     var box = measurePlot(ctx);
-    var bundle = computePriced();
+    if (!box) {
+      if (ctx.wrap) ctx.wrap.style.display = 'none';
+      return;
+    }
+    var bundle = computePriced(ctx);
     maybeFetchMissing(bundle);
     // refresh the badge on every scan: at page launch the native chart and the
     // async model-detail fetches land late, so the a/b counts must self-update
@@ -1061,14 +1084,6 @@
     renderAllBars();
   }
 
-  var mutationsPaused = false;
-  function withPausedObservation(fn) {
-    mutationsPaused = true;
-    try { fn(); } finally {
-      setTimeout(function () { mutationsPaused = false; }, 50);
-    }
-  }
-
   function scheduleScan(delayMs) {
     if (scanTimer) return;
     scanTimer = setTimeout(function () {
@@ -1086,11 +1101,17 @@
 
   var mo = null;
   function observePage() {
-    mo = new MutationObserver(function () {
-      if (mutationsPaused) return;
-      scheduleScan();
+    mo = new MutationObserver(function (records) {
+      var relevant = records.some(function (r) {
+        var el = r.target.nodeType === 1 ? r.target : r.target.parentElement;
+        return !el || !el.closest || !el.closest('.raa-bar, .raa-chartwrap, #raa-root');
+      });
+      if (relevant) scheduleScan(120);
     });
-    mo.observe(document.documentElement, { childList: true, subtree: true });
+    mo.observe(document.documentElement, {
+      childList: true, subtree: true, characterData: true,
+      attributes: true, attributeFilter: ['data-chart-item-id', 'aria-selected', 'aria-checked']
+    });
     window.addEventListener('popstate', function () { scheduleScan(100); });
   }
 
@@ -1108,7 +1129,7 @@
       return;
     }
     injectCss();
-    withPausedObservation(function () { renderAllBars(); });
+    renderAllBars();
     observePage();
     setTimeout(function () { scheduleScan(0); }, 1500);
     setTimeout(function () { scheduleScan(0); }, 4000);
