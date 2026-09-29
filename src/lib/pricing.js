@@ -290,9 +290,19 @@
     return l % r;
   }
 
+  var formulaCache = new Map();
+  function compiledFormula(expr) {
+    if (formulaCache.has(expr)) return formulaCache.get(expr);
+    var ast = null;
+    try { ast = parseFormula(expr); } catch (e) { /* cache invalid expressions too */ }
+    if (formulaCache.size >= 256) formulaCache.delete(formulaCache.keys().next().value);
+    formulaCache.set(expr, ast);
+    return ast;
+  }
+
   function evalFormula(expr, vars) {
     try {
-      var v = evalAst(parseFormula(expr), vars || {});
+      var v = evalAst(compiledFormula(expr), vars || {});
       return typeof v === 'number' && isFinite(v) ? Math.max(0, v) : null;
     } catch (e) {
       return null;
@@ -300,12 +310,7 @@
   }
 
   function isFormulaSafe(expr) {
-    try {
-      parseFormula(expr);
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return compiledFormula(expr) !== null;
   }
 
   function applyOp(rule, base, aaCost) {
@@ -319,7 +324,7 @@
   }
 
   function makeCtx(sources, today) {
-    var byId = {};
+    var byId = Object.create(null);
     (Array.isArray(sources) ? sources : []).forEach(function (s) {
       if (s && typeof s.id === 'string') byId[s.id] = s;
     });
@@ -382,14 +387,15 @@
     // pattern prices differently.
     var matched = null;
     var matchedRaw = null;
-    if (Array.isArray(source.nameIncludes)) {
+    var modelIdKey = matchKey(model.id), modelLabelKey = matchKey(model.label);
+    if (!exact && !promo && Array.isArray(source.nameIncludes)) {
       for (var i = 0; i < source.nameIncludes.length; i++) {
         var entry = source.nameIncludes[i];
         if (!entry || !entry.match) continue;
         var m = matchKey(entry.match);
         var hit = (m.indexOf('/') === 0
-          ? matchKey(model.id).indexOf(m.slice(1))
-          : matchKey(model.label).indexOf(m)) !== -1;
+          ? modelIdKey.indexOf(m.slice(1))
+          : modelLabelKey.indexOf(m)) !== -1;
         if (hit && ruleUntilActive(entry.rule || entry, ctx.today)) {
           matchedRaw = entry.rule;
           matched = normalizeRule(entry.rule);
@@ -459,7 +465,10 @@
     } else {
       price = applyOp(own, base, aaCost);
     }
-    if (!num(price) || price < 0) price = 0;
+    if (!num(price)) {
+      anomalies.push('invalid-price');
+      price = base;
+    }
     price = Math.max(0, price);
 
     if (price <= EPS && aaCost > EPS) {
@@ -516,8 +525,9 @@
         var res = resolvePrice(m, id, ctx);
         if (num(res.price)) {
           candidates.push({
-            sourceId: id,
-            sourceName: (ctx.sourcesById[id] && ctx.sourcesById[id].name) || id,
+            sourceId: res.sourceId,
+            requestedSourceId: id,
+            sourceName: res.sourceId ? ((ctx.sourcesById[res.sourceId] && ctx.sourcesById[res.sourceId].name) || res.sourceId) : 'Artificial Analysis',
             price: res.price,
             ruleDescription: res.ruleDescription,
             anomalies: res.anomalies,

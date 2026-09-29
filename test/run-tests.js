@@ -14,6 +14,19 @@ function load(file) {
 }
 
 const pricing = load('pricing.js').pricing;
+
+assert.strictEqual(pricing.applySource([{ id: 'm', label: 'M', aaCost: 1e308 }],
+  { id: 'overflow', defaultRule: { type: 'multiplier', value: 1e308 } })[0].repricedCost, 1e308,
+  'overflow must not become a free winning price');
+const fallbackSources = [
+  { id: 'plan', name: 'Plan', kind: 'subscription', fallbackTo: 'api' },
+  { id: 'api', name: 'API', defaultRule: { type: 'multiplier', value: 0.5 } }
+];
+assert.strictEqual(pricing.applyBest([{ id: 'm', label: 'M', aaCost: 2 }], ['plan'], fallbackSources)[0].winnerSourceId,
+  'api', 'fallback winner must identify the actual pricing source');
+for (let i = 0; i < 300; i++) assert.strictEqual(pricing.evalFormula('base + ' + i, { base: 2 }), 2 + i);
+assert.strictEqual(pricing.evalFormula('base * 2', { base: 3 }), 6);
+assert.strictEqual(pricing.evalFormula('base * 2', { base: 4 }), 8, 'cached AST must use fresh variables');
 const pareto = load('pareto.js').pareto;
 
 const colors = load('colors.js').colors._internals;
@@ -397,7 +410,8 @@ test('applyBest picks min across enabled sources with provenance', () => {
   assert.strictEqual(out[0].winnerSourceId, 'max');
   assert.strictEqual(out[0].candidates.length, 2);
   assert.ok(Math.abs(out[1].repricedCost - 4 * 1.055) < 1e-9, 'min(4.22, 4.22) via fallback');
-  assert.strictEqual(out[1].winnerSourceId, 'max', 'tie prefers earlier enabled order');
+  assert.strictEqual(out[1].winnerSourceId, 'openrouter', 'fallback identifies the source supplying the price');
+  assert.strictEqual(out[1].candidates[0].requestedSourceId, 'max', 'candidate retains the selected route');
 });
 
 test('applyBest tie prefers earlier enabled order', () => {
