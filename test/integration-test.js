@@ -310,12 +310,19 @@ async function main() {
     return result;
   };
   let nativeIds = ['uuid-glm'];
+  let referenceIds = [];
   const originalQuery = plot.querySelectorAll;
   plot.querySelectorAll = function (sel) {
-    return sel === '[data-chart-item-id]' ? nativeIds.map(id => ({ getAttribute: () => id })) : originalQuery(sel);
+    return sel === '[data-chart-item-id]' ? nativeIds.concat(referenceIds).map(id => ({
+      getAttribute: name => name === 'data-chart-item-id' ? id : (referenceIds.includes(id) ? '0.25' : '1')
+    })) : originalQuery(sel);
   };
   R.integration.renderAllBars();
   assert.deepStrictEqual(Object.keys(ctxA.dataById), ['glm-5-3'], 'native selection controls overlay');
+  referenceIds = ['uuid-claude'];
+  R.integration.renderAllBars();
+  assert.deepStrictEqual(Object.keys(ctxA.dataById), ['glm-5-3'], 'unselected reference dots do not enter overlay');
+  referenceIds = [];
   nativeIds = ['uuid-claude'];
   R.integration.renderAllBars();
   assert.deepStrictEqual(Object.keys(ctxA.dataById), ['claude-opus-5'], 'same-size selection replacement updates overlay');

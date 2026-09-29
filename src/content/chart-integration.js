@@ -611,6 +611,9 @@
     }
     var ids = [];
     for (var i = 0; i < dots.length; i++) {
+      // AA keeps unselected comparison/preview models as quarter-opacity dots.
+      // They are context, not members of the native selector's active set.
+      if (dots[i].getAttribute('opacity') === '0.25') continue;
       var key = dots[i].getAttribute('data-chart-item-id');
       var id = bundle.chartIds && bundle.chartIds[key];
       // Unknown native points must not silently expand into the entire registry.
@@ -1121,7 +1124,7 @@
     });
     mo.observe(document.documentElement, {
       childList: true, subtree: true, characterData: true,
-      attributes: true, attributeFilter: ['data-chart-item-id', 'aria-selected', 'aria-checked']
+      attributes: true, attributeFilter: ['data-chart-item-id', 'opacity', 'aria-selected', 'aria-checked']
     });
     window.addEventListener('popstate', function () { scheduleScan(100); });
   }
