@@ -42,6 +42,9 @@ variant retains its own cost and score, with connecting lines within each releas
 The native release selector controls which points are shown. Missing variants are
 loaded once from public release detail pages and cached for the current index version;
 the original AA chart stays visible while those details are unavailable or loading.
+Release charts label each group once, beside its highest-scoring visible variant.
+Labels use short, unobstructed leaders; crowded labels may be omitted, while every
+point retains its full model name and pricing details in the hover tooltip.
 
 *(Illustrative — the comparison depends on the rates you configure.)*
 

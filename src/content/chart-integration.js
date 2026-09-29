@@ -480,10 +480,12 @@
 
     var xTicks = [];
     if (lay.log) {
-      [0.05, 0.06, 0.08, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 2, 3, 5, 8, 10, 20].forEach(function (v) {
-        var lo = Math.pow(10, lay.xLo), hi = Math.pow(10, lay.xHi);
-        if (v >= lo * 1.0001 && v <= hi * 0.9999) xTicks.push(v);
-      });
+      for (var exponent = Math.floor(lay.xLo); exponent <= Math.ceil(lay.xHi); exponent++) {
+        [1, 2, 3, 5, 8].forEach(function (factor) {
+          var v = factor * Math.pow(10, exponent);
+          if (Math.log10(v) >= lay.xLo && Math.log10(v) <= lay.xHi) xTicks.push(v);
+        });
+      }
     } else {
       var xStep = niceStep(lay.xHi - lay.xLo, 6);
       var xStart = Math.ceil(lay.xLo / xStep) * xStep;
@@ -497,10 +499,14 @@
           '" font-size="11" fill="#737373" text-anchor="end">' + yv + '</text>';
       }
     });
+    var lastTickRight = -Infinity;
     xTicks.forEach(function (xv) {
       var xx = lay.sx(xv);
       if (xx >= lay.L - 1 && xx <= lay.L + lay.iw + 1) {
         var label = '$' + trimMoney(xv);
+        var halfWidth = textWidth(label) / 2;
+        if (xx - halfWidth < lastTickRight + 10) return;
+        lastTickRight = xx + halfWidth;
         s += '<text x="' + xx.toFixed(1) + '" y="' + (lay.T + lay.ih + 18) +
           '" font-size="11" fill="#737373" text-anchor="middle">' + esc(label) + '</text>';
       }
@@ -952,173 +958,128 @@
     var polyPts = fpts.map(function (m) {
       return { x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) };
     });
-    drawLabels(ctx, lay, priced, polyPts);
+    var segments = [];
+    function addSegments(points) {
+      for (var i = 1; i < points.length; i++) segments.push([points[i - 1], points[i]]);
+    }
+    addSegments(polyPts);
+    Object.keys(groups).forEach(function (id) {
+      addSegments(groups[id].slice().sort(function (a, b) {
+        return a.aaCost - b.aaCost || a.intelligence - b.intelligence;
+      }).map(function (m) { return { x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) }; }));
+    });
+    var labels = priced;
+    if (ctx.isRelease) labels = Object.keys(groups).map(function (id) {
+      var representative = groups[id].slice().sort(function (a, b) {
+        return b.intelligence - a.intelligence || a.repricedCost - b.repricedCost || a.id.localeCompare(b.id);
+      })[0];
+      return Object.assign({}, representative, { label: representative.releaseLabel || representative.label });
+    });
+    drawLabels(ctx, lay, priced, segments, labels);
 
     ctx.prov.style.display = RAA.state.getSourceMode() !== 'aa' ? '' : 'none';
   }
 
-  function truncateLabel(t) {
-    t = String(t == null ? '' : t);
-    return t.length > 30 ? t.slice(0, 29) + '\u2026' : t;
+  var labelCanvas;
+  function textWidth(text) {
+    if (!labelCanvas) {
+      var canvas = document.createElement('canvas');
+      labelCanvas = canvas.getContext ? canvas.getContext('2d') : null;
+    }
+    if (!labelCanvas) return text.length * 6.1;
+    labelCanvas.font = '11px Arial, sans-serif';
+    return labelCanvas.measureText(text).width;
   }
 
-  function drawLabels(ctx, lay, priced, polyPts) {
-    var placed = [];
-    var s = '';
-    var dotBoxes = priced.map(function (m) {
-      var cx = lay.sx(m.repricedCost), cy = lay.sy(m.intelligence);
-      return { x1: cx - 7, y1: cy - 7, x2: cx + 7, y2: cy + 7 };
+  function drawLabels(ctx, lay, priced, segments, labels) {
+    var placed = [], leaders = [], markup = '';
+    var H = 12, GAP = 8, MAX_LEADER = 48;
+    var dots = priced.map(function (m) {
+      return { id: m.id, x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) };
     });
-
-    function segSeg(ax, ay, bx, by, cx2, cy2, dx, dy) {
-      var d1 = (bx - ax) * (cy2 - ay) - (by - ay) * (cx2 - ax);
-      var d2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
-      var d3 = (dx - cx2) * (ay - cy2) - (dy - cy2) * (ax - cx2);
-      var d4 = (dx - cx2) * (by - cy2) - (dy - cy2) * (bx - cx2);
-      return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+    function overlaps(a, b) {
+      return a.x1 < b.x2 && a.x2 > b.x1 && a.y1 < b.y2 && a.y2 > b.y1;
     }
-
-    function segHitsRect(ax, ay, bx, by, x1, y1, x2, y2) {
-      if (ax >= x1 && ax <= x2 && ay >= y1 && ay <= y2) return true;
-      if (bx >= x1 && bx <= x2 && by >= y1 && by <= y2) return true;
-      return segSeg(ax, ay, bx, by, x1, y1, x2, y1) ||
-        segSeg(ax, ay, bx, by, x2, y1, x2, y2) ||
-        segSeg(ax, ay, bx, by, x2, y2, x1, y2) ||
-        segSeg(ax, ay, bx, by, x1, y2, x1, y1);
+    function crosses(a, b, c, d) {
+      function side(p, q, r) { return (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x); }
+      return side(a, b, c) * side(a, b, d) < -0.001 && side(c, d, a) * side(c, d, b) < -0.001;
     }
-
-    function hitsPolyline(x1, y1, x2, y2) {
-      if (!polyPts || polyPts.length < 2) return false;
-      for (var i = 0; i + 1 < polyPts.length; i++) {
-        if (segHitsRect(polyPts[i].x, polyPts[i].y, polyPts[i + 1].x, polyPts[i + 1].y, x1, y1, x2, y2)) {
-          return true;
-        }
+    function hitsBox(a, b, box) {
+      // Liang-Barsky also handles horizontal, vertical and collinear segments.
+      var lo = 0, hi = 1, dx = b.x - a.x, dy = b.y - a.y;
+      var p = [-dx, dx, -dy, dy], q = [a.x - box.x1, box.x2 - a.x, a.y - box.y1, box.y2 - a.y];
+      for (var i = 0; i < 4; i++) {
+        if (Math.abs(p[i]) < 1e-8) { if (q[i] < 0) return false; }
+        else if (p[i] < 0) lo = Math.max(lo, q[i] / p[i]);
+        else hi = Math.min(hi, q[i] / p[i]);
+        if (lo > hi) return false;
       }
-      return false;
+      return true;
     }
-    var positions = priced.map(function (m) { return { x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) }; });
-    var density = Object.create(null);
-    priced.forEach(function (m, i) {
-      density[m.id] = positions.filter(function (p) {
-        var dx = p.x - positions[i].x, dy = p.y - positions[i].y;
-        return dx * dx + dy * dy < 3600;
-      }).length;
-    });
-    var sorted = priced.slice().sort(function (a, b) {
-      if (density[a.id] !== density[b.id]) return density[b.id] - density[a.id];
-      return a.intelligence === b.intelligence
-        ? a.repricedCost - b.repricedCost
-        : b.intelligence - a.intelligence;
-    });
-
-    var H = 12;
-    var DIRS = ['E', 'NE', 'N', 'SE', 'S', 'W', 'NW', 'SW'];
-    var MAX_LEVEL = 12;
-
-    // 8-position model: candidate box for direction dir at push level
-    function candidateBox(dir, cx, cy, w, level) {
-      var push = level * 13;
-      var x1, y1, anchor;
-      if (dir === 'E') { x1 = cx + 8 + push; y1 = cy - H / 2; anchor = 'start'; }
-      else if (dir === 'NE') { x1 = cx + 7 + push * 0.7; y1 = cy - 7 - H - push * 0.7; anchor = 'start'; }
-      else if (dir === 'N') { x1 = cx - w / 2; y1 = cy - 9 - H - push; anchor = 'middle'; }
-      else if (dir === 'SE') { x1 = cx + 7 + push * 0.7; y1 = cy + 7 + push * 0.7; anchor = 'start'; }
-      else if (dir === 'S') { x1 = cx - w / 2; y1 = cy + 9 + push; anchor = 'middle'; }
-      else if (dir === 'W') { x1 = cx - 8 - w - push; y1 = cy - H / 2; anchor = 'end'; }
-      else if (dir === 'NW') { x1 = cx - 7 - w - push * 0.7; y1 = cy - 7 - H - push * 0.7; anchor = 'end'; }
-      else { x1 = cx - 7 - w - push * 0.7; y1 = cy + 7 + push * 0.7; anchor = 'end'; }
-      return { x1: x1, y1: y1, x2: x1 + w, y2: y1 + H, anchor: anchor };
+    function dotBox(dot, radius) {
+      return { x1: dot.x - radius, y1: dot.y - radius, x2: dot.x + radius, y2: dot.y + radius };
     }
-
-    function collides(x1, y1, x2, y2) {
-      for (var i = 0; i < placed.length; i++) {
-        var b = placed[i];
-        if (x1 < b.x2 && x2 > b.x1 && y1 < b.y2 && y2 > b.y1) return true;
+    // Give highlighted and high-scoring labels first choice. Stable IDs break ties
+    // so a source change does not arbitrarily reshuffle equally placed labels.
+    labels.slice().sort(function (a, b) {
+      return Number(isHighlighted(b)) - Number(isHighlighted(a)) || b.intelligence - a.intelligence || a.id.localeCompare(b.id);
+    }).forEach(function (m) {
+      var point = { x: lay.sx(m.repricedCost), y: lay.sy(m.intelligence) };
+      var text = String(m.label || m.id), width = textWidth(text);
+      var maxWidth = Math.max(40, lay.iw - 16);
+      while (width > maxWidth && text.length > 4) {
+        text = text.replace(/\u2026$/, '').slice(0, -1) + '\u2026';
+        width = textWidth(text);
       }
-      for (var j = 0; j < dotBoxes.length; j++) {
-        var d = dotBoxes[j];
-        if (x1 < d.x2 && x2 > d.x1 && y1 < d.y2 && y2 > d.y1) return true;
-      }
-      if (hitsPolyline(x1 - 2, y1 - 2, x2 + 2, y2 + 2)) return true;
-      return false;
-    }
-
-    function overlapsCount(x1, y1, x2, y2) {
-      var n = 0;
-      for (var i = 0; i < placed.length; i++) {
-        var b = placed[i];
-        if (x1 < b.x2 && x2 > b.x1 && y1 < b.y2 && y2 > b.y1) n++;
-      }
-      for (var j = 0; j < dotBoxes.length; j++) {
-        var d = dotBoxes[j];
-        if (x1 < d.x2 && x2 > d.x1 && y1 < d.y2 && y2 > d.y1) n++;
-      }
-      return n;
-    }
-
-    sorted.forEach(function (m) {
-      var cx = lay.sx(m.repricedCost), cy = lay.sy(m.intelligence);
-      var text = truncateLabel(m.label);
-      var w = text.length * 6.1 + 4;
-      var dim = !isHighlighted(m);
-      var dimAttr = dim ? ' opacity="0.2"' : '';
-
-      var best = null, bestLevel = 0;
-      for (var level = 0; level <= MAX_LEVEL && !best; level++) {
-        for (var di = 0; di < DIRS.length; di++) {
-          var c = candidateBox(DIRS[di], cx, cy, w, level);
-          if (c.x1 < lay.L + 2 || c.x2 > lay.L + lay.iw - 1) continue;
-          if (c.y1 < lay.T + 1 || c.y2 > lay.T + lay.ih - 1) continue;
-          if (collides(c.x1 - 1, c.y1 - 1, c.x2 + 1, c.y2 + 1)) continue;
-          best = c;
-          bestLevel = level;
-          break;
-        }
-      }
-
-      if (!best) {
-        var minOverlap = Infinity;
-        for (var lv2 = 0; lv2 <= MAX_LEVEL; lv2++) {
-          for (var di2 = 0; di2 < DIRS.length; di2++) {
-            var c2 = candidateBox(DIRS[di2], cx, cy, w, lv2);
-            if (c2.x1 < lay.L + 2 || c2.x2 > lay.L + lay.iw - 1) continue;
-            if (c2.y1 < lay.T + 1 || c2.y2 > lay.T + lay.ih - 1) continue;
-            var ov = overlapsCount(c2.x1, c2.y1, c2.x2, c2.y2) +
-              (hitsPolyline(c2.x1 - 2, c2.y1 - 2, c2.x2 + 2, c2.y2 + 2) ? 100 : 0);
-            if (ov < minOverlap) {
-              minOverlap = ov;
-              best = c2;
-              bestLevel = lv2;
-              if (ov === 0) break;
-            }
+      var candidates = [];
+      // Prefer the native compact placements beside the dot; expand only locally.
+      [0, 10, 20, 32].forEach(function (push) {
+        var gap = GAP + push;
+        [[point.x + gap, point.y - H / 2],
+          [point.x + gap, point.y - H - gap],
+          [point.x + gap, point.y + gap],
+          [point.x - width - gap, point.y - H / 2],
+          [point.x - width / 2, point.y - H - gap],
+          [point.x - width / 2, point.y + gap],
+          [point.x - width - gap, point.y - H - gap],
+          [point.x - width - gap, point.y + gap]].forEach(function (xy, direction) {
+          var box = { x1: xy[0] - 2, y1: xy[1] - 2, x2: xy[0] + width + 2, y2: xy[1] + H + 2 };
+          if (box.x1 < lay.L || box.x2 > lay.L + lay.iw || box.y1 < lay.T || box.y2 > lay.T + lay.ih) return;
+          if (placed.some(function (b) { return overlaps(box, b); })) return;
+          if (dots.some(function (dot) { return overlaps(box, dotBox(dot, 6)); })) return;
+          if (segments.concat(leaders).some(function (seg) { return hitsBox(seg[0], seg[1], box); })) return;
+          var end = { x: Math.max(box.x1, Math.min(point.x, box.x2)), y: Math.max(box.y1, Math.min(point.y, box.y2)) };
+          var dx = end.x - point.x, dy = end.y - point.y;
+          var distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance > MAX_LEADER) return;
+          var start = { x: point.x + dx / distance * 6, y: point.y + dy / distance * 6 };
+          var leader = distance > 12 ? [start, end] : null;
+          if (leader) {
+            if (placed.some(function (b) { return hitsBox(start, end, b); })) return;
+            if (dots.some(function (dot) { return dot.id !== m.id && hitsBox(start, end, dotBox(dot, 5)); })) return;
+            if (segments.concat(leaders).some(function (seg) { return crosses(start, end, seg[0], seg[1]); })) return;
           }
-          if (minOverlap === 0) break;
-        }
-        if (minOverlap >= 100) return;
+          candidates.push({ box: box, x: xy[0], y: xy[1], leader: leader, score: distance + direction * 0.5 });
+        });
+      });
+      candidates.sort(function (a, b) { return a.score - b.score; });
+      var best = candidates[0];
+      // Dense charts may omit a label, but all points keep their full tooltip.
+      if (!best) return;
+      placed.push(best.box);
+      var opacity = isHighlighted(m) ? 1 : 0.2;
+      if (best.leader) {
+        leaders.push(best.leader);
+        markup += '<line x1="' + best.leader[0].x.toFixed(1) + '" y1="' + best.leader[0].y.toFixed(1) +
+          '" x2="' + best.leader[1].x.toFixed(1) + '" y2="' + best.leader[1].y.toFixed(1) +
+          '" stroke="rgba(0,0,0,0.2)" stroke-width="1" opacity="' + opacity + '"/>';
       }
-      if (!best || minOverlap > 0) return;
-      placed.push({ x1: best.x1, y1: best.y1, x2: best.x2, y2: best.y2 });
-
-      var line = '';
-      if (bestLevel > 0) {
-        var bx = (best.x1 + best.x2) / 2, by = (best.y1 + best.y2) / 2;
-        var vx = bx - cx, vy = by - cy;
-        var len = Math.sqrt(vx * vx + vy * vy) || 1;
-        var ux = vx / len, uy = vy / len;
-        var nx = Math.max(best.x1, Math.min(cx, best.x2));
-        var ny = Math.max(best.y1, Math.min(cy, best.y2));
-        line = '<line x1="' + (cx + ux * 6).toFixed(1) + '" y1="' + (cy + uy * 6).toFixed(1) +
-          '" x2="' + (nx - ux * 1.5).toFixed(1) + '" y2="' + (ny - uy * 1.5).toFixed(1) +
-          '" stroke="#9ca3af" stroke-width="1" opacity="0.85"' + dimAttr + '/>';
-      }
-
-      var tx = best.anchor === 'start' ? best.x1 : best.anchor === 'end' ? best.x2 : best.x1 + w / 2;
-      var ty = best.y1 + H / 2 + 3.5;
-      s += line + '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1) +
-        '" font-size="11" fill="#404040" text-anchor="' + best.anchor + '"' + dimAttr + '>' +
-        esc(text) + '</text>';
+      markup += '<text data-model-id="' + esc(m.id) + '" x="' + best.x.toFixed(1) + '" y="' +
+        (best.y + 9).toFixed(1) + '" font-family="Arial, sans-serif" font-size="11" font-weight="400"' +
+        ' fill="rgba(0,0,0,0.75)" stroke="white" stroke-width="3" stroke-linejoin="round" paint-order="stroke"' +
+        ' opacity="' + opacity + '">' + esc(text) + '</text>';
     });
-    ctx.gLbl.innerHTML = s;
+    ctx.gLbl.innerHTML = markup;
   }
 
   function applyPos(g, x, y) {

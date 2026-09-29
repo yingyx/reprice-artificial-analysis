@@ -208,6 +208,17 @@ async function main() {
   assert.ok(ctxA.gAxis._innerHTML.indexOf('<line') === -1, 'no spines/gridlines like AA');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('Most attractive quadrant') === -1, 'no stray MAQ caption in plot');
   assert.ok(ctxA.gLbl && ctxA.gLbl._innerHTML.indexOf('GLM-5.3 (max)') !== -1, 'side model labels rendered');
+  const leaders = [...ctxA.gLbl.innerHTML.matchAll(/<line ([^>]+)>/g)].map(match => {
+    const attrs = Object.fromEntries([...match[1].matchAll(/(x1|y1|x2|y2)="([^"]+)"/g)].map(a => [a[1], Number(a[2])]));
+    assert.ok(Math.hypot(attrs.x2 - attrs.x1, attrs.y2 - attrs.y1) <= 48, 'label leaders stay local to their point');
+    return attrs;
+  });
+  const side = (a, x, y) => (a.x2 - a.x1) * (y - a.y1) - (a.y2 - a.y1) * (x - a.x1);
+  for (let i = 0; i < leaders.length; i++) for (let j = i + 1; j < leaders.length; j++) {
+    const a = leaders[i], b = leaders[j];
+    assert.ok(!(side(a, b.x1, b.y1) * side(a, b.x2, b.y2) < 0 &&
+      side(b, a.x1, a.y1) * side(b, a.x2, a.y2) < 0), 'label leaders do not cross each other');
+  }
   assert.ok(ctxA.gLbl._innerHTML.indexOf('>DeepSeek V4 Pro 0813 (max)<') !== -1, 'all model labels rendered');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('>Intelligence Index<') === -1, 'short y title removed');
   assert.ok(!ctxA.nodes['glm-5-3'].querySelector('.ring'), 'no highlight rings');
@@ -371,6 +382,10 @@ async function main() {
   const ctxRelease = contexts[1];
   assert.deepStrictEqual(Object.keys(ctxRelease.dataById), ['claude-low', 'claude-high'], 'release selection ignores global model URL');
   assert.ok(ctxRelease.gReleases.innerHTML.includes('<path'), 'same-release variants are connected');
+  assert.strictEqual((ctxRelease.gLbl.innerHTML.match(/<text /g) || []).length, 1, 'one label per release instead of one per effort variant');
+  assert.ok(ctxRelease.gLbl.innerHTML.includes('>Claude Test</text>'), 'release label uses the native group name');
+  assert.ok(ctxRelease.gLbl.innerHTML.includes('data-model-id="claude-high"'), 'release label anchors to highest-intelligence visible variant');
+  assert.strictEqual(Object.keys(ctxRelease.nodes).length, 2, 'both effort points retain tooltip targets');
   releaseIds = ['uuid-claude-high'];
   releaseReferences = ['uuid-claude-low'];
   R.integration.renderAllBars();
