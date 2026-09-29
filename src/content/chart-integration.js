@@ -51,7 +51,8 @@
     document.head.appendChild(st);
   }
 
-  var ANCHOR_SELECTOR = '[id^="intelligence-index-vs-cost"], [id^="intelligence-vs-cost"]';
+  // Only task-cost charts have the units and model semantics we reprice.
+  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"]';
 
   function findAnchors(doc) {
     try {
@@ -74,14 +75,7 @@
     if (!plot) return null;
     var pr = plot.getBoundingClientRect();
     if (pr.width < 60 || pr.height < 120) return null;
-    var best = plot, el = plot;
-    while (el.parentNode && el.parentNode !== anchorEl && el.parentNode !== document.documentElement) {
-      el = el.parentNode;
-      var r = el.getBoundingClientRect();
-      if (r.height > pr.height + 60 || r.width > pr.width + 2) break;
-      best = el;
-    }
-    return best;
+    return plot;
   }
 
   function measurePlot(ctx) {
@@ -196,6 +190,7 @@
   }
 
   function ensureCssElements(ctx) {
+    if (ctx.bar && !ctx.anchor.contains(ctx.bar)) ctx.bar = null;
     if (!ctx.bar) {
       ctx.bar = document.createElement('div');
       ctx.bar.className = 'raa-bar';
@@ -235,7 +230,6 @@
           return;
         }
         RAA.state.setSource(v);
-        renderAllBars();
       });
 
       ctx.anchor.insertBefore(ctx.bar, ctx.anchor.firstChild);
@@ -259,7 +253,7 @@
   function onLegendClick(ev) {
     var target = ev.target;
     if (!target || !target.closest) return;
-    var anchor = target.closest('[id^="intelligence-index-vs-cost"]');
+    var anchor = target.closest(ANCHOR_SELECTOR);
     if (!anchor) return;
     var btn = target.closest('button');
     if (!btn || !anchor.contains(btn)) return;
@@ -318,9 +312,8 @@
 
   function populateSelect(select) {
     var desired = RAA.state.getSourceId();
-    var mode = RAA.state.getSourceMode();
     var opts = ['<option value="__aa__">Artificial Analysis</option>'];
-    opts.push('<option value="__best__"' + (mode === 'best' ? '' : '') + '>\u2605 Auto-best (cheapest)</option>');
+    opts.push('<option value="__best__">\u2605 Auto-best (cheapest)</option>');
     RAA.state.cache.profiles.forEach(function (p) {
       opts.push('<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>');
     });

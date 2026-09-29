@@ -97,6 +97,9 @@ function makeDoc(ldJsonScripts) {
   anchor.appendChild(plot);
   anchor.rect = { left: 0, top: 0, width: 800, height: 560 };
   doc.body.appendChild(anchor);
+  const release = makeElement('div');
+  release.attrs.id = anchor.attrs.id + '-by-model-release';
+  doc.body.appendChild(release);
 
   doc.documentElement = makeElement('html');
   doc.documentElement.children = [doc.head, doc.body];
@@ -107,7 +110,8 @@ function makeDoc(ldJsonScripts) {
   doc.createElementNS = (ns, t) => makeElement(t);
   doc.querySelectorAll = (sel) => {
     if (sel.indexOf('script[type="application/ld+json"]') !== -1) return ldJsonScripts;
-    if (sel.startsWith('[id^=')) return [anchor];
+    if (sel.startsWith('[id^=')) return [anchor, release];
+    if (sel.startsWith('[id=')) return [anchor, release].filter(e => sel.includes('[id="' + e.attrs.id + '"]'));
     if (sel.startsWith('span')) return [];
     return [];
   };
