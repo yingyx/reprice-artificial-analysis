@@ -496,14 +496,7 @@
           }
         },
         {
-          "match": "glm",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
-          "match": "qwen 3.8 max 0902",
+          "match": "qwen 3.8 max (0902)",
           "rule": {
             "type": "multiplier",
             "value": 0.5
@@ -538,13 +531,6 @@
           }
         },
         {
-          "match": "qwen 3.8",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
           "match": "qwen 3.7 max",
           "rule": {
             "type": "multiplier",
@@ -566,13 +552,6 @@
           }
         },
         {
-          "match": "qwen 3.7",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.303
-          }
-        },
-        {
           "match": "qwen 3.6 max preview",
           "rule": {
             "type": "multiplier",
@@ -584,20 +563,6 @@
           "rule": {
             "type": "multiplier",
             "value": 0.303
-          }
-        },
-        {
-          "match": "qwen 3.6",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
-          "match": "qwen",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
           }
         },
         {
@@ -622,13 +587,6 @@
           }
         },
         {
-          "match": "kimi k2.7",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
           "match": "kimi k2.6",
           "rule": {
             "type": "multiplier",
@@ -637,20 +595,6 @@
         },
         {
           "match": "kimi k2.5",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
-          "match": "kimi k2",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
-          "match": "kimi",
           "rule": {
             "type": "multiplier",
             "value": 0.5
@@ -692,13 +636,6 @@
           }
         },
         {
-          "match": "mimo",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.333
-          }
-        },
-        {
           "match": "deepseek v4.1 flash",
           "rule": {
             "type": "multiplier",
@@ -734,20 +671,6 @@
           }
         },
         {
-          "match": "deepseek v4",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.167
-          }
-        },
-        {
-          "match": "deepseek",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.167
-          }
-        },
-        {
           "match": "claude sonnet 5.5",
           "rule": {
             "type": "multiplier",
@@ -776,13 +699,6 @@
           }
         },
         {
-          "match": "grok",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
           "match": "gpt-6 luna",
           "rule": {
             "type": "multiplier",
@@ -804,13 +720,6 @@
           }
         },
         {
-          "match": "gpt",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.143
-          }
-        },
-        {
           "match": "gemini 3.8 flash",
           "rule": {
             "type": "multiplier",
@@ -819,13 +728,6 @@
         },
         {
           "match": "gemini 3.7 flash",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.25
-          }
-        },
-        {
-          "match": "gemini",
           "rule": {
             "type": "multiplier",
             "value": 0.25
@@ -860,13 +762,6 @@
           }
         },
         {
-          "match": "minimax",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.213
-          }
-        },
-        {
           "match": "muse spark 1.3 contributor",
           "rule": {
             "type": "multiplier",
@@ -895,13 +790,6 @@
           }
         },
         {
-          "match": "muse",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
           "match": "inkling small",
           "rule": {
             "type": "multiplier",
@@ -916,7 +804,7 @@
           }
         },
         {
-          "match": "nemotron",
+          "match": "nemotron 3 ultra",
           "rule": {
             "type": "multiplier",
             "value": 0.5
@@ -944,13 +832,6 @@
           }
         },
         {
-          "match": "step",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.5
-          }
-        },
-        {
           "match": "tencent hy4",
           "rule": {
             "type": "multiplier",
@@ -965,10 +846,10 @@
           }
         },
         {
-          "match": "tencent",
+          "match": "jev",
           "rule": {
             "type": "multiplier",
-            "value": 0.143
+            "value": 0.5
           }
         }
       ],
@@ -977,9 +858,9 @@
           "match": "mimo v2.5 pro",
           "rule": {
             "type": "multiplier",
-            "value": 0.05
+            "value": 0.1
           },
-          "reason": "MiMo V2.5 Pro -99% deal: effective value ~$200 on GOAT plan",
+          "reason": "MiMo V2.5 Pro -99% deal: $20 GOAT allowance ~ $100 of list-price usage (pricing-limits deals card; pricing page effective-usage row ~$100 on GOAT)",
           "startsAt": null,
           "endsAt": null
         },
@@ -1004,8 +885,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-29",
-      "notes": "$10/mo buys $70 of credits (7x base multiplier). Per-model monthly credits from docs: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (ratio 0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code (0.167); $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213, -50% deal); $40 for GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus, Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333, -98% deal); $10 for Claude Sonnet 5.5, MiMo V2.6 Pro UltraSpeed (1.0); $20 for all remaining models (0.5): GPT-5.6 Luna, GPT-6 Luna, Qwen 3.8 Max, Qwen 3.8 Max 0902, Qwen 3.8 Omni Flash, Qwen 3.8 Flash, DeepSeek V4 Pro, DeepSeek V4 Flash Vision exp, DeepSeek V4 Flash Fast, MiMo V2.5 Pro (-99% deal), MiMo V2.6 Pro, MiMo V2.6 Flash, GLM-5.3, GLM-5.3 FlashX, GLM-5.2 Fast, Muse Spark 1.3/1.2, Muse Spark 1.3/1.2 Contributor, Kimi K3, Kimi K2.7 Code HighSpeed, Grok 4.5/4.6/4.7, Inkling/Inkling Small, Step 5 Preview/3.7/3.5 Flash, Nemotron 3 Ultra, Qwen 3.7 Flash, Qwen 3.6 Max Preview, MiniMax M2.7/M2.5, Kimi K2.6/K2.5, GLM-5.1/GLM-5, Tencent Hy4 Preview. Active deals: MiniMax M3 -50% (~$47 eff., ratio 0.213); MiMo V2.5 -98% (~$100 eff., ratio 0.1); MiMo V2.5 Pro -99% (~$200 eff., ratio 0.05). 57 paid + 5 free models on GOAT (62 total). Free models: Ling 3.0 Flash Sante, Laguna S 2.1, Jev (TypeSafe), Space Bunny Alpha, Pixel Canary. Limits: $14/5h, $35/wk, $70/mo. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing.",
+      "asOf": "2026-09-30",
+      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat). Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code (0.167); $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus, Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for all other paid models (0.5), now including Jev, which the plan bills at a $20 allowance. Deals (no end date stated on either page, so endsAt null): MiniMax M3 -50% baked into its $47 GOAT allowance (promo 0.213); MiMo V2.5 -98% ~ $100 effective monthly usage on GOAT per the pricing page effective-usage table (promo 0.1; the pricing-limits deals card phrases the same deal as up to ~$300 at old list price, the pricing page's per-plan figure is used); MiMo V2.5 Pro -99% ~ $100 on GOAT ($20 allowance at deal rates, pricing-limits deals card; the pricing page MiMo row links to this combined deal and shows ~$100 on GOAT) (promo 0.1). GOAT lists 64 models = 59 paid + 5 free. Free models get no pattern and stay at AA list price: Ling 3.1 Flash (added Sep 29), Ling 3.0 Flash Sante, Laguna S 2.1, Space Bunny Alpha, Pixel Canary. Patterns kept although AA does not list the model yet (they activate when AA adds it): Jev, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor, Tencent Hy4 Preview, Tencent Hy3. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) were removed and nemotron narrowed to nemotron 3 ultra so AA models outside the plan are not repriced; every paid plan model keeps a specific pattern. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits. Substring matching means the exact-name patterns glm-5 and glm-5.2 also catch AA labels that merely contain them (GLM 5V Turbo, GLM-5-Turbo, Quasar 438B based on GLM-5.2); dropping them would leave the in-plan GLM-5/GLM-5.2 uncovered, so they stay.",
       "builtin": true
     },
     {
