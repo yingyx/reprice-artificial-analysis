@@ -201,8 +201,13 @@ async function main() {
   assert.strictEqual(ctxA.select.value, 'opencode-go-example', 'select reflects profile');
   assert.ok(ctxA.svg, 'overlay svg created in repriced mode');
   assert.strictEqual(ctxA.wrap.style.display, '', 'overlay visible in repriced mode');
-  assert.strictEqual(ctxA.path.attrs['stroke-dasharray'], '0.1 7', 'Pareto line dotted like AA legend');
-  assert.ok(ctxA.gAxis._innerHTML.indexOf('fill-opacity="0.2"') !== -1, 'MAQ shading visible');
+  assert.strictEqual(ctxA.path.attrs['stroke-dasharray'], '0.1 6', 'Pareto line dotted like AA legend');
+  assert.ok(ctxA.gAxis._innerHTML.indexOf('fill="rgb(144, 238, 144)" fill-opacity="0.25"') !== -1, 'MAQ shading visible');
+  assert.ok(ctxA.gAxis._innerHTML.includes('fill="rgb(235, 235, 235)" fill-opacity="0.25"'), 'native lower-right quadrant shading');
+  Object.values(ctxA.nodes).forEach(g => {
+    assert.strictEqual(g.children[0].attrs.r, '6', 'native point radius survives rerenders');
+    assert.strictEqual(g.children[0].attrs.stroke, 'none', 'native dots have no white outline');
+  });
   assert.ok(ctxA.gAxis._innerHTML.indexOf('$0.05') !== -1, 'exact log cost ticks');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('>Artificial Analysis Intelligence Index<') !== -1, 'y-axis title matches AA');
   assert.ok(ctxA.gAxis._innerHTML.indexOf('<line') === -1, 'no spines/gridlines like AA');
@@ -248,7 +253,8 @@ async function main() {
   const dsFlash = ctxA.dataById['deepseek-v4-1-flash'];
   const dsPromo = (goProfile.promos || []).find(p => p.match === 'deepseek v4.1 flash');
   const dsPromoActive = !!(dsPromo && R.pricing.promoActive(dsPromo, R.pricing.todayStr()));
-  const dsExpected = 2 * (dsPromoActive ? dsPromo.rule.value : 0.667);
+  // The scheduled preset update made the former promotional rate permanent.
+  const dsExpected = 2 * (dsPromoActive ? dsPromo.rule.value : 0.167);
   assert.ok(Math.abs(dsFlash.repricedCost - dsExpected) < 1e-9,
     'promo-aware DeepSeek V4.1 Flash price, got ' + dsFlash.repricedCost);
   assert.strictEqual(dsFlash.estimate, 'full-quota', 'subscription price labelled as full-quota estimate');
@@ -351,6 +357,42 @@ async function main() {
   ctx.location.search = '';
   R.extract.extractModelsDetailed = originalExtract;
 
+  // Reuse a catalogue response before requesting another large page. Keep
+  // the native chart until all selected models are resolved or failed.
+  const pendingDetails = {};
+  const originalDetailExtract = R.extract.extractModelDetailsFromHtml;
+  ctx.fetch = url => new Promise((resolve, reject) => {
+    pendingDetails[url.split('/').pop()] = { resolve, reject };
+  });
+  R.extract.extractModelDetailsFromHtml = (html, wanted) => html.split(',').filter(id => wanted.includes(id)).map(id => ({
+    id, label: id, aaCost: id === 'batch-unavailable' ? null : 1, intelligence: 50, provider: 'OpenAI'
+  }));
+  ctx.location.search = '?models=batch-a,batch-b,batch-c,batch-failed,batch-unavailable';
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxA.wrap.style.display, 'none', 'keep original chart while details are pending');
+  await new Promise(resolve => setTimeout(resolve, 450));
+  assert.strictEqual(Object.keys(pendingDetails).length, 1, 'only one large page fetches at a time');
+  pendingDetails['batch-a'].resolve({ ok: true, text: async () => 'batch-a,batch-b,batch-unavailable,unrelated' });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxA.wrap.style.display, 'none', 'first response does not reveal a partial overlay');
+  assert.ok(!pendingDetails['batch-b'], 'shared response avoids a redundant model request');
+  assert.ok(pendingDetails['batch-c'], 'queue continues for a model absent from the first response');
+  assert.ok(!R.registry.all().some(m => m.id === 'unrelated'), 'unrequested catalogue data never enters registry');
+  R.state.setSource('__aa__');
+  R.state.setSource('__best__');
+  assert.strictEqual(ctxA.wrap.style.display, 'none', 'switching sources does not bypass pending batch');
+  pendingDetails['batch-c'].resolve({ ok: true, text: async () => 'batch-c' });
+  await new Promise(resolve => setTimeout(resolve, 10));
+  pendingDetails['batch-failed'].reject(new Error('offline'));
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.strictEqual(ctxA.wrap.style.display, '', 'failed request cannot leave the chart stuck loading');
+  assert.ok(!pendingDetails['batch-unavailable'], 'explicit unavailable values do not trigger another catalogue request');
+  assert.deepStrictEqual(Object.keys(ctxA.dataById).sort(), ['batch-a', 'batch-b', 'batch-c'], 'successful results appear together');
+  delete ctx.fetch;
+  ctx.location.search = '';
+  R.extract.extractModelDetailsFromHtml = originalDetailExtract;
+
   // Release variants share a group, never a cost or identity. Exercise the same
   // chunk boundaries and nested evaluation objects used by the live Flight data.
   const variant = (id, cost, effort) => ({ id: 'uuid-' + id, slug: id, name: id,
@@ -366,6 +408,11 @@ async function main() {
   assert.strictEqual(releaseData.models.length, 2, 'release variants do not collapse');
   assert.strictEqual(releaseData.models[1].aaCost, 3, 'nested evaluations do not corrupt variant cost');
   assert.strictEqual(releaseData.models[0].releaseId, 'claude-test');
+  const details = R.extract.extractModelDetailsFromHtml(html, ['claude-high', 'missing']);
+  assert.strictEqual(details.length, 1, 'detail catalogue only returns requested models');
+  assert.strictEqual(details[0].id, 'claude-high');
+  assert.strictEqual(details[0].aaCost, 3, 'detail parser preserves each variant cost');
+  assert.strictEqual(details[0].intelligence, 42, 'nested evaluation scores are not model scores');
   const releasePlot = makeElement('div');
   releasePlot.className = 'recharts-responsive-container';
   releasePlot.rect = plot.rect;
@@ -423,19 +470,17 @@ async function main() {
 
   // ---- coding plan preset library sanity ----
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  const expected = {
-    'opencode-go-example': 0.167,
-    'codex-plus': 0.26, 'codex-pro-5x': 0.26, 'codex-pro-20x': 0.13,
-    'claude-pro': 0.03, 'claude-max-5x': 0.03, 'claude-max-20x': 0.015,
-    'glm-coding-lite': 0.05, 'glm-coding-pro': 0.04, 'glm-coding-max': 0.035,
-    'command-code-goat': 0.5, 'kimi-allegretto': 0.005
-  };
-  for (const [id, ratio] of Object.entries(expected)) {
+  // Scheduled data maintenance may legitimately change every estimate.
+  // Verify that state preserves the bundled values instead of pinning old prices.
+  for (const preset of R.SOURCES.filter(s => s.kind === 'subscription')) {
+    const { id, manualRatio: ratio } = preset;
     const p = R.state.cache.profiles.find(q => q.id === id);
     assert.ok(p, `preset source exists: ${id}`);
     assert.strictEqual(p.kind, 'subscription', `${id} kind subscription`);
     assert.ok(R.pricing.computeSubscriptionRatio(p) != null, `${id} ratio computable`);
+    assert.ok(Number.isFinite(ratio) && ratio > 0 && ratio <= 1, `${id} ratio in supported range`);
     assert.ok(Math.abs(R.pricing.computeSubscriptionRatio(p) - ratio) < 1e-9, `${id} ratio = x${ratio}`);
+    assert.deepStrictEqual(JSON.parse(JSON.stringify(p.nameIncludes)), JSON.parse(JSON.stringify(preset.nameIncludes)), `${id} model-specific rules preserved`);
     assert.ok(p.asOf && DATE_RE.test(p.asOf), `${id} asOf date present`);
   }
 

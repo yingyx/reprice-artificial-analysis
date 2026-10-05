@@ -288,6 +288,16 @@
     return extractReleaseData(flightChunksFromString(String(html || '')));
   }
 
+  function extractModelDetailsFromHtml(html, requestedIds) {
+    // A detail page can contain the full model catalogue. Parse its complete
+    // JSON records once, without the two legacy whole-page regex scans.
+    var models = extractReleaseDataFromHtml(html).models;
+    if (!models.length) models = extractFlightModelsFromHtml(html);
+    var wanted = Object.create(null);
+    requestedIds.forEach(function (id) { wanted[id] = true; });
+    return models.filter(function (m) { return wanted[m.id]; });
+  }
+
   function extractModelsDetailed(doc) {
     doc = doc || document;
     var serialized = flightText(doc);
@@ -346,6 +356,7 @@
     extractFromLdJson: extractFromLdJson,
     extractFlightModels: extractFlightModels,
     extractFlightModelsFromHtml: extractFlightModelsFromHtml,
+    extractModelDetailsFromHtml: extractModelDetailsFromHtml,
     extractIndexVersionFromText: extractIndexVersionFromText,
     extractIndexVersion: extractIndexVersion,
     extractModelsDetailed: extractModelsDetailed,

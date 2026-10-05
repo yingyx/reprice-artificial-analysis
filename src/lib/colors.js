@@ -11,7 +11,8 @@
     ['openai', 'OpenAI'], ['gpt-', 'OpenAI'], ['chatgpt', 'OpenAI'], ['o3', 'OpenAI'], ['o4', 'OpenAI'],
     ['claude', 'Anthropic'], ['anthropic', 'Anthropic'],
     ['gemini', 'Google'], ['gemma', 'Google'], ['google', 'Google'], ['palm', 'Google'],
-    ['llama', 'Meta'], [' meta ', 'Meta'],
+    ['llama', 'Meta'], [' meta ', 'Meta'], ['muse', 'Meta'],
+    ['mimo', 'Xiaomi'], ['step', 'StepFun'],
     ['deepseek', 'DeepSeek'],
     ['qwen', 'Alibaba'], ['alibaba', 'Alibaba'], ['qwq', 'Alibaba'],
     ['glm', 'Z AI'], ['zhipu', 'Z AI'], ['z-ai', 'Z AI'],
@@ -63,6 +64,17 @@
     return m ? normalizeCssColor(m[1]) : null;
   }
 
+  function legendEntry(button) {
+    var swatches = button.querySelectorAll('svg [fill], span[style*="background-color"]');
+    for (var i = 0; i < swatches.length; i++) {
+      var swatch = swatches[i];
+      var color = normalizeCssColor(swatch.getAttribute('fill')) || extractBgColor(swatch.getAttribute('style'));
+      var name = (button.textContent || '').trim();
+      if (color && name && name.length <= 60) return { name: name, color: color };
+    }
+    return null;
+  }
+
   function harvestLegendColors(doc) {
     doc = doc || document;
     var map = {};
@@ -77,6 +89,11 @@
         var text = (nameEl.textContent || '').trim();
         if (!text || text.length > 60) continue;
         map[norm(text)] = color;
+      }
+      var buttons = doc.querySelectorAll('button');
+      for (var j = 0; j < buttons.length; j++) {
+        var entry = legendEntry(buttons[j]);
+        if (entry) map[norm(entry.name)] = entry.color;
       }
     } catch (e) { /* ignore */ }
     return map;
@@ -101,10 +118,12 @@
     }
 
     function colorFor(label, id, providerHint) {
-      var key = String(id || label);
-      if (assigned[key]) return assigned[key];
       var provider = providerHint || inferProviderName(label, id);
       var hex = provider ? providerHex(provider) : null;
+      // A late legend or provider hint must replace an earlier fallback.
+      if (hex) return hex;
+      var key = String(provider || id || label);
+      if (assigned[key]) return assigned[key];
       if (!hex) {
         var h = 0;
         for (var j = 0; j < key.length; j++) {
@@ -122,6 +141,7 @@
       _internals: {
         inferProviderName: inferProviderName,
         harvestLegendColors: harvestLegendColors,
+        legendEntry: legendEntry,
         normalizeCssColor: normalizeCssColor,
         extractBgColor: extractBgColor,
         FALLBACK_PALETTE: FALLBACK_PALETTE

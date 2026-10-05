@@ -31,6 +31,27 @@ const pareto = load('pareto.js').pareto;
 
 const colors = load('colors.js').colors._internals;
 
+// The live AA legend uses SVG fills; early fallbacks must not remain cached.
+{
+  const service = load('colors.js').colors;
+  const button = (name, color) => ({
+    textContent: name,
+    querySelectorAll: () => [{ getAttribute: key => key === 'fill' ? color : null }]
+  });
+  const legend = entries => ({ querySelectorAll: selector => selector === 'button' ? entries : [] });
+  service.colorFor('Claude Opus 5.5', 'opus');
+  service.refresh(legend([button('Anthropic', '#cc785c'), button('OpenAI', '#1f1f1f')]));
+  assert.strictEqual(service.colorFor('Claude Opus 5.5', 'opus'), 'rgb(204,120,92)');
+  assert.strictEqual(service.colorFor('Claude Sonnet 5.5', 'sonnet'), 'rgb(204,120,92)');
+  service.colorFor('Unknown model', 'new-model');
+  assert.strictEqual(service.colorFor('Unknown model', 'new-model', 'OpenAI'), 'rgb(31,31,31)');
+  service.refresh(legend([button('Anthropic', '#123456')]));
+  assert.strictEqual(service.colorFor('Claude Opus 5.5', 'opus'), 'rgb(18,52,86)');
+  assert.strictEqual(colors.inferProviderName('Muse Spark 1.3', 'muse-spark'), 'Meta');
+  assert.strictEqual(colors.inferProviderName('MiMo-V2.6-Pro', 'mimo-v2-6-pro'), 'Xiaomi');
+  assert.strictEqual(colors.inferProviderName('Step 5 Preview', 'step-5'), 'StepFun');
+}
+
 // registry (needs storage.js; registry state is per-context)
 function loadRegistry() {
   const store = {};

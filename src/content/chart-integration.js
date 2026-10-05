@@ -25,8 +25,7 @@
     '.raa-panelbtn:hover{background:#ede7fb}',
     '.raa-pt{transition:transform .55s cubic-bezier(.22,.9,.24,1);will-change:transform;cursor:default}',
     '.raa-pt.raa-noanim{transition:none}',
-    '.raa-pt.raa-cached circle.body{opacity:.55}',
-    '.raa-pt:hover circle.body{stroke-width:1.6;filter:brightness(.92)}',
+    '.raa-pt:hover circle.body{filter:brightness(.92)}',
     '.raa-tip{position:absolute;pointer-events:none;background:#fff;border:1px solid #e5e7eb;border-radius:8px;',
     'box-shadow:0 6px 20px rgba(0,0,0,.12);padding:8px 10px;font-size:12px;color:#26272b;display:none;z-index:50;',
     'line-height:1.55;min-width:190px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}',
@@ -268,18 +267,9 @@
     if (!anchor) return;
     var btn = target.closest('button');
     if (!btn || !anchor.contains(btn)) return;
-    var sws = btn.querySelectorAll('span[style*="background-color"]');
-    var sw = null, m = null;
-    for (var i = 0; i < sws.length; i++) {
-      m = RAA.colors._internals.extractBgColor(sws[i].getAttribute('style'));
-      if (m) { sw = sws[i]; break; }
-    }
-    if (!sw || !m) return;
-    var nameEl = sw.nextElementSibling;
-    var name = nameEl ? (nameEl.textContent || '').trim() : '';
-    if (!name) {
-      name = (btn.textContent || '').trim();
-    }
+    var entry = RAA.colors._internals.legendEntry(btn);
+    if (!entry) return;
+    var name = entry.name, m = entry.color;
     if (!name || name === 'Most attractive quadrant' || name === 'Pareto line') {
       return;
     }
@@ -305,7 +295,7 @@
     if (!missing.length || typeof root.fetch !== 'function') return;
     missing.forEach(function (id) { fetchState[id] = 'pending'; });
     setTimeout(function () {
-      missing.forEach(fetchModelDetail);
+      fetchModelBatch(missing);
     }, 200);
   }
 
@@ -383,7 +373,7 @@
       ctx.path.setAttribute('fill', 'none');
       ctx.path.setAttribute('stroke', '#565a61');
       ctx.path.setAttribute('stroke-width', '2.5');
-      ctx.path.setAttribute('stroke-dasharray', '0.1 7');
+      ctx.path.setAttribute('stroke-dasharray', '0.1 6');
       ctx.path.setAttribute('stroke-linecap', 'round');
       ctx.gPts = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       ctx.gLbl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -404,7 +394,7 @@
   function layoutFor(ctx, priced) {
     var W = ctx.lastW, H = ctx.lastH;
     var legendH = arguments.length > 2 ? arguments[2] : 0;
-    var L = 48, Rp = 24, T = legendH + 12, B = 46;
+    var L = 65, Rp = 5, T = legendH + 5, B = 53;
     var iw = W - L - Rp, ih = H - T - B;
 
     var iqMin = Infinity, iqMax = -Infinity, cMin = Infinity, cMax = -Infinity;
@@ -434,7 +424,7 @@
       xLo = 0;
       xHi = cMax * 1.15 || 1;
     }
-    var yLo = Math.floor(iqMin - 3), yHi = Math.ceil(iqMax + 3);
+    var yLo = Math.min(0, Math.floor(iqMin / 10) * 10), yHi = Math.ceil((iqMax + 3) / 10) * 10;
 
     function sx(c) {
       if (log && c <= 0) return L + 2;
@@ -472,9 +462,12 @@
     var yMid = (lay.yLo + lay.yHi) / 2;
     var qx = lay.sx(xMid), qy = lay.sy(yMid);
     s += '<rect x="' + lay.L + '" y="' + lay.T + '" width="' + (qx - lay.L).toFixed(1) +
-      '" height="' + (qy - lay.T).toFixed(1) + '" fill="#34A853" fill-opacity="0.2"/>';
+      '" height="' + (qy - lay.T).toFixed(1) + '" fill="rgb(144, 238, 144)" fill-opacity="0.25"/>';
+    s += '<rect x="' + qx.toFixed(1) + '" y="' + qy.toFixed(1) + '" width="' +
+      (lay.L + lay.iw - qx).toFixed(1) + '" height="' + (lay.T + lay.ih - qy).toFixed(1) +
+      '" fill="rgb(235, 235, 235)" fill-opacity="0.25"/>';
 
-    var yStep = niceStep(lay.yHi - lay.yLo, 4);
+    var yStep = niceStep(lay.yHi - lay.yLo, 7);
     var yStart = Math.ceil(lay.yLo / yStep) * yStep;
     for (var yv = yStart; yv <= lay.yHi; yv += yStep) gridY.push(yv);
 
@@ -494,9 +487,9 @@
 
     gridY.forEach(function (yv) {
       var yy = lay.sy(yv);
-      if (yy > lay.T + 1 && yy < lay.T + lay.ih - 1) {
+      if (yy >= lay.T && yy <= lay.T + lay.ih) {
         s += '<text x="' + (lay.L - 9) + '" y="' + (yy + 3.5).toFixed(1) +
-          '" font-size="11" fill="#737373" text-anchor="end">' + yv + '</text>';
+          '" font-size="11" fill="#666" text-anchor="end">' + yv + '</text>';
       }
     });
     var lastTickRight = -Infinity;
@@ -508,7 +501,7 @@
         if (xx - halfWidth < lastTickRight + 10) return;
         lastTickRight = xx + halfWidth;
         s += '<text x="' + xx.toFixed(1) + '" y="' + (lay.T + lay.ih + 18) +
-          '" font-size="11" fill="#737373" text-anchor="middle">' + esc(label) + '</text>';
+          '" font-size="11" fill="#666" text-anchor="middle">' + esc(label) + '</text>';
       }
     });
 
@@ -516,9 +509,9 @@
     var xlabel = (lay.log ? 'Cost per Task (USD, Log Scale)' : 'Cost per Task (USD)') +
       (repriced ? (RAA.state.getSourceMode() === 'best' ? ' \u00B7 Repriced (Auto-best)' : ' \u00B7 Repriced') : '');
     s += '<text x="' + (lay.L + lay.iw / 2).toFixed(1) + '" y="' + (lay.H - 10) +
-      '" font-size="12" fill="#565a61" text-anchor="middle">' + esc(xlabel) + '</text>';
-    s += '<text x="14" y="' + (lay.T + lay.ih / 2).toFixed(1) + '" font-size="12" fill="#565a61" text-anchor="middle"' +
-      ' transform="rotate(-90 14 ' + (lay.T + lay.ih / 2).toFixed(1) + ')">Artificial Analysis Intelligence Index</text>';
+      '" font-size="13" fill="#000" text-anchor="middle">' + esc(xlabel) + '</text>';
+    s += '<text x="10" y="' + (lay.T + lay.ih / 2).toFixed(1) + '" font-size="13" fill="#000" text-anchor="middle"' +
+      ' transform="rotate(-90 10 ' + (lay.T + lay.ih / 2).toFixed(1) + ')">Artificial Analysis Intelligence Index</text>';
     ctx.gAxis.innerHTML = s;
   }
 
@@ -528,10 +521,9 @@
     g.setAttribute('class', 'raa-pt raa-noanim' + (p.m._cached ? ' raa-cached' : ''));
     var circle = document.createElementNS(NS, 'circle');
     circle.setAttribute('class', 'body');
-    circle.setAttribute('r', '4.5');
+    circle.setAttribute('r', '6');
     circle.setAttribute('fill', color);
-    circle.setAttribute('stroke', '#ffffff');
-    circle.setAttribute('stroke-width', '1');
+    circle.setAttribute('stroke', 'none');
     g.appendChild(circle);
     ctx.gPts.appendChild(g);
     bindTip(ctx, g, p.m.id);
@@ -762,25 +754,70 @@
   }
 
   function fetchModelDetail(id) {
-    root.fetch('/models/' + encodeURIComponent(id)).then(function (r) {
+    var controller = typeof root.AbortController === 'function' ? new root.AbortController() : null;
+    var timer;
+    var timeout = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        if (controller) controller.abort();
+        reject(new Error('Model detail request timed out'));
+      }, 10000);
+    });
+    var request = Promise.resolve().then(function () {
+      return root.fetch('/models/' + encodeURIComponent(id), controller ? { signal: controller.signal } : undefined);
+    }).then(function (r) {
       return r.ok ? r.text() : null;
-    }).then(function (html) {
+    });
+    return Promise.race([request, timeout]).then(function (html) {
       if (!html) { fetchState[id] = 'failed'; fetchFailAt[id] = Date.now(); return; }
-      var models = RAA.extract.extractFlightModelsFromHtml(html);
-      var target = null;
-      models.forEach(function (mm) { if (mm.id === id) target = mm; });
-      if (target && isNum(target.aaCost) && isNum(target.intelligence)) {
-        RAA.registry.upsertModels([target], RAA.extract.extractIndexVersionFromText(html));
-        fetchState[id] = 'done';
-        renderAllBars();
-      } else {
+      var wanted = Object.keys(fetchState).filter(function (key) { return fetchState[key] === 'pending'; });
+      var models = RAA.extract.extractModelDetailsFromHtml(html, wanted).filter(function (m) {
+        if (isNum(m.aaCost) && isNum(m.intelligence)) return true;
+        // An explicit unavailable value in this catalogue is not a reason to
+        // download the same catalogue again from every other model page.
+        fetchState[m.id] = 'failed';
+        fetchFailAt[m.id] = Date.now();
+        return false;
+      });
+      // Reuse this page for other queued models, but never overwrite unrelated
+      // registry entries just because the detail page happens to list them.
+      if (models.length) {
+        RAA.registry.upsertModels(models, RAA.extract.extractIndexVersionFromText(html));
+        models.forEach(function (m) { fetchState[m.id] = 'done'; });
+      }
+      if (fetchState[id] !== 'done') {
         fetchState[id] = 'failed';
         fetchFailAt[id] = Date.now();
       }
     }).catch(function () {
       fetchState[id] = 'failed';
       fetchFailAt[id] = Date.now();
+    }).then(function () {
+      clearTimeout(timer);
     });
+  }
+
+  var detailQueue = [];
+  var detailBusy = false;
+  function fetchModelBatch(ids) {
+    ids.forEach(function (id) {
+      if (detailQueue.indexOf(id) === -1) detailQueue.push(id);
+    });
+    drainDetailQueue();
+  }
+
+  function drainDetailQueue() {
+    if (detailBusy) return;
+    while (detailQueue.length && fetchState[detailQueue[0]] !== 'pending') detailQueue.shift();
+    if (!detailQueue.length) { renderAllBars(); return; }
+    var id = detailQueue.shift();
+    detailBusy = true;
+    // Yield between pages and keep only one large response/parse in flight.
+    setTimeout(function () {
+      fetchModelDetail(id).then(function () {
+        detailBusy = false;
+        drainDetailQueue();
+      });
+    }, 0);
   }
 
   function maybeFetchMissing(bundle) {
@@ -805,7 +842,7 @@
     if (!missing.length) return;
     missing.forEach(function (id) { fetchState[id] = 'pending'; });
     setTimeout(function () {
-      missing.forEach(fetchModelDetail);
+      fetchModelBatch(missing);
     }, 400);
   }
 
@@ -816,7 +853,7 @@
       (nativeDots == null ? '?' : nativeDots) + '|' +
       (highlight ? highlight.name : '') + '|';
     return head + bundle.priced.map(function (m) {
-      return JSON.stringify(m);
+      return JSON.stringify(m) + RAA.colors.colorFor(m.label, m.id, m.provider);
     }).join(';');
   }
 
@@ -863,7 +900,6 @@
   }
 
   function renderOverlay(ctx, bundle) {
-    RAA.colors.refresh(document);
     var priced = bundle.priced;
     ctx.profile = RAA.state.activePricingProfile() || aaLikeProfile('Artificial Analysis');
     ctx.profileName = bundle.profileName;
@@ -946,7 +982,7 @@
         if (body) body.setAttribute('fill', RAA.colors.colorFor(m.label, m.id, m.provider));
       }
       g.setAttribute('opacity', dim ? '0.15' : '1');
-      if (body) body.setAttribute('r', dim ? '4.5' : '5');
+      if (body) body.setAttribute('r', '6');
     });
     Object.keys(ctx.nodes).forEach(function (id) {
       if (!seen[id]) {
@@ -987,7 +1023,7 @@
       labelCanvas = canvas.getContext ? canvas.getContext('2d') : null;
     }
     if (!labelCanvas) return text.length * 6.1;
-    labelCanvas.font = '11px Arial, sans-serif';
+    labelCanvas.font = '11px suisseIntl, "suisseIntl Fallback", ui-sans-serif, system-ui, sans-serif';
     return labelCanvas.measureText(text).width;
   }
 
@@ -1075,7 +1111,7 @@
           '" stroke="rgba(0,0,0,0.2)" stroke-width="1" opacity="' + opacity + '"/>';
       }
       markup += '<text data-model-id="' + esc(m.id) + '" x="' + best.x.toFixed(1) + '" y="' +
-        (best.y + 9).toFixed(1) + '" font-family="Arial, sans-serif" font-size="11" font-weight="400"' +
+        (best.y + 9).toFixed(1) + '" font-size="11" font-weight="400"' +
         ' fill="rgba(0,0,0,0.75)" stroke="white" stroke-width="3" stroke-linejoin="round" paint-order="stroke"' +
         ' opacity="' + opacity + '">' + esc(text) + '</text>';
     });
@@ -1105,9 +1141,11 @@
     }
     var bundle = computePriced(ctx);
     if (!ctx.isRelease) maybeFetchMissing(bundle);
-    if (bundle.loading) {
+    var pending = !ctx.isRelease && (bundle.selectedIds || []).some(function (id) { return fetchState[id] === 'pending'; });
+    if (bundle.loading || pending) {
       if (ctx.wrap) ctx.wrap.style.display = 'none';
-      ctx.prov.textContent = 'Release variants unavailable or loading · showing original AA chart';
+      ctx.prov.textContent = ctx.isRelease ? 'Release variants unavailable or loading · showing original AA chart' :
+        'Loading model details · showing original AA chart';
       ctx.prov.style.display = '';
       ctx._provLabel = null;
       ctx.lastSig = '';
@@ -1116,6 +1154,7 @@
     // refresh the badge on every scan: at page launch the native chart and the
     // async model-detail fetches land late, so the a/b counts must self-update
     updateProv(ctx, bundle, countNativeDots(ctx.anchor));
+    RAA.colors.refresh(ctx.anchor);
     var sig = dataSig(bundle, countNativeDots(ctx.anchor), box);
     if (!ctx.svg || sig !== ctx.lastSig) {
       ctx.lastSig = sig;
@@ -1171,7 +1210,7 @@
     });
     mo.observe(document.documentElement, {
       childList: true, subtree: true, characterData: true,
-      attributes: true, attributeFilter: ['data-chart-item-id', 'opacity', 'aria-selected', 'aria-checked']
+      attributes: true, attributeFilter: ['data-chart-item-id', 'opacity', 'fill', 'aria-selected', 'aria-checked']
     });
     window.addEventListener('popstate', function () { scheduleScan(100); });
   }
