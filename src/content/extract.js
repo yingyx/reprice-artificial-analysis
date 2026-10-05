@@ -112,7 +112,8 @@
     while ((m = re.exec(raw))) {
       try {
         var s = JSON.parse(m[1]);
-        if (typeof s === 'string' && s.length > 50) parts.push(s);
+        // Flight chunk boundaries are arbitrary, including short closing tails.
+        if (typeof s === 'string') parts.push(s);
       } catch (e) { }
     }
     return parts.join('');
@@ -252,18 +253,81 @@
   }
 
   var detailedCache = new WeakMap();
+  function flightRecords(text) {
+    var records = Object.create(null), order = [];
+    String(text || '').split('\n').forEach(function (line) {
+      var colon = line.indexOf(':');
+      if (colon < 0) return;
+      try {
+        var id = line.slice(0, colon);
+        records[id] = JSON.parse(line.slice(colon + 1));
+        order.push(id);
+      } catch (e) { }
+    });
+    function dereference(value, seen) {
+      if (typeof value !== 'string' || !/^\$[\da-f]+(?::[^\s]+)*$/i.test(value)) return value;
+      if (seen[value]) return value;
+      seen[value] = true;
+      var path = value.slice(1).split(':'), target = records[path.shift()];
+      for (var i = 0; i < path.length && target != null; i++) {
+        target = dereference(target, seen);
+        target = Array.isArray(target) && path[i] === 'props' ? target[3] : target[path[i]];
+      }
+      return target === undefined ? value : dereference(target, seen);
+    }
+    var copies = new WeakMap();
+    function expand(value) {
+      value = dereference(value, Object.create(null));
+      if (!value || typeof value !== 'object') return value;
+      if (copies.has(value)) return copies.get(value);
+      var copy = Array.isArray(value) ? [] : Object.create(null);
+      copies.set(value, copy);
+      Object.keys(value).forEach(function (key) { copy[key] = expand(value[key]); });
+      return copy;
+    }
+    return order.map(function (id) { return expand(records[id]); });
+  }
+
   // Parse complete Flight records instead of matching across nested model objects.
   // Release variants keep their own slug, UUID and cost; the release is only a group.
   function extractReleaseData(text) {
-    var models = Object.create(null), releases = Object.create(null);
+    var models = Object.create(null), releases = Object.create(null), charts = Object.create(null);
+    var visited = new WeakSet();
     function visit(value) {
       if (!value || typeof value !== 'object') return;
+      if (visited.has(value)) return;
+      visited.add(value);
+      var codingRows = Array.isArray(value.benchmarkRows) ? value.benchmarkRows : value.rows;
+      if (Array.isArray(codingRows) && codingRows.some(function (r) { return r && r.agentName && r.display && r.mean && num(r.indexScore); }) &&
+          (!charts.coding || codingRows.length > charts.coding.length)) {
+        // The dedicated agents page also carries a smaller highlights table.
+        // Its benchmarkRows catalogue, not that table, backs the scatter plot.
+        charts.coding = codingRows.filter(function (r) { return r && r.id && r.display && r.mean; }).map(function (r) {
+          var creators = r.modelCreators || [];
+          var label = r.display.model || '';
+          if (creators.length === 1 && creators[0].slug === 'anthropic' && !/^Claude\b/i.test(label)) label = 'Claude ' + label;
+          return { id: r.id, chartId: r.id, label: r.display.agent + ' - ' + r.display.model,
+            pricingLabel: label, intelligence: num(r.indexScore) ? r.indexScore * 100 : null,
+            aaCost: r.mean.costUsd, provider: creators.map(function (c) { return c.name; }).join(' + '),
+            pricingUnsupported: creators.length !== 1 || /\+/.test(label),
+            pricingNote: creators.length !== 1 || /\+/.test(label) ? 'Mixed-model cost split unavailable; AA price retained' : null };
+        });
+      }
+      if (typeof value.evalSlug === 'string' && Array.isArray(value.models)) {
+        var scale = value.evalSlug === 'artificial-analysis-cyber-index' ? 1 : 100;
+        charts[value.evalSlug] = value.models.filter(function (m) { return m && m.slug && m.id && 'costPerTask' in m; }).map(function (m) {
+          return { id: m.slug, chartId: m.id, label: m.shortName || m.name,
+            intelligence: num(m.score) ? m.score * scale : null, aaCost: m.costPerTask, provider: m.creatorName };
+        });
+      }
       if (!Array.isArray(value) && SLUG_RE.test(value.slug || '') && value.name) {
         if (value.id && value.release && value.release.slug) {
           var cost = value.intelligenceIndexCostPerTask;
+          var prev = models[value.slug];
           models[value.slug] = {
             id: value.slug, chartId: value.id, label: value.shortName || value.name,
-            intelligence: value.intelligenceIndex, aaCost: cost && cost.cost ? cost.cost.total : null,
+            intelligence: 'intelligenceIndex' in value ? value.intelligenceIndex : (prev ? prev.intelligence : null),
+            aaCost: 'intelligenceIndexCostPerTask' in value ? (cost && cost.cost ? cost.cost.total : null) : (prev ? prev.aaCost : null),
             provider: value.creator && value.creator.name,
             releaseId: value.release.slug, releaseLabel: value.release.name,
             effort: value.effort && value.effort.level
@@ -275,13 +339,9 @@
       }
       Object.keys(value).forEach(function (key) { visit(value[key]); });
     }
-    String(text || '').split('\n').forEach(function (line) {
-      var colon = line.indexOf(':');
-      if (colon < 0) return;
-      try { visit(JSON.parse(line.slice(colon + 1))); } catch (e) { }
-    });
+    flightRecords(text).forEach(visit);
     return { models: Object.keys(models).map(function (id) { return models[id]; }),
-      releases: Object.keys(releases).map(function (id) { return releases[id]; }) };
+      releases: Object.keys(releases).map(function (id) { return releases[id]; }), charts: charts };
   }
 
   function extractReleaseDataFromHtml(html) {
@@ -305,9 +365,11 @@
     var cached = detailedCache.get(doc);
     if (cached && cached.serialized === serialized && ldTexts.length === cached.ldTexts.length &&
       ldTexts.every(function (t, i) { return t === cached.ldTexts[i]; })) return cached.result;
+    var releaseData = extractReleaseData(serialized);
     var flight = [];
     try {
-      flight = extractFlightModels(doc);
+      // The structured catalogue is authoritative and much cheaper to parse.
+      flight = releaseData.models.length ? releaseData.models : extractFlightModels(doc);
     } catch (e) {
       flight = [];
     }
@@ -325,16 +387,17 @@
       models = mergeModelLists(ldjson, flight);
       source = ldjson.length ? 'ldjson' : (flight.length ? 'flight' : 'none');
     }
-    var releaseData = extractReleaseData(serialized);
     models = mergeModelLists(releaseData.models, models);
     var withCost = models.filter(function (m) { return num(m.aaCost); }).length;
     var chartIds = Object.create(null);
     var pairs = /"id":"([^"\\]+)","slug":"([a-z0-9._-]+)"/g;
     var pair;
     while ((pair = pairs.exec(serialized))) chartIds[pair[1]] = pair[2];
+    releaseData.models.forEach(function (m) { chartIds[m.chartId] = m.id; });
     var result = {
       models: models,
       releaseData: releaseData,
+      charts: releaseData.charts,
       chartIds: chartIds,
       source: source,
       indexVersion: extractIndexVersion(doc),
@@ -348,8 +411,18 @@
     return extractModelsDetailed(doc).models;
   }
 
+  function extractPageFromHtml(html) {
+    var ld = [], match;
+    var re = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+    while ((match = re.exec(html))) ld.push({ textContent: match[1] });
+    return extractModelsDetailed({ querySelectorAll: function (selector) {
+      return selector === 'script[type="application/ld+json"]' ? ld : [{ textContent: html }];
+    } });
+  }
+
   root.RepriceAA = root.RepriceAA || {};
   root.RepriceAA.extract = {
+    extractPageFromHtml: extractPageFromHtml,
     extractReleaseDataFromHtml: extractReleaseDataFromHtml,
     parseLdJsonDatasets: parseLdJsonDatasets,
     pickBestDataset: pickBestDataset,
