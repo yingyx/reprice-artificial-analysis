@@ -457,7 +457,7 @@
           "match": "glm-5.3 flash",
           "rule": {
             "type": "multiplier",
-            "value": 0.25
+            "value": 0.167
           }
         },
         {
@@ -855,6 +855,16 @@
       ],
       "promos": [
         {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          },
+          "reason": "Kimi K3 boosted allowance: $60/mo on GOAT (base $20) through Oct 7, 2026 - plan table \"$20$60through Oct 7th\", pricing-limits#kimi-k3-boosted-credits \"for one week, through October 7, 2026\"; endsAt from the stated date",
+          "startsAt": null,
+          "endsAt": "2026-10-07"
+        },
+        {
           "match": "mimo v2.5 pro",
           "rule": {
             "type": "multiplier",
@@ -885,8 +895,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-09-30",
-      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat). Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code (0.167); $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for GLM-5.3 Flash, Gemini 3.8 Flash, Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus, Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for all other paid models (0.5), now including Jev, which the plan bills at a $20 allowance. Deals (no end date stated on either page, so endsAt null): MiniMax M3 -50% baked into its $47 GOAT allowance (promo 0.213); MiMo V2.5 -98% ~ $100 effective monthly usage on GOAT per the pricing page effective-usage table (promo 0.1; the pricing-limits deals card phrases the same deal as up to ~$300 at old list price, the pricing page's per-plan figure is used); MiMo V2.5 Pro -99% ~ $100 on GOAT ($20 allowance at deal rates, pricing-limits deals card; the pricing page MiMo row links to this combined deal and shows ~$100 on GOAT) (promo 0.1). GOAT lists 64 models = 59 paid + 5 free. Free models get no pattern and stay at AA list price: Ling 3.1 Flash (added Sep 29), Ling 3.0 Flash Sante, Laguna S 2.1, Space Bunny Alpha, Pixel Canary. Patterns kept although AA does not list the model yet (they activate when AA adds it): Jev, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor, Tencent Hy4 Preview, Tencent Hy3. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) were removed and nemotron narrowed to nemotron 3 ultra so AA models outside the plan are not repriced; every paid plan model keeps a specific pattern. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits. Substring matching means the exact-name patterns glm-5 and glm-5.2 also catch AA labels that merely contain them (GLM 5V Turbo, GLM-5-Turbo, Quasar 438B based on GLM-5.2); dropping them would leave the in-plan GLM-5/GLM-5.2 uncovered, so they stay.",
+      "asOf": "2026-10-05",
+      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat); manualRatio/defaultRule = 10/20 = 0.5, the plan's most common (default) monthly allowance. Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code and GLM-5.3 Flash (0.167) - GLM-5.3 Flash was $40 (0.25) last run, the plan table now says $60 and pricing-limits#glm-5.3-flash-boosted-credits states $60 on GOAT \"while capacity lasts\" (no stated end date, so it is baked into the pattern value, not a promo); DeepSeek V4.1 Flash's boosted-usage deal likewise states \"no end date\"; $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for Gemini 3.8 Flash and Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus and Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for every other paid model (0.5), including Jev, which the plan bills at a $20 allowance. Kimi K3 is the only limited-time allowance boost with a stated end date: the plan table shows \"$20$60through Oct 7th\" and pricing-limits#kimi-k3-boosted-credits says \"Kimi K3 gets boosted monthly credits for one week, through October 7, 2026\" ($60 on GOAT, up from $20) - base pattern stays 0.5 ($20) and a promo carries 0.167 ($60) with endsAt 2026-10-07 from the stated date; after Oct 7 the pattern's 0.5 applies again. Deals still on the pages with no end date stated (endsAt null): MiniMax M3 -50% baked into its $47 GOAT allowance (pricing page effective-usage row and pricing-limits deal card both say $47 on GOAT -> promo 0.213); MiMo V2.5 -98% and MiMo V2.5 Pro -99% (pricing page effective-usage row ~$100 on GOAT -> promo 0.1 for both; pricing-limits' MiMo V2.5 deal card phrases its $30 GOAT allowance as up to ~$300 at old list price - the designated pricing page's per-plan figure is used, as in prior runs). GOAT lists 63 models = 59 paid + 4 free. Free models get no pattern and stay at AA list price: Space Bunny Alpha, Laguna S 2.1, Ling 3.0 Flash, Ling 3.0 Flash Sante, Ling 3.1 Flash (commandcode.ai/pricing still lists \"Free on Pixel Canary\" but changelog v1.73.1 retired Pixel Canary when its stealth preview ended Sep 30, 2026). Patterns kept although AA does not list the model yet (zero hits in check-patterns; they activate when AA adds them): Jev, Tencent Hy3, Tencent Hy4 Preview, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) stay removed and nemotron stays narrowed to nemotron 3 ultra so AA models outside the plan are not repriced; every paid plan model has a specific pattern, ordered most-specific first. Substring side-effects that cannot be narrowed without leaving in-plan models uncovered: glm-5 also catches AA labels \"GLM 5V Turbo\", \"GLM-5-Turbo\" and \"Quasar 438B (Max, Based on GLM-5.2)\", glm-5.2 catches that Quasar label too, qwen 3.8 flash also catches \"Qwen3.8-Flash-Next\", deepseek v4 pro/flash also catch the dated snapshots (0424/0813/0420/0731); reasoning-effort variants (e.g. \"Grok 4.7 (High)\", \"Kimi K3 (Max)\") are the same model and intended. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits (deal cards and end dates), commandcode.ai/changelog (Pixel Canary).",
       "builtin": true
     },
     {
