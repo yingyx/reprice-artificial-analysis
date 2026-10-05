@@ -649,6 +649,30 @@ function loadSourceDoc() {
 
 const sourceDoc = loadSourceDoc();
 
+test('manual coding estimates: weekly anchors convert to monthly model prices', () => {
+  const ctx = pricing.makeCtx(sourceDoc.sources);
+  const ratio = (id, label) => pricing.resolvePrice({ id: label, label, aaCost: 1 }, id, ctx).price;
+  const close = (actual, expected) => assert.ok(Math.abs(actual - expected) / expected < 0.0001);
+  close(ratio('codex-plus', 'GPT-6.1 Sol (max)'), 20 / (45 * 52 / 12));
+  close(ratio('codex-pro-20x', 'GPT-6 Astra (max)'), 200 / (66 * 20 * 52 / 12));
+  close(ratio('claude-pro', 'Claude Opus 5.5 (max)'), 20 / (230 * 52 / 12));
+  close(ratio('claude-max-20x', 'Claude Opus 5.5 (max)'), 200 / (2155 * 52 / 12));
+  close(ratio('kimi-allegretto', 'Kimi K3 (max)'), 29.37 / (136.905 * 52 / 12));
+  close(ratio('glm-coding-lite', 'GLM-5.3 (max)'), 18 / (10000 * (0.26 / 170) * 52 / 12));
+  close(ratio('glm-coding-lite', 'GLM-5.3-Flash'), 18 / (10000 * (0.03 / 56) * 52 / 12));
+  for (const [id, label] of [['codex-plus', 'GPT-7'], ['claude-pro', 'Claude Fable 5.1'],
+    ['kimi-allegretto', 'Kimi K3 256K'], ['kimi-allegretto', 'Kimi K2.7 Code'],
+    ['glm-coding-lite', 'GLM-5.3-FlashX'], ['glm-coding-lite', 'GLM-5.2']]) {
+    assert.strictEqual(ratio(id, label), 1, 'unmeasured or redirected model keeps AA price: ' + label);
+  }
+});
+
+test('manual coding estimates: excluded from scheduled provider maintenance', () => {
+  const monitored = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'providers.json'), 'utf8')).providers;
+  assert.ok(!monitored.some(p => /^(codex-|claude-|glm-coding-|kimi-)/.test(p.sourceId)));
+  assert.ok(monitored.some(p => p.sourceId === 'opencode-go-plus'), 'Go Plus remains scheduled');
+});
+
 test('sources: document shape with ordered, unique, valid entries', () => {
   assert.strictEqual(sourceDoc.schema, 1, 'schema field');
   assert.ok(Array.isArray(sourceDoc.sources) && sourceDoc.sources.length >= 10, 'preset library non-trivial');

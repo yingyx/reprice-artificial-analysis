@@ -223,23 +223,51 @@
       "name": "Codex Plus (ChatGPT)",
       "kind": "subscription",
       "monthlyFee": 20,
-      "manualRatio": 0.26,
+      "manualRatio": 0.10256,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.26
+        "value": 0.10256
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "gpt",
+          "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.26
+            "value": 0.10256
+          }
+        },
+        {
+          "match": "gpt-6 astra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.06993
+          }
+        },
+        {
+          "match": "gpt-6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.06993
+          }
+        },
+        {
+          "match": "gpt-6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.11834
+          }
+        },
+        {
+          "match": "gpt-5.6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.053419
           }
         }
       ],
-      "asOf": "2026-08-25",
-      "notes": "Quota Radar 20x Pro: Luna-only $1,145 / Sol-only $1,920 API equivalent; equal mix gives $1,532; scaled linearly to Plus quota ($20 / $76.6).",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 1; direct Plus anchor. Per-model multiplier = $20/(anchor * 6 * 1 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
       "builtin": true
     },
     {
@@ -247,23 +275,51 @@
       "name": "Codex Pro 5x",
       "kind": "subscription",
       "monthlyFee": 100,
-      "manualRatio": 0.26,
+      "manualRatio": 0.10256,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.26
+        "value": 0.10256
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "gpt",
+          "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.26
+            "value": 0.10256
+          }
+        },
+        {
+          "match": "gpt-6 astra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.06993
+          }
+        },
+        {
+          "match": "gpt-6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.06993
+          }
+        },
+        {
+          "match": "gpt-6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.11834
+          }
+        },
+        {
+          "match": "gpt-5.6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.053419
           }
         }
       ],
-      "asOf": "2026-08-25",
-      "notes": "Same per-unit quota as Plus (5x preserves unit cost); $100 / $383.",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 5; cross-tier projection, not a measurement of this tier. Per-model multiplier = $100/(anchor * 6 * 5 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
       "builtin": true
     },
     {
@@ -271,23 +327,51 @@
       "name": "Codex Pro 20x",
       "kind": "subscription",
       "monthlyFee": 200,
-      "manualRatio": 0.13,
+      "manualRatio": 0.051282,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.13
+        "value": 0.051282
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "gpt",
+          "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.13
+            "value": 0.051282
+          }
+        },
+        {
+          "match": "gpt-6 astra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.034965
+          }
+        },
+        {
+          "match": "gpt-6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.034965
+          }
+        },
+        {
+          "match": "gpt-6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.059172
+          }
+        },
+        {
+          "match": "gpt-5.6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.026709
           }
         }
       ],
-      "asOf": "2026-08-25",
-      "notes": "Quota Radar observed, Luna/Sol equal mix: $200 / $1,532; 20x tier has a 0.5x per-unit discount.",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 20; cross-tier projection, not a measurement of this tier. Per-model multiplier = $200/(anchor * 6 * 20 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
       "builtin": true
     },
     {
@@ -295,23 +379,23 @@
       "name": "Claude Pro",
       "kind": "subscription",
       "monthlyFee": 20,
-      "manualRatio": 0.03,
+      "manualRatio": 0.020067,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.03
+        "value": 0.020067
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "claude",
+          "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.03
+            "value": 0.020067
           }
         }
       ],
-      "asOf": "2026-09-01",
-      "notes": "Pro weekly input allowance ~44M tokens; Sonnet 4.6 blended (7:2:1) $3.66/M gives ~$575/mo API equivalent.",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05. 2026-09-23 first-hand Pro report: Opus 5.5 about $230/week; no controlled cache mix or multi-account distribution. https://linux.do/t/topic/2942313 Monthly API-equivalent capacity = 230 * 52/12 = 996.67 USD projected; multiplier = 20/(230*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
       "builtin": true
     },
     {
@@ -319,23 +403,23 @@
       "name": "Claude Max 5x",
       "kind": "subscription",
       "monthlyFee": 100,
-      "manualRatio": 0.03,
+      "manualRatio": 0.020067,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.03
+        "value": 0.020067
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "claude",
+          "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.03
+            "value": 0.020067
           }
         }
       ],
-      "asOf": "2026-09-01",
-      "notes": "5x Pro quota preserves Pro per-unit cost (~$3,450/mo API equivalent); headroom + priority, not a volume discount.",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05. Conservative projection: Pro Opus 5.5 $230/week times the advertised 5x usage tier, not a direct Max 5x weekly measurement. Official relative usage: https://claude.com/pricing . Pro anchor: https://linux.do/t/topic/2942313 . The Max 5x report https://linux.do/t/topic/2941739 observes one 5h window at about 13% weekly usage; it does not establish a universal full-week amount. Monthly API-equivalent capacity = 1150 * 52/12 = 4983.3 USD projected; multiplier = 100/(1150*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
       "builtin": true
     },
     {
@@ -343,23 +427,23 @@
       "name": "Claude Max 20x",
       "kind": "subscription",
       "monthlyFee": 200,
-      "manualRatio": 0.015,
+      "manualRatio": 0.021417,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.015
+        "value": 0.021417
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "claude",
+          "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.015
+            "value": 0.021417
           }
         }
       ],
-      "asOf": "2026-09-01",
-      "notes": "Only Claude tier with cheaper per-unit usage ($200 = 0.5x Pro unit rate x 20); ~$13,800/mo API equivalent.",
+      "asOf": "2026-10-05",
+      "notes": "Manual estimate, reviewed 2026-10-05. Provisional conservative anchor: RemakeBench 2026-09-25 Opus-5.5-heavy window uses $1249.83 / 0.58 = about $2155/week. https://www.remakebench.com/capacity/plans/claude-max-20x . The receipt labels Max 20x but its app plan string says Pro: tier attribution is unresolved and this is a low-confidence planning estimate, not a verified Max entitlement. Do not scale this receipt to Pro/5x. Monthly API-equivalent capacity = 2155 * 52/12 = 9338.3 USD projected; multiplier = 200/(2155*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
       "builtin": true
     },
     {
@@ -367,23 +451,36 @@
       "name": "GLM Coding Plan Lite",
       "kind": "subscription",
       "monthlyFee": 18,
-      "manualRatio": 0.05,
+      "manualRatio": 0.2716,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.05
+        "value": 0.2716
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "glm",
+          "match": "glm-5.3-flashx",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm-5.3-flash",
           "rule": {
             "type": "multiplier",
-            "value": 0.05
+            "value": 0.77538
+          }
+        },
+        {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.2716
           }
         }
       ],
-      "asOf": "2026-09-05",
-      "notes": "Official \"15-30x API equivalent\" midpoint; 2k/5h + 10k/wk credits. Off-peak 1x promo for GLM-5.2/5-Turbo through Sep 2026 improves off-peak ~2x.",
+      "asOf": "2026-10-05",
+      "notes": "Manual conservative peak-rate estimate, reviewed 2026-10-05. Official weekly credits 10000; credits = (uncached input*weight + cached input*weight + output*weight)/10000. GLM-5.3 weights 6.9/1.7/24, API USD per million 1.4/0.26/4.4; Flash weights 2.3/0.56/8, rates 0.15/0.03/0.50. Mix-independent API USD/credit floor = min(rate/(100*weight)); multiply by weekly credits and 52/12. Projected monthly floors: GLM-5.3 $66.275, Flash $23.214. Full weekly quota utilization assumed, tools excluded, not measured spend. Off-peak 50% credit charging can halve these price multipliers; the all-day holiday rate through 2026-10-07 and time/client-specific Flash campaign are intentionally not baked into this static baseline. Sources https://docs.z.ai/devpack/overview and https://docs.z.ai/guides/overview/pricing . Only delivered GLM-5.3 and Flash are covered; older IDs routed to a newer model are not repriced as the old benchmark. FlashX is a different service and excluded.",
       "builtin": true
     },
     {
@@ -391,23 +488,36 @@
       "name": "GLM Coding Plan Pro",
       "kind": "subscription",
       "monthlyFee": 80,
-      "manualRatio": 0.04,
+      "manualRatio": 0.20118,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.04
+        "value": 0.20118
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "glm",
+          "match": "glm-5.3-flashx",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm-5.3-flash",
           "rule": {
             "type": "multiplier",
-            "value": 0.04
+            "value": 0.57436
+          }
+        },
+        {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.20118
           }
         }
       ],
-      "asOf": "2026-09-05",
-      "notes": "12k/5h + 60k/wk credits; slightly better per-credit cost than Lite.",
+      "asOf": "2026-10-05",
+      "notes": "Manual conservative peak-rate estimate, reviewed 2026-10-05. Official weekly credits 60000; credits = (uncached input*weight + cached input*weight + output*weight)/10000. GLM-5.3 weights 6.9/1.7/24, API USD per million 1.4/0.26/4.4; Flash weights 2.3/0.56/8, rates 0.15/0.03/0.50. Mix-independent API USD/credit floor = min(rate/(100*weight)); multiply by weekly credits and 52/12. Projected monthly floors: GLM-5.3 $397.65, Flash $139.29. Full weekly quota utilization assumed, tools excluded, not measured spend. Off-peak 50% credit charging can halve these price multipliers; the all-day holiday rate through 2026-10-07 and time/client-specific Flash campaign are intentionally not baked into this static baseline. Sources https://docs.z.ai/devpack/overview and https://docs.z.ai/guides/overview/pricing . Only delivered GLM-5.3 and Flash are covered; older IDs routed to a newer model are not repriced as the old benchmark. FlashX is a different service and excluded.",
       "builtin": true
     },
     {
@@ -415,23 +525,36 @@
       "name": "GLM Coding Plan Max",
       "kind": "subscription",
       "monthlyFee": 168,
-      "manualRatio": 0.035,
+      "manualRatio": 0.18107,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.035
+        "value": 0.18107
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "glm",
+          "match": "glm-5.3-flashx",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm-5.3-flash",
           "rule": {
             "type": "multiplier",
-            "value": 0.035
+            "value": 0.51692
+          }
+        },
+        {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.18107
           }
         }
       ],
-      "asOf": "2026-09-05",
-      "notes": "28k/5h + 140k/wk credits; best per-credit cost of the GLM ladder.",
+      "asOf": "2026-10-05",
+      "notes": "Manual conservative peak-rate estimate, reviewed 2026-10-05. Official weekly credits 140000; credits = (uncached input*weight + cached input*weight + output*weight)/10000. GLM-5.3 weights 6.9/1.7/24, API USD per million 1.4/0.26/4.4; Flash weights 2.3/0.56/8, rates 0.15/0.03/0.50. Mix-independent API USD/credit floor = min(rate/(100*weight)); multiply by weekly credits and 52/12. Projected monthly floors: GLM-5.3 $927.84, Flash $325. Full weekly quota utilization assumed, tools excluded, not measured spend. Off-peak 50% credit charging can halve these price multipliers; the all-day holiday rate through 2026-10-07 and time/client-specific Flash campaign are intentionally not baked into this static baseline. Sources https://docs.z.ai/devpack/overview and https://docs.z.ai/guides/overview/pricing . Only delivered GLM-5.3 and Flash are covered; older IDs routed to a newer model are not repriced as the old benchmark. FlashX is a different service and excluded.",
       "builtin": true
     },
     {
@@ -901,26 +1024,38 @@
     },
     {
       "id": "kimi-allegretto",
-      "name": "Kimi Allegretto",
+      "name": "Kimi Allegretto (legacy CNY199 estimate)",
       "kind": "subscription",
-      "monthlyFee": 28,
-      "manualRatio": 0.005,
+      "monthlyFee": 29.37,
+      "manualRatio": 0.049507,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.005
+        "value": 0.049507
       },
       "rules": {},
       "nameIncludes": [
         {
-          "match": "kimi",
+          "match": "kimi k3 256k",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3 highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3",
           "rule": {
             "type": "multiplier",
-            "value": 0.005
+            "value": 0.049507
           }
         }
       ],
-      "asOf": "2026-08-18",
-      "notes": "Measured heavy agent usage: ~1.4B tokens/mo for ¥199 (92% cache hits). Assumes agent-coding-like mix; light usage gets far less value.",
+      "asOf": "2026-10-05",
+      "notes": "Manual historical estimate for the legacy domestic CNY199 Allegretto plan, reviewed 2026-10-05; low confidence, not a current universal Kimi quota. 2026-07-19 matched-plan full-week record: 340M tokens, API equivalent $136.905 (CNY927.7), 20.97% monthly pool. Source https://linux.do/t/topic/2615396 . Weekly bottleneck projection: 136.905 * 52/12 = $593.25/month, below the monthly-pool projection 136.905/0.2097; do not add them. Fee USD29.37 uses that receipt's historical implied FX (927.7/136.905 CNY per USD), not a live FX quote. Multiplier = fee/(136.905*52/12), about 0.0495, replacing the unsupported 0.005. K3 Standard only; exclude 256K and HighSpeed via explicit rules below. Newer reports https://github.com/MoonshotAI/kimi-cli/issues/2604 suggest metering changes but do not establish this exact legacy tier's current quota. Overseas $39 reports are not transferred. K2.x and other variants stay at AA price without matched evidence.",
       "builtin": true
     }
   ];
