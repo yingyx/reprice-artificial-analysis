@@ -11,4 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Run tests
-        run: node test/run-tests.js
+        run: |
+          node test/run-tests.js
+          node test/integration-test.js
+          node test/check-providers-test.js

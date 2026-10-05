@@ -81,10 +81,15 @@ Verification loop (mandatory before running the build):
    URLs. A source may have NO pages listed (manually dispatched task):
    then research the provider's own published plan/pricing pages yourself
    and only write numbers you can support there.
+   Codex, Claude, GLM and Kimi coding-plan estimates are manually maintained.
+   Never modify those entries, even if mentioned in dispatch context.
 2. Fetch each page for the changed sources (use the webfetch tool).
 3. Update `data/sources.json` - and ONLY the entries whose `id` matches a
    changed source id (array order must be preserved; other entries stay
    byte-identical):
+   - if a configured source id is missing, research its named tier and append
+     a new entry using the schema below and the provider label as its name;
+     leave it absent when evidence is insufficient; never add placeholder pricing;
    - keep `id` and `name` stable; bump `asOf` to today (YYYY-MM-DD);
    - rewrite `notes` with the concrete numbers you used;
    - recompute every affected `nameIncludes` pattern value with the formula

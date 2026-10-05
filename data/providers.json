@@ -1,5 +1,5 @@
 {
-  "note": "Scheduled agent task list for source preset maintenance (see .github/workflows/update-sources.yml and .github/update-sources-prompt.md). sourceId must match an id in data/sources.json sources[]. Pages are sha256-hashed on each run; a source's agent task fires only when one of its pages changed. The agent itself (model/provider) is configured in repo Settings > Secrets and variables > Actions: secret AGENT_API_KEY plus variables AGENT_MODEL, AGENT_PROVIDER_ID, AGENT_BASE_URL.",
+  "note": "Scheduled source maintenance tasks (see .github/workflows/update-sources.yml and .github/update-sources-prompt.md). sourceId identifies an existing preset or a new tier for the agent to research and append. Missing presets trigger research even when shared page hashes are unchanged. Actual prices and allowances belong in data/sources.json and are maintained by Actions. Agent settings: secret AGENT_API_KEY; variables AGENT_MODEL, AGENT_PROVIDER_ID, AGENT_BASE_URL.",
   "providers": [
     {
       "sourceId": "opencode-go-example",
@@ -12,6 +12,20 @@
         {
           "url": "https://opencode.ai/docs/go",
           "expect": "usage limits table, per-model $/1M prices and monthly usage $ value"
+        }
+      ]
+    },
+    {
+      "sourceId": "opencode-go-plus",
+      "label": "OpenCode Go Plus",
+      "pages": [
+        {
+          "url": "https://opencode.ai/go",
+          "expect": "Go Plus tier price and included models; distinguish Go from Go Plus"
+        },
+        {
+          "url": "https://opencode.ai/docs/go",
+          "expect": "Go Plus per-model monthly USD allowances and 5-hour/weekly limits; do not scale Go allowances uniformly"
         }
       ]
     },

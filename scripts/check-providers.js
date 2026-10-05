@@ -16,7 +16,8 @@
 // The agent fires when the price hash changed, or when the full hash changed
 // on >= DRIFT_LIMIT consecutive runs with an unchanged price hash (escape
 // hatch for structural changes that carry no price token). A page seen for
-// the first time only records hashes and does not fire the agent.
+// the first time triggers one review, as does a configured source not yet
+// present in sources.json (even when another tier shares its page URLs).
 //
 // Usage:
 //   node scripts/check-providers.js            # compare + persist state
@@ -107,6 +108,7 @@ function hashPriceSignals(tokens) {
 async function main() {
   const config = JSON.parse(fs.readFileSync(providersPath, 'utf8'));
   const providers = config.providers || [];
+  const sourceIds = new Set(JSON.parse(fs.readFileSync(path.join(repoRoot, 'data', 'sources.json'), 'utf8')).sources.map(s => s.id));
   const prevState = loadState();
   const prev = loadPages(prevState);
   const nextPages = {};
@@ -114,6 +116,13 @@ async function main() {
   const failures = [];
   const warnings = [];
   const lines = [];
+  // Tiers commonly share the same evidence pages. Fetch once per run so all
+  // tiers compare the same snapshot and public sites receive fewer requests.
+  const pageRequests = new Map();
+  function sharedPage(url) {
+    if (!pageRequests.has(url)) pageRequests.set(url, fetchText(url));
+    return pageRequests.get(url);
+  }
 
   // Force-listed source ids (dispatch input): the agent task fires for
   // them regardless of page changes - for providers that publish no
@@ -123,11 +132,12 @@ async function main() {
 
   for (const p of providers) {
     const marks = [];
+    if (!sourceIds.has(p.sourceId)) marks.push('new-source:' + p.sourceId);
     const tokenCounts = [];
     for (const page of p.pages || []) {
       const before = prev[page.url];
       try {
-        const text = normalizeHtml(await fetchText(page.url));
+        const text = normalizeHtml(await sharedPage(page.url));
         const full = hash16(text);
         const tokens = extractPriceSignals(text);
         tokenCounts.push(tokens.length);
