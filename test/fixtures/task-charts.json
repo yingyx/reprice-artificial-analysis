@@ -1,0 +1,233 @@
+{
+  "catalogue": [
+    {
+      "id": "b25ac058-1e33-4c31-bbc9-a20c3ad0717a",
+      "slug": "gpt-6-1-sol",
+      "name": "GPT-6.1 Sol (Max)",
+      "shortName": "GPT-6.1 Sol (max)",
+      "release": {
+        "slug": "gpt-6-1-sol",
+        "name": "GPT-6.1 Sol"
+      },
+      "intelligenceIndex": 51.8332597011541,
+      "intelligenceIndexCostPerTask": {
+        "cost": {
+          "total": 0.7241670655535033
+        }
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "slug": "openai",
+        "name": "OpenAI",
+        "logo": "/img/logos/openai.svg",
+        "color": "#1f1f1f",
+        "country": "us"
+      }
+    }
+  ],
+  "thin": [
+    {
+      "id": "b25ac058-1e33-4c31-bbc9-a20c3ad0717a",
+      "slug": "gpt-6-1-sol",
+      "name": "GPT-6.1 Sol (Max)",
+      "shortName": "GPT-6.1 Sol (max)",
+      "release": {
+        "slug": "gpt-6-1-sol",
+        "name": "GPT-6.1 Sol"
+      },
+      "intelligenceIndex": 51.8332597011541,
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "color": "#1f1f1f",
+        "logo": "/img/logos/openai.svg"
+      }
+    }
+  ],
+  "coding": [
+    {
+      "id": "fa2595093fa640e73d072e7d1aa7df82",
+      "agentName": "Devin Fusion CLI",
+      "display": {
+        "agent": "Devin Fusion CLI",
+        "model": "GPT-6 Astra XHigh + SWE-2 Medium"
+      },
+      "modelCreators": [
+        {
+          "slug": "openai",
+          "name": "OpenAI",
+          "color": "#1f1f1f",
+          "logo": "/img/logos/openai.svg"
+        },
+        {
+          "slug": "cognition",
+          "name": "Cognition",
+          "color": "#2200FF",
+          "logo": "/img/logos/devin.svg"
+        }
+      ],
+      "indexScore": 0.588884131062264,
+      "mean": {
+        "costUsd": 4.536492777821779
+      }
+    },
+    {
+      "id": "cd4c865dc2f539b650d741fd2ebf7f2d",
+      "agentName": "Claude Code",
+      "display": {
+        "agent": "Claude Code",
+        "model": "Qwen3.8 Max"
+      },
+      "modelCreators": [
+        {
+          "slug": "alibaba",
+          "name": "Alibaba",
+          "color": "#ff7018",
+          "logo": "/img/logos/alibaba.svg"
+        }
+      ],
+      "indexScore": 0.43265296412598736,
+      "mean": {
+        "costUsd": 3.478965577837015
+      }
+    },
+    {
+      "id": "ab5074e404be48bbd4ac3c488ad9a3e2",
+      "agentName": "Claude Code",
+      "display": {
+        "agent": "Claude Code",
+        "model": "Opus 5.5 (max)"
+      },
+      "modelCreators": [
+        {
+          "slug": "anthropic",
+          "name": "Anthropic",
+          "color": "#cc785c",
+          "logo": "/img/logos/anthropic.svg"
+        }
+      ],
+      "indexScore": 0.659885802549234,
+      "mean": {
+        "costUsd": 13.036383418426828
+      }
+    }
+  ],
+  "evaluations": [
+    {
+      "evalSlug": "artificial-analysis-cyber-index",
+      "models": [
+        {
+          "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
+          "slug": "glm-5-3-flash",
+          "name": "GLM 5.3 Flash",
+          "shortName": "GLM-5.3-Flash",
+          "modelUrl": "/models/glm-5-3-flash",
+          "creatorSlug": "zai",
+          "creatorName": "Z AI",
+          "creatorColor": "#1c7ff8",
+          "score": 49.9235527532159,
+          "costPerTask": 0.3173506704304702
+        },
+        {
+          "id": "24d8fdfe-6241-424e-b7b7-1b6efb06e4fb",
+          "slug": "mimo-v2-6-pro",
+          "name": "MiMo-V2.6-Pro",
+          "shortName": "MiMo-V2.6-Pro",
+          "modelUrl": "/models/mimo-v2-6-pro",
+          "creatorSlug": "xiaomi",
+          "creatorName": "Xiaomi",
+          "creatorColor": "#ff6900",
+          "score": 56.0656020403805,
+          "costPerTask": 0.18444444819390018
+        }
+      ]
+    },
+    {
+      "evalSlug": "cwe-bench-aa",
+      "models": [
+        {
+          "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
+          "slug": "glm-5-3-flash",
+          "name": "GLM 5.3 Flash",
+          "shortName": "GLM-5.3-Flash",
+          "modelUrl": "/models/glm-5-3-flash",
+          "creatorSlug": "zai",
+          "creatorName": "Z AI",
+          "creatorColor": "#1c7ff8",
+          "score": 0.558333333333333,
+          "costPerTask": 0.30627525072322326
+        },
+        {
+          "id": "24d8fdfe-6241-424e-b7b7-1b6efb06e4fb",
+          "slug": "mimo-v2-6-pro",
+          "name": "MiMo-V2.6-Pro",
+          "shortName": "MiMo-V2.6-Pro",
+          "modelUrl": "/models/mimo-v2-6-pro",
+          "creatorSlug": "xiaomi",
+          "creatorName": "Xiaomi",
+          "creatorColor": "#ff6900",
+          "score": 0.633333333333333,
+          "costPerTask": 0.17940132828638747
+        }
+      ]
+    },
+    {
+      "evalSlug": "deepsecbench-aa",
+      "models": [
+        {
+          "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
+          "slug": "glm-5-3-flash",
+          "name": "GLM 5.3 Flash",
+          "shortName": "GLM-5.3-Flash",
+          "modelUrl": "/models/glm-5-3-flash",
+          "creatorSlug": "zai",
+          "creatorName": "Z AI",
+          "creatorColor": "#1c7ff8",
+          "score": 0.198915233995969,
+          "costPerTask": 0.0780099439396
+        },
+        {
+          "id": "24d8fdfe-6241-424e-b7b7-1b6efb06e4fb",
+          "slug": "mimo-v2-6-pro",
+          "name": "MiMo-V2.6-Pro",
+          "shortName": "MiMo-V2.6-Pro",
+          "modelUrl": "/models/mimo-v2-6-pro",
+          "creatorSlug": "xiaomi",
+          "creatorName": "Xiaomi",
+          "creatorColor": "#ff6900",
+          "score": 0.26237518589335,
+          "costPerTask": 0.0854820075235413
+        }
+      ]
+    },
+    {
+      "evalSlug": "cybergym-e2e-aa",
+      "models": [
+        {
+          "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
+          "slug": "glm-5-3-flash",
+          "name": "GLM 5.3 Flash",
+          "shortName": "GLM-5.3-Flash",
+          "modelUrl": "/models/glm-5-3-flash",
+          "creatorSlug": "zai",
+          "creatorName": "Z AI",
+          "creatorColor": "#1c7ff8",
+          "score": 0.7404580152671756,
+          "costPerTask": 0.34759340597451
+        },
+        {
+          "id": "24d8fdfe-6241-424e-b7b7-1b6efb06e4fb",
+          "slug": "mimo-v2-6-pro",
+          "name": "MiMo-V2.6-Pro",
+          "shortName": "MiMo-V2.6-Pro",
+          "modelUrl": "/models/mimo-v2-6-pro",
+          "creatorSlug": "xiaomi",
+          "creatorName": "Xiaomi",
+          "creatorColor": "#ff6900",
+          "score": 0.7862595419847328,
+          "costPerTask": 0.19737392327997252
+        }
+      ]
+    }
+  ]
+}

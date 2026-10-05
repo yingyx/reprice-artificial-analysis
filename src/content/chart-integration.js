@@ -53,6 +53,14 @@
   // Only task-cost charts have the units and model semantics we reprice.
   var RELEASE_ANCHOR = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
   var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"], [id="' + RELEASE_ANCHOR + '"]';
+  var TASK_CHARTS = {
+    'artificial-analysis-coding-agent-index-vs-cost-per-task': { key: 'coding', label: 'Artificial Analysis Coding Agent Index' },
+    'artificial-analysis-cyber-index-score-vs-cost-per-task': { key: 'artificial-analysis-cyber-index', label: 'Artificial Analysis Cyber Index' },
+    'cwe-bench-aa-score-vs-cost-per-task': { key: 'cwe-bench-aa', label: 'CWE-Bench-AA Score (%)' },
+    'deepsecbench-aa-score-vs-cost-per-task': { key: 'deepsecbench-aa', label: 'DeepsecBench-AA Score (%)' },
+    'cybergym-e2e-aa-score-vs-cost-per-task': { key: 'cybergym-e2e-aa', label: 'CyberGym-E2E-AA Score (%)' }
+  };
+  ANCHOR_SELECTOR += ', ' + Object.keys(TASK_CHARTS).map(function (id) { return '[id="' + id + '"]'; }).join(', ');
 
   function findAnchors(doc) {
     try {
@@ -170,6 +178,7 @@
     var ctx = {
       anchor: anchorEl,
       isRelease: anchorEl.getAttribute('id') === RELEASE_ANCHOR,
+      taskChart: TASK_CHARTS[anchorEl.getAttribute('id')] || null,
       bar: null,
       select: null,
       prov: null,
@@ -303,7 +312,7 @@
     if (!highlight) return false;
     if (m.provider && String(m.provider).toLowerCase() === highlight.name.toLowerCase()) return true;
     if (RAA.colors._internals.inferProviderName(m.label, m.id) === highlight.name) return true;
-    var c = RAA.colors._internals.normalizeCssColor(RAA.colors.colorFor(m.label, m.id, m.provider));
+    var c = RAA.colors._internals.normalizeCssColor((m.nativeColor || RAA.colors.colorFor(m.label, m.id, m.provider)));
     return c !== null && c === highlight.color;
   }
 
@@ -425,6 +434,10 @@
       xHi = cMax * 1.15 || 1;
     }
     var yLo = Math.min(0, Math.floor(iqMin / 10) * 10), yHi = Math.ceil((iqMax + 3) / 10) * 10;
+    if (ctx.taskChart) {
+      yLo = ctx.taskChart.key === 'coding' ? Math.max(0, Math.floor((iqMin - 2) / 5) * 5) : 0;
+      yHi = ctx.taskChart.key === 'coding' ? Math.min(100, Math.ceil((iqMax + 2) / 5) * 5) : 100;
+    }
 
     function sx(c) {
       if (log && c <= 0) return L + 2;
@@ -467,7 +480,8 @@
       (lay.L + lay.iw - qx).toFixed(1) + '" height="' + (lay.T + lay.ih - qy).toFixed(1) +
       '" fill="rgb(235, 235, 235)" fill-opacity="0.25"/>';
 
-    var yStep = niceStep(lay.yHi - lay.yLo, 7);
+    var percentScore = ctx.taskChart && ctx.taskChart.key !== 'coding' && ctx.taskChart.key !== 'artificial-analysis-cyber-index';
+    var yStep = niceStep(lay.yHi - lay.yLo, ctx.taskChart && ctx.taskChart.key !== 'coding' ? 5 : 7);
     var yStart = Math.ceil(lay.yLo / yStep) * yStep;
     for (var yv = yStart; yv <= lay.yHi; yv += yStep) gridY.push(yv);
 
@@ -489,7 +503,7 @@
       var yy = lay.sy(yv);
       if (yy >= lay.T && yy <= lay.T + lay.ih) {
         s += '<text x="' + (lay.L - 9) + '" y="' + (yy + 3.5).toFixed(1) +
-          '" font-size="11" fill="#666" text-anchor="end">' + yv + '</text>';
+          '" font-size="11" fill="#666" text-anchor="end">' + yv + (percentScore ? '%' : '') + '</text>';
       }
     });
     var lastTickRight = -Infinity;
@@ -511,7 +525,7 @@
     s += '<text x="' + (lay.L + lay.iw / 2).toFixed(1) + '" y="' + (lay.H - 10) +
       '" font-size="13" fill="#000" text-anchor="middle">' + esc(xlabel) + '</text>';
     s += '<text x="10" y="' + (lay.T + lay.ih / 2).toFixed(1) + '" font-size="13" fill="#000" text-anchor="middle"' +
-      ' transform="rotate(-90 10 ' + (lay.T + lay.ih / 2).toFixed(1) + ')">Artificial Analysis Intelligence Index</text>';
+      ' transform="rotate(-90 10 ' + (lay.T + lay.ih / 2).toFixed(1) + ')">' + esc(ctx.taskChart ? ctx.taskChart.label : 'Artificial Analysis Intelligence Index') + '</text>';
     ctx.gAxis.innerHTML = s;
   }
 
@@ -551,7 +565,8 @@
     // original price row would just duplicate the repriced one — hide it
     var repricedBySource = !!(m.winnerSourceId || m.sourceId);
     var rows = '';
-    rows += row('Intelligence Index', isNum(m.intelligence) ? m.intelligence.toFixed(1) : '?');
+    rows += row(ctx.taskChart ? ctx.taskChart.label : 'Intelligence Index', isNum(m.intelligence) ? m.intelligence.toFixed(1) : '?');
+    if (m.pricingNote) rows += row('Pricing scope', esc(m.pricingNote));
     if (mode === 'aa' || repricedBySource) {
       rows += row('AA Cost / Task', fmtMoney(m.aaCost));
     }
@@ -604,6 +619,7 @@
   }
 
   function nativeSelectedIds(ctx, bundle) {
+    ctx.unmappedNative = false;
     var plot = findPlotEl(ctx.anchor);
     if (!plot) return null;
     var dots = plot.querySelectorAll('[data-chart-item-id]');
@@ -618,6 +634,7 @@
       if (dots[i].getAttribute('opacity') === '0.25') continue;
       var key = dots[i].getAttribute('data-chart-item-id');
       var id = bundle.chartIds && bundle.chartIds[key];
+      if (!id) ctx.unmappedNative = true;
       // Unknown native points must not silently expand into the entire registry.
       if (id && ids.indexOf(id) === -1) ids.push(id);
     }
@@ -681,12 +698,63 @@
     };
   }
 
+  var pageRecovery = { url: null, pending: false, at: 0, data: null };
+  function currentPageUrl() {
+    return root.location && root.location.pathname ? root.location.pathname + (root.location.search || '') : '';
+  }
+
+  function pageBundle() {
+    var url = currentPageUrl();
+    if (pageRecovery.url !== url) pageRecovery = { url: url, pending: false, at: 0, data: null };
+    var page = RAA.extract.extractModelsDetailed(document), extra = pageRecovery.data;
+    if (!extra) return page;
+    if (pageRecovery.page === page) return pageRecovery.combined;
+    var models = Object.create(null);
+    extra.models.forEach(function (m) { models[m.id] = m; });
+    page.models.forEach(function (m) { if (!models[m.id] || (isNum(m.aaCost) && isNum(m.intelligence))) models[m.id] = m; });
+    pageRecovery.page = page;
+    pageRecovery.combined = Object.assign({}, page, {
+      models: Object.keys(models).map(function (id) { return models[id]; }),
+      chartIds: Object.assign({}, extra.chartIds, page.chartIds),
+      charts: Object.assign({}, extra.charts, page.charts),
+      releaseData: extra.releaseData,
+      source: page.source + '+page-recovery'
+    });
+    return pageRecovery.combined;
+  }
+
+  function recoverPageData() {
+    var state = pageRecovery;
+    if (!state.url || typeof root.fetch !== 'function' || state.pending || (state.at && Date.now() - state.at < 60000)) return;
+    state.pending = true;
+    state.at = Date.now();
+    var controller = typeof root.AbortController === 'function' ? new root.AbortController() : null;
+    var timer;
+    var timeout = new Promise(function (_, reject) {
+      timer = setTimeout(function () { if (controller) controller.abort(); reject(new Error('Page data timeout')); }, 10000);
+    });
+    var request = Promise.resolve().then(function () {
+      return root.fetch(state.url, controller ? { signal: controller.signal } : undefined);
+    }).then(function (r) { if (!r.ok) throw new Error('Page data unavailable'); return r.text(); });
+    Promise.race([request, timeout]).then(function (html) {
+      if (state !== pageRecovery || currentPageUrl() !== state.url) return;
+      state.data = RAA.extract.extractPageFromHtml(html);
+      state.page = null;
+    }).catch(function () { /* Preserve the native chart and allow a later retry. */ }).then(function () {
+      clearTimeout(timer);
+      state.pending = false;
+      scheduleScan(0);
+    });
+  }
+
   function computePriced(ctx) {
-    var bundle = RAA.extract.extractModelsDetailed(document);
+    var bundle = pageBundle();
     var release = ctx.isRelease ? releaseBundle(ctx, bundle) : null;
-    var merged = release ? release.models : RAA.registry.merge(bundle.models, bundle.indexVersion);
-    var selectedIds = nativeSelectedIds(ctx, release || bundle);
-    if (selectedIds === null) selectedIds = release ? [] : urlSelectedIds();
+    var task = ctx.taskChart && { models: (bundle.charts || {})[ctx.taskChart.key] || [], chartIds: {} };
+    if (task) task.models.forEach(function (m) { task.chartIds[m.chartId] = m.id; });
+    var merged = task ? task.models : release ? release.models : RAA.registry.merge(bundle.models, bundle.indexVersion);
+    var selectedIds = nativeSelectedIds(ctx, task || release || bundle);
+    if (selectedIds === null) selectedIds = (release || task) ? [] : urlSelectedIds();
     if (selectedIds) {
       var wanted = {};
       selectedIds.forEach(function (id) { wanted[id] = true; });
@@ -695,7 +763,23 @@
     } else {
       merged = merged.filter(function (m) { return !m._cached; });
     }
+    var nativeColors = {};
+    var nativePlot = findPlotEl(ctx.anchor);
+    if (nativePlot) Array.prototype.forEach.call(nativePlot.querySelectorAll('[data-chart-item-id]'), function (dot) {
+      var color = dot.getAttribute('fill');
+      if (color && /^(#[\da-f]{3,8}|rgba?\([\d.,\s%]+\))$/i.test(color)) nativeColors[dot.getAttribute('data-chart-item-id')] = color;
+    });
+    var idsByChart = (task || release || bundle).chartIds || {};
+    var colorsById = {};
+    Object.keys(nativeColors).forEach(function (key) { colorsById[idsByChart[key]] = nativeColors[key]; });
+    merged = merged.map(function (m) { return Object.assign({}, m, { nativeColor: colorsById[m.id] }); });
     var mode = RAA.state.getSourceMode();
+    // Match agent pricing using only the underlying model, never the agent name.
+    var originals = {};
+    if (task) merged = merged.map(function (m) {
+      originals[m.id] = m;
+      return m.pricingLabel ? Object.assign({}, m, { label: m.pricingLabel }) : m;
+    });
     var profile = RAA.state.activePricingProfile() || aaLikeProfile('Artificial Analysis');
     var priced, profileName;
     if (mode === 'best') {
@@ -711,6 +795,13 @@
       priced = RAA.pricing.applyProfile(merged, profile);
       profileName = profile.name;
     }
+    if (task) priced = priced.map(function (m) {
+      var original = originals[m.id];
+      if (original.pricingUnsupported) return Object.assign({}, original, {
+        repricedCost: original.aaCost, ruleDescription: original.pricingNote, candidates: []
+      });
+      return Object.assign({}, m, { label: original.label });
+    });
     var finalPriced = priced.filter(function (m) {
       return isNum(m.intelligence) && isNum(m.repricedCost);
     });
@@ -728,7 +819,7 @@
       });
     });
     return {
-      loading: release && release.loading,
+      loading: ctx.unmappedNative || (release && release.loading),
       priced: finalPriced,
       profileName: profileName,
       mode: mode,
@@ -853,7 +944,7 @@
       (nativeDots == null ? '?' : nativeDots) + '|' +
       (highlight ? highlight.name : '') + '|';
     return head + bundle.priced.map(function (m) {
-      return JSON.stringify(m) + RAA.colors.colorFor(m.label, m.id, m.provider);
+      return JSON.stringify(m) + (m.nativeColor || RAA.colors.colorFor(m.label, m.id, m.provider));
     }).join(';');
   }
 
@@ -873,7 +964,8 @@
     var pc = bundle.pageCoverage;
     var tip = 'Points come from data serialized into the page (' +
       (bundle.source || 'page data') + ')';
-    if (pc) tip += ': ' + pc.withCost + '/' + pc.total + ' models carry an AA cost';
+    if (ctx.taskChart) tip += '. Costs belong to this benchmark; source ratios assume unchanged token usage. Mixed-model agents retain AA cost without a cost split.';
+    else if (pc) tip += ': ' + pc.withCost + '/' + pc.total + ' models carry an AA cost';
     if (bundle.hidden && bundle.hidden.length) {
       var names = bundle.hidden.slice(0, 12).map(function (h) {
         return '\u00B7 ' + h.label + (h.incomplete ? ' (no usable cost/intelligence data)' : '');
@@ -908,12 +1000,7 @@
     priced.forEach(function (m) { ctx.dataById[m.id] = m; });
 
     if (!priced.length) {
-      ctx.svg = null;
-      ctx.wrap.innerHTML = '';
-      var msg = document.createElement('div');
-      msg.className = 'raa-msg';
-      msg.textContent = 'No Intelligence vs Cost data found yet. RepriceAA will appear here.';
-      ctx.wrap.appendChild(msg);
+      ctx.wrap.style.display = 'none';
       return;
     }
 
@@ -967,7 +1054,7 @@
       var dim = !isHighlighted(m);
       var g = ctx.nodes[m.id];
       if (!g) {
-        g = makePointNode(ctx, { m: m }, RAA.colors.colorFor(m.label, m.id, m.provider));
+        g = makePointNode(ctx, { m: m }, (m.nativeColor || RAA.colors.colorFor(m.label, m.id, m.provider)));
         ctx.nodes[m.id] = g;
         applyPos(g, isNum(m.aaCost) ? lay.sx(m.aaCost) : x, y);
         requestAnimationFrame(function () {
@@ -979,7 +1066,7 @@
       } else {
         applyPos(g, x, y);
         var body = g.querySelector('circle.body');
-        if (body) body.setAttribute('fill', RAA.colors.colorFor(m.label, m.id, m.provider));
+        if (body) body.setAttribute('fill', (m.nativeColor || RAA.colors.colorFor(m.label, m.id, m.provider)));
       }
       g.setAttribute('opacity', dim ? '0.15' : '1');
       if (body) body.setAttribute('r', '6');
@@ -1140,12 +1227,15 @@
       return;
     }
     var bundle = computePriced(ctx);
-    if (!ctx.isRelease) maybeFetchMissing(bundle);
-    var pending = !ctx.isRelease && (bundle.selectedIds || []).some(function (id) { return fetchState[id] === 'pending'; });
-    if (bundle.loading || pending) {
+    if (!ctx.isRelease && !ctx.taskChart && !ctx.unmappedNative) maybeFetchMissing(bundle);
+    var pending = !ctx.isRelease && !ctx.taskChart && (bundle.selectedIds || []).some(function (id) { return fetchState[id] === 'pending'; });
+    if (bundle.loading || pending || !bundle.priced.length) {
+      // An unresolved native UUID is not an empty selection. Client navigation
+      // may mount a chart whose payload is absent from the initial Flight scripts.
+      if (ctx.unmappedNative || (!bundle.priced.length && countNativeDots(ctx.anchor))) recoverPageData();
       if (ctx.wrap) ctx.wrap.style.display = 'none';
-      ctx.prov.textContent = ctx.isRelease ? 'Release variants unavailable or loading · showing original AA chart' :
-        'Loading model details · showing original AA chart';
+      ctx.dataById = {};
+      ctx.prov.textContent = 'Chart data unavailable or loading · showing original AA chart';
       ctx.prov.style.display = '';
       ctx._provLabel = null;
       ctx.lastSig = '';
@@ -1233,6 +1323,12 @@
     observePage();
     setTimeout(function () { scheduleScan(0); }, 1500);
     setTimeout(function () { scheduleScan(0); }, 4000);
+    // Retry transient failures even if the page stops mutating after hydration.
+    function retryIncomplete() {
+      if (contexts.some(function (ctx) { return !ctx.lastSig && isActiveSource(RAA.state); })) scheduleScan(0);
+      setTimeout(retryIncomplete, 60000);
+    }
+    if (typeof root.location !== 'undefined') setTimeout(retryIncomplete, 60000);
   }
 
   RAA.state.load().then(function () {

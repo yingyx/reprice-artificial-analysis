@@ -464,6 +464,119 @@ async function main() {
   ctx.location.search = '';
   R.extract.extractModelsDetailed = originalExtract;
 
+  // Reduced public AA Flight records, captured 2026-10-05. A later selector
+  // repeats a model without cost; it must not erase the complete chart record.
+  const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/task-charts.json'), 'utf8'));
+  const flightHtml = value => 'self.__next_f.push([1,' + JSON.stringify('a:' + JSON.stringify(value) + '\n') + ']);';
+  const pageHtml = flightHtml([fixture.catalogue, fixture.thin, { rows: fixture.coding }, fixture.evaluations]);
+  const expanded = R.extract.extractPageFromHtml(pageHtml);
+  const streamedRecord = 'b:' + JSON.stringify(fixture.catalogue) + '\n';
+  const firstChunk = 'self.__next_f.push([1,' + JSON.stringify(streamedRecord.slice(0, -20)) + ']);';
+  const streamScripts = [{ textContent: firstChunk }];
+  const streamDoc = { querySelectorAll: selector => selector === 'script[type="application/ld+json"]' ? [] : streamScripts };
+  const incompleteStream = R.extract.extractModelsDetailed(streamDoc);
+  assert.strictEqual(incompleteStream.releaseData.models.length, 0, 'incomplete streamed JSON is not a complete structured record');
+  streamScripts.push({ textContent: 'self.__next_f.push([1,' + JSON.stringify(streamedRecord.slice(-20)) + ']);' });
+  assert.notStrictEqual(R.extract.extractModelsDetailed(streamDoc), incompleteStream, 'late Flight tail invalidates the cached extraction');
+  assert.strictEqual(R.extract.extractModelsDetailed(streamDoc).models[0].aaCost, fixture.catalogue[0].intelligenceIndexCostPerTask.cost.total,
+    'short final Flight chunk invalidates the cache and completes hydration');
+  assert.strictEqual(expanded.models.find(m => m.id === 'gpt-6-1-sol').aaCost, fixture.catalogue[0].intelligenceIndexCostPerTask.cost.total,
+    'late lightweight catalogue cannot erase a full cost record');
+  const explicitNull = JSON.parse(JSON.stringify(fixture.thin));
+  explicitNull[0].intelligenceIndexCostPerTask = null;
+  assert.strictEqual(R.extract.extractPageFromHtml(flightHtml([fixture.catalogue, explicitNull])).models[0].aaCost, null,
+    'explicitly unavailable costs stay unavailable');
+  assert.strictEqual(expanded.charts.coding.length, 3);
+  assert.strictEqual(R.extract.extractPageFromHtml(flightHtml([
+    { benchmarkRows: fixture.coding }, { rows: fixture.coding.slice(0, 1) }
+  ])).charts.coding.length, 3, 'dedicated agents page uses benchmarkRows rather than the smaller highlights table');
+  const referencedRows = '29:' + JSON.stringify(['$', 'section', null, { rows: fixture.coding.slice(0, 1) }]) + '\n' +
+    '2a:' + JSON.stringify({ benchmarkRows: ['$29:props:rows:0'].concat(fixture.coding.slice(1)) }) + '\n' +
+    '2b:' + JSON.stringify({ rows: '$2a:benchmarkRows', cycle: '$2b' }) + '\n';
+  const referencedPage = R.extract.extractPageFromHtml('self.__next_f.push([1,' + JSON.stringify(referencedRows) + ']);');
+  assert.strictEqual(referencedPage.charts.coding.length, 3, 'shared Flight references preserve all agent rows without recursing forever');
+  assert.strictEqual(referencedPage.charts.coding[0].aaCost, fixture.coding[0].mean.costUsd);
+  assert.strictEqual(expanded.charts.coding[0].intelligence, fixture.coding[0].indexScore * 100);
+  for (const evaluation of fixture.evaluations) {
+    const actual = expanded.charts[evaluation.evalSlug][0];
+    assert.strictEqual(actual.aaCost, evaluation.models[0].costPerTask, 'each evaluation keeps its own cost');
+    assert.strictEqual(actual.intelligence, evaluation.models[0].score * (evaluation.evalSlug === 'artificial-analysis-cyber-index' ? 1 : 100));
+  }
+
+  const taskAnchors = [], taskPlots = [];
+  const taskIds = ['artificial-analysis-coding-agent-index-vs-cost-per-task'].concat(fixture.evaluations.map(e => e.evalSlug + '-score-vs-cost-per-task'));
+  taskIds.forEach((id, i) => {
+    const a = makeElement('div'), p = makeElement('div');
+    a.attrs.id = id; a.rect = anchor.rect;
+    p.className = 'recharts-responsive-container'; p.rect = plot.rect;
+    const rows = i ? expanded.charts[fixture.evaluations[i - 1].evalSlug] : expanded.charts.coding;
+    p.querySelectorAll = sel => sel === '[data-chart-item-id]' ? rows.map(m => ({ getAttribute: key =>
+      key === 'data-chart-item-id' ? m.chartId : key === 'fill' ? '#123456' : '1' })) : [];
+    a.appendChild(p); doc.body.appendChild(a); taskAnchors.push(a); taskPlots.push(p);
+  });
+  const queryBeforeTasks = doc.querySelectorAll;
+  doc.querySelectorAll = sel => sel.startsWith('[id=') ? queryBeforeTasks(sel).concat(taskAnchors.filter(a => sel.includes('[id="' + a.attrs.id + '"]'))) : queryBeforeTasks(sel);
+  R.extract.extractModelsDetailed = () => expanded;
+  R.state.setSource('claude-pro');
+  R.integration.renderAllBars();
+  const taskContexts = R.integration._contexts().filter(c => c.taskChart);
+  assert.strictEqual(taskContexts.length, 5, 'coding, cyber and three cyber sub-benchmarks mount');
+  const codingContext = taskContexts[0];
+  const codingPoints = Object.values(codingContext.dataById);
+  const opus = codingPoints.find(m => m.label.includes('Opus 5.5'));
+  assert.ok(opus.repricedCost < opus.aaCost, 'Claude model name is normalized without conflating agent and model');
+  const qwen = codingPoints.find(m => m.label.includes('Qwen'));
+  assert.strictEqual(qwen.repricedCost, qwen.aaCost, 'Claude Code running Qwen does not inherit Claude subscription');
+  const hybrid = codingPoints.find(m => m.label.includes('SWE-2'));
+  assert.strictEqual(hybrid.repricedCost, hybrid.aaCost, 'mixed-model cost is not discounted as a single model');
+  assert.ok(codingContext.gAxis.innerHTML.includes('Artificial Analysis Coding Agent Index'));
+  assert.strictEqual(codingContext.nodes[opus.id].children[0].attrs.fill, '#123456', 'point follows native color mode');
+  assert.ok(!R.registry.all().some(m => m.id === opus.id), 'agent rows cannot pollute Intelligence registry');
+  for (let i = 1; i < taskContexts.length; i++) {
+    const point = Object.values(taskContexts[i].dataById)[0];
+    assert.strictEqual(point.aaCost, fixture.evaluations[i - 1].models[0].costPerTask, 'chart-specific price survives integration');
+  }
+
+  // SPA navigation with native points but no initial payload: fetch the current
+  // public page once, recover all charts, and never paint an empty overlay.
+  ctx.location = { pathname: '/', search: '?coverage-test=1' };
+  R.extract.extractModelsDetailed = () => ({ models: [], chartIds: {}, charts: {}, releaseData: { models: [], releases: [] }, source: 'none' });
+  let pageCalls = 0, resolvePage;
+  ctx.fetch = url => { pageCalls++; assert.strictEqual(url, '/?coverage-test=1'); return new Promise(resolve => { resolvePage = resolve; }); };
+  R.integration.renderAllBars();
+  R.integration.renderAllBars();
+  assert.strictEqual(codingContext.wrap.style.display, 'none', 'missing mapping preserves original chart');
+  await new Promise(resolve => setTimeout(resolve, 5));
+  assert.strictEqual(pageCalls, 1, 'all charts share one bounded recovery request');
+  resolvePage({ ok: true, text: async () => pageHtml });
+  await new Promise(resolve => setTimeout(resolve, 30));
+  R.integration.renderAllBars();
+  assert.strictEqual(codingContext.wrap.style.display, '', 'page data recovers without browser reload');
+  assert.strictEqual(Object.keys(codingContext.dataById).length, 3);
+  assert.strictEqual(pageCalls, 1);
+  ctx.location.search = '?coverage-test=failed';
+  let failures = 0;
+  ctx.fetch = async () => { failures++; throw new Error('transient network failure'); };
+  R.integration.renderAllBars();
+  await new Promise(resolve => setTimeout(resolve, 20));
+  R.integration.renderAllBars();
+  assert.strictEqual(failures, 1, 'failed recovery has a cooldown, not a request loop');
+  assert.strictEqual(codingContext.wrap.style.display, 'none', 'failure keeps the native chart usable');
+  ctx.location.search = '?coverage-test=stale';
+  ctx.fetch = () => new Promise(resolve => { resolvePage = resolve; });
+  R.integration.renderAllBars();
+  await new Promise(resolve => setTimeout(resolve, 5));
+  ctx.location.search = '?coverage-test=new-route';
+  delete ctx.fetch;
+  R.integration.renderAllBars();
+  resolvePage({ ok: true, text: async () => pageHtml });
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.strictEqual(codingContext.wrap.style.display, 'none', 'late page response cannot populate a different route');
+  delete ctx.fetch;
+  ctx.location = { search: '' };
+  R.extract.extractModelsDetailed = originalExtract;
+  doc.querySelectorAll = queryBeforeTasks;
+
   R.state.setSource('__aa__');
   await new Promise((r) => setTimeout(r, 50));
   assert.strictEqual(ctxA.wrap.style.display, 'none', 'overlay hidden in AA mode after best');
