@@ -1,103 +1,54 @@
 # RepriceAA
 
-<p align="center">
-  <a href="../../releases"><img src="https://img.shields.io/github/v/release/yingyx/reprice-artificial-analysis?style=flat-square" alt="release"></a>
-  <img src="https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square" alt="tests">
-  <img src="https://img.shields.io/badge/privacy-no_network_·_storage_only-green?style=flat-square" alt="privacy">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
-</p>
+[English](README.md) · 简体中文 · [Releases](../../releases) · [MIT 许可证](LICENSE)
 
-<p align="center">
-  <b>用「你实际支付的价格」重新计算 Artificial Analysis 基准的 Chrome 扩展。</b>
-  <br>
-  Artificial Analysis 按公开牌价为模型排名，而实际支出通常来自订阅、折扣 API 或中转渠道。
-  RepriceAA 用你的有效价格重画 Intelligence Index 图表，使图上的性价比结论与你的真实成本一致。
-</p>
+用你购买订阅、折扣 API 或其他渠道的实际价格，重新计算 [Artificial Analysis](https://artificialanalysis.ai/models) 图表中的模型成本。
 
-<p align="center">
-  同一张图，切换一个选项：Price Source <i>Artificial Analysis</i> → <b>★ Auto-best (cheapest)</b>
-</p>
+将 **Price Source** 从 **Artificial Analysis** 切换为 **★ Auto-best (cheapest)**，即可按已启用渠道中的最低价比较模型。
 
-<p align="center">
-  <img src="assets/hero.gif" alt="Before：AA 牌价原图。After：同一张图由 RepriceAA 用你实际支付的价格重算（Auto-best）。" width="960">
-</p>
+![交替展示 AA 牌价与 RepriceAA Auto-best 重算价格的对比](assets/hero.gif)
 
-## 背景
-
-[Intelligence Index vs. Cost per Task](https://artificialanalysis.ai/models) 图表以公开的
-$/M tokens 价格作为成本轴。当你通过订阅或折扣方案使用同一批模型时，每个模型的实际单价与
-牌价不同，图表给出的"性价比前沿"也就不再适用于你的情况。
-
-| | AA 牌价图表 | RepriceAA |
-|---|---|---|
-| 价格基准 | 公开 $/M tokens | 你的有效单价 |
-| 订阅制套餐 | 不建模 | 逐模型有效单价（按各模型额度） |
-| 多个渠道 | 单一数字 | 逐一比较，取最低 |
-| 性价比前沿 | 牌价 Pareto | *你的* Pareto |
-
-*（示意性对比——结果取决于你配置的价格。）*
-
-## 功能
-
-RepriceAA 在任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页面上注入侧边面板，
-并与原生图表集成：
-
-- **4 种规则类型**——`multiplier`（`0.5x`）、`absolute`（`$3/task`）、`formula`（`aaCost * 0.8 + 0.2`）、`exclude`
-- **订阅摊销**——月费 + 各模型额度 → 逐模型有效单价；未单独标注额度的模型回退到套餐摊销比值
-- **Best-of 模式**——每个模型在所有启用渠道中取最低价，并保留价格来源
-- **回退链**——未覆盖的模型落到下一个渠道（检测循环，深度上限 3）
-- **限时规则**——`until: 2026-12-31`，促销价到期自动失效
-- **异常提示**——零成本、公式错误、渠道未覆盖等情况明确标出，不静默丢弃
-- **跨页模型登记**——任意 AA 页面见过的模型缓存到本地（上限 600 条、14 天新鲜度），切页不丢点
+*录制于 2026 年 10 月 5 日，实际结果取决于你配置的渠道和价格。*
 
 ## 安装
 
-**方式一 —— 下载打包的 Release（推荐，Chrome 扩展）**
+**Chrome 扩展**
 
-1. 从 [Releases](../../releases) 页面下载 `repriceaa-vX.Y.Z.zip` 并解压。
-2. `chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中解压后的文件夹。
+1. 从 [Releases](../../releases) 下载 `repriceaa-vX.Y.Z.zip` 并解压。
+2. 打开 `chrome://extensions`，启用 **开发者模式**。
+3. 点击 **加载已解压的扩展程序**，选择解压后的文件夹。
 
-**方式二 —— 用户脚本（Tampermonkey / Violentmonkey / Greasemonkey）**
+也可以克隆本仓库后直接加载仓库目录，无需构建或安装依赖。
 
-从 [Releases](../../releases) 页面下载 `repriceaa.user.js`（在 Tampermonkey 的
-「实用工具」中导入，或将文件拖入脚本管理面板），也可以从
-[Greasy Fork](https://greasyfork.org) 安装——该脚本与 releases 同步，新版本发布后自动更新。
-用户脚本与扩展出自同一份源码——头部元信息与文件加载顺序均由 `manifest.json` 生成，
-两者自动保持同步。
+**用户脚本**
 
-**方式三 —— 从源码安装**
+从 [Releases](../../releases) 下载 `repriceaa.user.js`，导入 Tampermonkey 或兼容的用户脚本管理器。
 
-```bash
-git clone <本仓库>
-```
+## 使用
 
-然后：`chrome://extensions` → 打开 **开发者模式** → **加载已解压的扩展程序** → 选中本目录。
+1. 在 Artificial Analysis 打开受支持的 Intelligence Index **单任务成本**图表。
+2. 点击 **RepriceAA → Sources**，检查启用的渠道或添加自己的定价。
+3. 在图表的 **Price Source** 中选择某个渠道或 **Auto-best**。悬停数据点可查看价格详情；选择 **Artificial Analysis** 可恢复原图。
 
-Release 包由 CI 自动构建；每个 Release 同时包含扩展 zip 与生成的用户脚本。本地重新生成用户脚本：
+在未集成图表的页面，可点击右下角紫色 **RAA** 按钮打开面板。
 
-```bash
-node scripts/build-userscript.js repriceaa.user.js
-```
+## 功能
 
-没有构建步骤，没有依赖，纯 JavaScript。
-
-安装完成后，访问任意 [artificialanalysis.ai](https://artificialanalysis.ai) 页面，
-点击右下角的紫色圆钮。
+- **自定义定价**：倍率、固定单任务价格、公式和模型排除规则。
+- **订阅摊销**：根据月费和各模型额度计算有效价格。
+- **渠道比较**：逐模型选择已启用渠道中的最低价，保留价格来源并支持回退渠道。
+- **图表集成**：重算性价比前沿，支持按模型发布分组的图表及不同推理档位。
+- **定价维护**：促销规则到期失效、异常提示，以及内置定价预设自动更新。
 
 ## 隐私
 
-零网络请求，零统计埋点。仅申请一个权限（`storage`）：定价配置与模型缓存全部保留在本地浏览器中。
+定价配置和模型缓存保存在本地浏览器中，无统计埋点；扩展仅申请 `storage` 权限。扩展会从 GitHub 或 jsDelivr 下载公开定价预设，也可能请求 Artificial Analysis 的模型或发布详情页，以补全图表数据。
 
 ## 开发
 
 ```bash
 node test/run-tests.js
+node scripts/build-userscript.js repriceaa.user.js
 ```
 
-55 个单元、集成与冒烟测试——零依赖，含用户脚本构建测试。
-
-<br>
-
-<p align="center">
-  <a href="README.md">English</a> · 简体中文
-</p>
+纯 JavaScript。每个 Release 同时提供扩展 ZIP 和生成的用户脚本。

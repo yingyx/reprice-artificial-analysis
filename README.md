@@ -1,116 +1,54 @@
 # RepriceAA
 
-<p align="center">
-  <a href="../../releases"><img src="https://img.shields.io/github/v/release/yingyx/reprice-artificial-analysis?style=flat-square" alt="release"></a>
-  <img src="https://img.shields.io/badge/tests-passing-brightgreen?style=flat-square" alt="tests">
-  <img src="https://img.shields.io/badge/privacy-no_network_·_storage_only-green?style=flat-square" alt="privacy">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="license"></a>
-</p>
+English · [简体中文](README.zh-CN.md) · [Releases](../../releases) · [MIT License](LICENSE)
 
-<p align="center">
-  <b>A Chrome extension that re-prices Artificial Analysis benchmarks with the prices you actually pay.</b>
-  <br>
-  Artificial Analysis ranks models by list price, while actual spending typically comes from
-  subscriptions, discounted API plans, or proxies. RepriceAA re-draws the Intelligence Index
-  chart with your effective prices, so the cost-optimal model is cost-optimal for you.
-</p>
+Reprice [Artificial Analysis](https://artificialanalysis.ai/models) charts with the prices you actually pay for subscriptions, discounted APIs, or other providers.
 
-<p align="center">
-  Same chart, one toggle: Price Source <i>Artificial Analysis</i> → <b>★ Auto-best (cheapest)</b>
-</p>
+Switch **Price Source** from **Artificial Analysis** to **★ Auto-best (cheapest)** to compare models using the lowest price across your enabled sources.
 
-<p align="center">
-  <img src="assets/hero.gif" alt="Before: AA list price. After: the same chart repriced by RepriceAA (Auto-best) with the prices you actually pay." width="960">
-</p>
+![AA list prices and RepriceAA Auto-best prices, alternating for comparison](assets/hero.gif)
 
-## Why
-
-The [Intelligence Index vs. Cost per Task](https://artificialanalysis.ai/models) chart ranks
-models by published $/M token prices. If you reach the same models through a subscription or a
-discounted plan, the effective price per model differs from the list price, and the chart's
-cost-optimal frontier no longer reflects your situation.
-
-| | AA list-price chart | RepriceAA |
-|---|---|---|
-| Price basis | published $/M tokens | your effective price |
-| Subscription plans | not modeled | per-model effective price (allowance-aware) |
-| Multiple providers | one number | compared, cheapest wins |
-| Cost-optimal frontier | list-price Pareto | *your* Pareto |
-
-The **by Model Release** task-cost chart also supports repricing. Each reasoning/effort
-variant retains its own cost and score, with connecting lines within each release.
-The native release selector controls which points are shown. Missing variants are
-loaded once from public release detail pages and cached for the current index version;
-the original AA chart stays visible while those details are unavailable or loading.
-Release charts label each group once, beside its highest-scoring visible variant.
-Labels use short, unobstructed leaders; crowded labels may be omitted, while every
-point retains its full model name and pricing details in the hover tooltip.
-
-*(Illustrative — the comparison depends on the rates you configure.)*
-
-## Features
-
-RepriceAA adds a side panel and integrates with the native chart on any
-[artificialanalysis.ai](https://artificialanalysis.ai) page:
-
-- **4 rule types** — `multiplier` (`0.5x`), `absolute` (`$3/task`), `formula` (`aaCost * 0.8 + 0.2`), `exclude`
-- **Subscription amortization** — monthly fee + per-model allowance → per-model effective price; the plan's amortized ratio is the fallback for models without a specific allowance
-- **Best-of mode** — each model priced across all enabled sources; cheapest wins, with provenance
-- **Fallback chains** — uncovered models fall through to another source (loops detected, depth capped at 3)
-- **Time-limited rules** — `until: 2026-12-31` for promotional pricing that expires automatically
-- **Anomaly flags** — zero-cost, formula errors, and uncovered models are surfaced rather than silently dropped
-- **Cross-page registry** — models seen on any AA page are cached locally (600 entries, 14-day freshness) so charts stay complete
+*Captured on October 5, 2026. Results depend on your configured sources and rates.*
 
 ## Install
 
-**Option 1 — packaged release (recommended, Chrome)**
+**Chrome extension**
 
-1. Download `repriceaa-vX.Y.Z.zip` from the [Releases](../../releases) page and unzip it.
-2. `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the unzipped folder.
+1. Download `repriceaa-vX.Y.Z.zip` from [Releases](../../releases) and unzip it.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. Click **Load unpacked** and select the unzipped folder.
 
-**Option 2 — userscript (Tampermonkey / Violentmonkey / Greasemonkey)**
+You can also clone this repository and load its folder directly. No build step or dependencies required.
 
-Install `repriceaa.user.js` from the [Releases](../../releases) page (Tampermonkey →
-Utilities → import, or drag the file into the dashboard), or install from
-[Greasy Fork](https://greasyfork.org), where the script syncs from this repo's releases and
-updates automatically. The same extension source produces the userscript —
-the header and file order are generated from `manifest.json`, so both stay in sync.
+**Userscript**
 
-**Option 3 — from source**
+Download `repriceaa.user.js` from [Releases](../../releases) and import it into Tampermonkey or a compatible userscript manager.
 
-```bash
-git clone <this-repo>
-```
+## Use
 
-Then: `chrome://extensions` → enable **Developer mode** → **Load unpacked** → select the folder.
+1. Open a supported Intelligence Index **cost-per-task** chart on Artificial Analysis.
+2. Open **RepriceAA → Sources** to review enabled providers or add your own pricing.
+3. Select a source or **Auto-best** in the chart's **Price Source** menu. Hover over a point for pricing details; select **Artificial Analysis** to restore the original chart.
 
-Releases are packaged automatically by CI; each release contains the extension zip and the
-generated userscript. Regenerate the userscript locally with:
+On pages without an integrated chart, open the panel with the purple **RAA** button in the bottom-right corner.
 
-```bash
-node scripts/build-userscript.js repriceaa.user.js
-```
+## Features
 
-No build step, no dependencies, plain JavaScript.
-
-Once loaded, visit any [artificialanalysis.ai](https://artificialanalysis.ai) page and click the
-purple launcher in the bottom-right corner.
+- **Custom pricing:** multipliers, fixed task costs, formulas, and model exclusions.
+- **Subscription plans:** effective prices from monthly fees and per-model allowances.
+- **Source comparison:** cheapest enabled source per model, with pricing provenance and fallback sources.
+- **Chart integration:** updated cost-optimal frontier; supports model-release charts and their reasoning variants.
+- **Pricing maintenance:** expiring promotional rules, error indicators, and automatically refreshed built-in presets.
 
 ## Privacy
 
-Zero network requests, zero analytics. One permission (`storage`): profiles and the model cache
-never leave your browser.
+Pricing profiles and model caches stay in your browser. No analytics; the extension requests only the `storage` permission. It downloads public pricing presets from GitHub or jsDelivr and may fetch Artificial Analysis model/release pages to fill missing chart data.
 
 ## Development
 
 ```bash
 node test/run-tests.js
+node scripts/build-userscript.js repriceaa.user.js
 ```
 
-55 unit, integration, and smoke tests — zero dependencies, including the userscript build.
-
-<br>
-
-<p align="center">
-  English · <a href="README.zh-CN.md">简体中文</a>
-</p>
+Plain JavaScript. Releases include both the extension ZIP and the generated userscript.
