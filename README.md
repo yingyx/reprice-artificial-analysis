@@ -26,7 +26,7 @@ Download `repriceaa.user.js` from [Releases](../../releases) and import it into 
 
 ## Use
 
-1. Open a supported Intelligence Index **cost-per-task** chart on Artificial Analysis.
+1. Open a supported **score vs. cost-per-task** chart on Artificial Analysis.
 2. Open **RepriceAA → Sources** to review enabled providers or add your own pricing.
 3. Select a source or **Auto-best** in the chart's **Price Source** menu. Hover over a point for pricing details; select **Artificial Analysis** to restore the original chart.
 
@@ -37,12 +37,14 @@ On pages without an integrated chart, open the panel with the purple **RAA** but
 - **Custom pricing:** multipliers, fixed task costs, formulas, and model exclusions.
 - **Subscription plans:** effective prices from monthly fees and per-model allowances.
 - **Source comparison:** cheapest enabled source per model, with pricing provenance and fallback sources.
-- **Chart integration:** updated cost-optimal frontier; supports model-release charts and their reasoning variants.
+- **Chart integration:** updated cost-optimal frontier; supports Intelligence Index (including release variants), Coding Agent Index, Cyber Index, CWE-Bench-AA, DeepsecBench-AA, and CyberGym-E2E-AA cost-per-task scatter plots.
 - **Pricing maintenance:** expiring promotional rules, error indicators, and automatically refreshed built-in presets.
+
+Each benchmark keeps its own scores and costs. Coding agents are priced by their underlying model; mixed-model agents retain AA prices when a cost breakdown is unavailable. Discounts assume unchanged token usage; they do not predict how switching agents or models changes scores. Token prices, execution time, and non-cost charts are not repriced.
 
 ## Privacy
 
-Pricing profiles and model caches stay in your browser. No analytics; the extension requests only the `storage` permission. It downloads public pricing presets from GitHub or jsDelivr and may fetch Artificial Analysis model/release pages to fill missing chart data.
+Pricing profiles and model caches stay in your browser. No analytics; the extension requests only the `storage` permission. It downloads public pricing presets from GitHub or jsDelivr and may fetch Artificial Analysis current chart page or model/release pages to fill missing chart data.
 
 ## Development
 

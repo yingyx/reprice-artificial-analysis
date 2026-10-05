@@ -26,7 +26,7 @@
 
 ## 使用
 
-1. 在 Artificial Analysis 打开受支持的 Intelligence Index **单任务成本**图表。
+1. 在 Artificial Analysis 打开受支持的**得分 vs. 单任务成本**图表。
 2. 点击 **RepriceAA → Sources**，检查启用的渠道或添加自己的定价。
 3. 在图表的 **Price Source** 中选择某个渠道或 **Auto-best**。悬停数据点可查看价格详情；选择 **Artificial Analysis** 可恢复原图。
 
@@ -37,12 +37,14 @@
 - **自定义定价**：倍率、固定单任务价格、公式和模型排除规则。
 - **订阅摊销**：根据月费和各模型额度计算有效价格。
 - **渠道比较**：逐模型选择已启用渠道中的最低价，保留价格来源并支持回退渠道。
-- **图表集成**：重算性价比前沿，支持按模型发布分组的图表及不同推理档位。
+- **图表集成**：重算性价比前沿，支持 Intelligence Index（含发布分组及推理档位）、Coding Agent Index、Cyber Index、CWE-Bench-AA、DeepsecBench-AA 和 CyberGym-E2E-AA 的单任务成本散点图。
 - **定价维护**：促销规则到期失效、异常提示，以及内置定价预设自动更新。
+
+每个评测使用自身的得分和成本。Coding Agent 按底层模型匹配定价；多模型组合缺少成本拆分时保留 AA 原价。折扣换算假定 token 用量不变，不预测更换 Agent 或模型后的得分变化。暂不重定价 token 单价、执行时间和非成本图表。
 
 ## 隐私
 
-定价配置和模型缓存保存在本地浏览器中，无统计埋点；扩展仅申请 `storage` 权限。扩展会从 GitHub 或 jsDelivr 下载公开定价预设，也可能请求 Artificial Analysis 的模型或发布详情页，以补全图表数据。
+定价配置和模型缓存保存在本地浏览器中，无统计埋点；扩展仅申请 `storage` 权限。扩展会从 GitHub 或 jsDelivr 下载公开定价预设，也可能请求 Artificial Analysis 的当前图表页、模型或发布详情页，以补全图表数据。
 
 ## 开发
 
