@@ -17,6 +17,12 @@
       "rules": {},
       "nameIncludes": [
         {
+          "match": "quasar",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
           "match": "glm-5.3-flash",
           "rule": {
             "type": "multiplier",
@@ -199,6 +205,13 @@
           }
         },
         {
+          "match": "space bunny",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333
+          }
+        },
+        {
           "match": "hy4 preview",
           "rule": {
             "type": "multiplier",
@@ -214,8 +227,8 @@
         }
       ],
       "promos": [],
-      "asOf": "2026-09-29",
-      "notes": "$10/mo subscription for 28 paid open-source coding models (plus 2 free limited-time). Per-model monthly usage limits from docs: $60 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, Kimi K2.6, LongCat-2.0, MiMo-V2.5, MiMo-V2.6-Flash, MiniMax M3, MiniMax M2.7, Muse Spark 1.3/1.2 Contributor, Qwen3.7 Plus, Hy3, DeepSeek V4.1 Flash; $30 for Qwen3.8 Flash, DeepSeek V4 Flash, Hy4 preview; $15 for Kimi K3, MiMo-V2.5-Pro, MiMo-V2.6-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna. Base ratio 0.167 uses $60 limit (10/60). Free models: Space Bunny Free (limited time), LongCat 2.5 Preview Free (limited time) – no pattern, stay at AA list price. Limits: 20%/5h, 50%/wk, 100%/mo. Sources: opencode.ai/go, opencode.ai/docs/go.",
+      "asOf": "2026-10-06",
+      "notes": "$10/mo subscription for 29 paid models plus 1 free limited-time model (opencode.ai/docs/go model list - 30 entries; opencode.ai/go pricing card). Per-model monthly usage limits (USD) from the docs Usage-limits Go tab, pattern value = 10/limit: $60 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, Kimi K2.6, LongCat-2.0, MiMo-V2.6-Flash, MiMo-V2.5, MiniMax M3, MiniMax M2.7, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Qwen3.7 Plus, DeepSeek V4.1 Flash, Hy3 (0.167; also manualRatio/defaultRule - $60 is the most common allowance); $30 for Qwen3.8 Flash, DeepSeek V4 Flash, Hy4 preview and Space Bunny (0.333) - Space Bunny moved from free to a paid $30/$120 model on the go page limits table, so it gains a pattern; $15 for GLM-5.3, Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna (0.667). Free: LongCat 2.5 Preview Free (Unlimited, docs footnote \"Free for a limited time\", no stated end date) gets no pattern and stays at AA list price. Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor. Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2) - caught by the \"glm-5.2\" substring - at AA list price since OpenCode does not offer Quasar. Neither page states a limited-time multiplier promo or end date; the only limited-time item is the free LongCat model. Limits per model: 20%/5h, 50%/wk, 100%/mo of its monthly limit. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-06).",
       "builtin": true
     },
     {
@@ -569,6 +582,24 @@
       },
       "rules": {},
       "nameIncludes": [
+        {
+          "match": "quasar",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm 5v turbo",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm-5-turbo",
+          "rule": {
+            "type": "exclude"
+          }
+        },
         {
           "match": "glm-5.3 flashx",
           "rule": {
@@ -1018,8 +1049,8 @@
           "endsAt": null
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat); manualRatio/defaultRule = 10/20 = 0.5, the plan's most common (default) monthly allowance. Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code and GLM-5.3 Flash (0.167) - GLM-5.3 Flash was $40 (0.25) last run, the plan table now says $60 and pricing-limits#glm-5.3-flash-boosted-credits states $60 on GOAT \"while capacity lasts\" (no stated end date, so it is baked into the pattern value, not a promo); DeepSeek V4.1 Flash's boosted-usage deal likewise states \"no end date\"; $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for Gemini 3.8 Flash and Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus and Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for every other paid model (0.5), including Jev, which the plan bills at a $20 allowance. Kimi K3 is the only limited-time allowance boost with a stated end date: the plan table shows \"$20$60through Oct 7th\" and pricing-limits#kimi-k3-boosted-credits says \"Kimi K3 gets boosted monthly credits for one week, through October 7, 2026\" ($60 on GOAT, up from $20) - base pattern stays 0.5 ($20) and a promo carries 0.167 ($60) with endsAt 2026-10-07 from the stated date; after Oct 7 the pattern's 0.5 applies again. Deals still on the pages with no end date stated (endsAt null): MiniMax M3 -50% baked into its $47 GOAT allowance (pricing page effective-usage row and pricing-limits deal card both say $47 on GOAT -> promo 0.213); MiMo V2.5 -98% and MiMo V2.5 Pro -99% (pricing page effective-usage row ~$100 on GOAT -> promo 0.1 for both; pricing-limits' MiMo V2.5 deal card phrases its $30 GOAT allowance as up to ~$300 at old list price - the designated pricing page's per-plan figure is used, as in prior runs). GOAT lists 63 models = 59 paid + 4 free. Free models get no pattern and stay at AA list price: Space Bunny Alpha, Laguna S 2.1, Ling 3.0 Flash, Ling 3.0 Flash Sante, Ling 3.1 Flash (commandcode.ai/pricing still lists \"Free on Pixel Canary\" but changelog v1.73.1 retired Pixel Canary when its stealth preview ended Sep 30, 2026). Patterns kept although AA does not list the model yet (zero hits in check-patterns; they activate when AA adds them): Jev, Tencent Hy3, Tencent Hy4 Preview, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) stay removed and nemotron stays narrowed to nemotron 3 ultra so AA models outside the plan are not repriced; every paid plan model has a specific pattern, ordered most-specific first. Substring side-effects that cannot be narrowed without leaving in-plan models uncovered: glm-5 also catches AA labels \"GLM 5V Turbo\", \"GLM-5-Turbo\" and \"Quasar 438B (Max, Based on GLM-5.2)\", glm-5.2 catches that Quasar label too, qwen 3.8 flash also catches \"Qwen3.8-Flash-Next\", deepseek v4 pro/flash also catch the dated snapshots (0424/0813/0420/0731); reasoning-effort variants (e.g. \"Grok 4.7 (High)\", \"Kimi K3 (Max)\") are the same model and intended. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits (deal cards and end dates), commandcode.ai/changelog (Pixel Canary).",
+      "asOf": "2026-10-06",
+      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat usage-limits section, same table on pricing-limits#usage-limits); manualRatio/defaultRule = 10/20 = 0.5, the plan's most common (default) monthly allowance. The plan page's models widget lists 62 models = 59 paid + 3 free (Laguna S 2.1, Ling 3.0 Flash Sante, Ling 3.1 Flash; the pricing-limits catalog additionally shows Ling 3.0 Flash free) - free models get no pattern and stay at AA list price, and Space Bunny Alpha no longer appears anywhere on the plan page. Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code and GLM-5.3 Flash (0.167) - pricing-limits deal cards state DeepSeek V4.1 Flash boosted credits have \"no end date\" and GLM-5.3 Flash's apply \"while capacity lasts\" (no date), so both are baked into the pattern values, not promos; $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for Gemini 3.8 Flash and Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max/Plus and Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for every other paid model (0.5), including Jev - the pricing-limits usage calculator states \"$20 is Jev's monthly allowance\" even though Jev's output tokens bill at $0. Kimi K3 is the only limited-time allowance boost with a stated end date: the plan table shows \"$20$60through Oct 7th\" and pricing-limits#kimi-k3-boosted-credits says boosted \"through October 7, 2026 ... from October 8 the allowance goes back to $20 on GOAT\" - base pattern stays 0.5 ($20) and a promo carries 0.167 ($60) with endsAt 2026-10-07 from the stated date (still active today, expires automatically after). Deals with no end date stated (endsAt null): MiniMax M3 -50% is baked into the $47 GOAT allowance (pricing page effective-usage row and pricing-limits deal card both say $47 on GOAT -> promo 0.213, same as its pattern); MiMo V2.5 -98% and MiMo V2.5 Pro -99% use the pricing page's effective-usage row (~$100 on GOAT -> promo 0.1 for each), while the pricing-limits deal cards instead phrase the $30/$20 GOAT allowances as up to ~$300/$100 at old list price - the designated pricing page's per-plan figure is used, as in prior runs. New exclude entries at the top of nameIncludes (\"quasar\", \"glm 5v turbo\", \"glm-5-turbo\") keep AA labels Command Code does not offer at AA list price: Quasar 438B (Max, Based on GLM-5.2) was caught by \"glm-5.2\", GLM 5V Turbo and GLM-5-Turbo by \"glm-5\". Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Jev, Tencent Hy3, Tencent Hy4 Preview, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) stay removed and nemotron stays narrowed to nemotron 3 ultra; every paid plan model has a specific pattern, ordered most-specific first. Intended same-model substring hits: reasoning-effort variants (\"Grok 4.7 (High)\", \"Kimi K3 (Max)\"), dated snapshots (DeepSeek 0424/0813/0420/0731, Qwen3.8 Max (0902), Qwen3.8-Flash-Next for Qwen 3.8 Flash, Step 3.5 Flash 2603). Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits (deal cards and end dates) - all fetched 2026-10-06.",
       "builtin": true
     },
     {
@@ -1056,6 +1087,233 @@
       ],
       "asOf": "2026-10-05",
       "notes": "Manual historical estimate for the legacy domestic CNY199 Allegretto plan, reviewed 2026-10-05; low confidence, not a current universal Kimi quota. 2026-07-19 matched-plan full-week record: 340M tokens, API equivalent $136.905 (CNY927.7), 20.97% monthly pool. Source https://linux.do/t/topic/2615396 . Weekly bottleneck projection: 136.905 * 52/12 = $593.25/month, below the monthly-pool projection 136.905/0.2097; do not add them. Fee USD29.37 uses that receipt's historical implied FX (927.7/136.905 CNY per USD), not a live FX quote. Multiplier = fee/(136.905*52/12), about 0.0495, replacing the unsupported 0.005. K3 Standard only; exclude 256K and HighSpeed via explicit rules below. Newer reports https://github.com/MoonshotAI/kimi-cli/issues/2604 suggest metering changes but do not establish this exact legacy tier's current quota. Overseas $39 reports are not transferred. K2.x and other variants stay at AA price without matched evidence.",
+      "builtin": true
+    },
+    {
+      "id": "opencode-go-plus",
+      "name": "OpenCode Go Plus",
+      "kind": "subscription",
+      "monthlyFee": 40,
+      "manualRatio": 0.666667,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.666667
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "quasar",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "glm-5.3-flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.222222
+          }
+        },
+        {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "glm-5.2",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.222222
+          }
+        },
+        {
+          "match": "qwen3.8 max",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "qwen3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.444444
+          }
+        },
+        {
+          "match": "qwen3.7 plus",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.222222
+          }
+        },
+        {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "kimi k2.7 code",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.222222
+          }
+        },
+        {
+          "match": "kimi k2.6",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.166667
+          }
+        },
+        {
+          "match": "mimo-v2.6-flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "mimo-v2.6-pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "mimo-v2.5-pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "mimo-v2.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "deepseek v4.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "deepseek v4 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "deepseek v4 flash vision",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "deepseek v4 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "grok 4.7",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "grok 4.6",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "gpt 6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "gpt 5.6 luna",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.666667
+          }
+        },
+        {
+          "match": "longcat-2.0",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.166667
+          }
+        },
+        {
+          "match": "minimax m3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.222222
+          }
+        },
+        {
+          "match": "minimax m2.7",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.166667
+          }
+        },
+        {
+          "match": "muse spark 1.3 contributor",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "muse spark 1.2 contributor",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "space bunny",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "hy4 preview",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.333333
+          }
+        },
+        {
+          "match": "hy3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.166667
+          }
+        }
+      ],
+      "promos": [],
+      "asOf": "2026-10-06",
+      "notes": "New preset for the $40/mo Go Plus tier (opencode.ai/go pricing card \"Go Plus $40 per month\"; opencode.ai/docs/go plan table \"Go Plus $40/month - Higher usage limits across the models below\"), same 30-model lineup as Go. Per-model monthly allowances (USD) from the docs Usage-limits Go Plus tab, pattern value = 40/limit - deliberately not a uniform multiple of the Go allowances (e.g. Kimi K2.6 $60->$240 4x but DeepSeek V4.1 Flash $60->$120 only 2x): $180 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, MiniMax M3, Qwen3.7 Plus (0.222222); $120 for GLM-5.3, MiMo-V2.6-Flash, MiMo-V2.5, Muse Spark 1.3/1.2 Contributor, DeepSeek V4.1 Flash, DeepSeek V4 Flash, Hy4 preview, Space Bunny (0.333333); $60 for Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna (0.666667 - the most common allowance, also manualRatio/defaultRule = 40/60); $240 for Kimi K2.6, LongCat-2.0, MiniMax M2.7, Hy3 (0.166667); $90 for Qwen3.8 Flash (0.444444). Token prices are identical for both tiers (docs: \"Token pricing is the same for Go and Go Plus\"); limits 20%/5h, 50%/wk, 100%/mo of each model's monthly limit. Free: LongCat 2.5 Preview Free (Unlimited, limited time) gets no pattern and stays at AA list price. Zero-hit patterns kept because AA does not list them yet: Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor. Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2), which the \"glm-5.2\" substring would catch, at AA list price. No multiplier promo or end date appears on either page. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-06).",
       "builtin": true
     }
   ];
