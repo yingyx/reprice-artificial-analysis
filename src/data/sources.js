@@ -226,6 +226,12 @@
           }
         },
         {
+          "match": "hy3-preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
           "match": "hy3",
           "rule": {
             "type": "multiplier",
@@ -234,8 +240,8 @@
         }
       ],
       "promos": [],
-      "asOf": "2026-10-08",
-      "notes": "$10/mo subscription for 30 paid models plus 1 free limited-time model (opencode.ai/docs/go model list - 31 entries; opencode.ai/go pricing card). New since the 2026-10-06 run: Claude Haiku 5.5 joined the lineup (docs model list and endpoints table claude-haiku-5-5; go page limits row marked New), so it gains a pattern at its $15 Go monthly allowance (10/15 = 0.667). Per-model monthly usage limits (USD) from the docs Usage-limits Go tab, pattern value = 10/limit: $60 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, Kimi K2.6, LongCat-2.0, MiMo-V2.6-Flash, MiMo-V2.5, MiniMax M3, MiniMax M2.7, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Qwen3.7 Plus, DeepSeek V4.1 Flash, Hy3 (0.167; also manualRatio/defaultRule - $60 is the most common allowance); $30 for Qwen3.8 Flash, DeepSeek V4 Flash, Hy4 preview and Space Bunny (0.333); $15 for GLM-5.3, Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 (0.667). Free: LongCat 2.5 Preview Free (Unlimited, docs footnote \"Free for a limited time\", no stated end date) gets no pattern and stays at AA list price. Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor - Claude Haiku 5.5 already matches AA labels (Claude Haiku 5.5 plus its reasoning-effort variants, all the same plan model). Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2) - caught by the \"glm-5.2\" substring - at AA list price since OpenCode does not offer Quasar. Neither page states a multiplier promo or end date; the only limited-time item is the free LongCat model. Limits per model: 20%/5h, 50%/wk, 100%/mo of its monthly limit. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-08).",
+      "asOf": "2026-10-09",
+      "notes": "$10/mo subscription covering 30 paid models plus 2 free limited-time models (opencode.ai/docs/go model list - 32 entries; opencode.ai/go pricing card \"Go $10 per month\"). Change since the 2026-10-08 run: Step 5 Preview Free joined the lineup as a free model (go page banner \"Step 5 Preview Free, a new model, is available for a limited time\"; docs bullet \"Step 5 Preview Free (limited time)\" and the usage-limits row Free/Unlimited with footnote \"Free for a limited time\" - no stated end date), so it gets NO pattern: AA lists the paid \"Step 5 Preview\" and it stays at AA list price under this source. Also new: exclude entry \"hy3-preview\" ahead of \"hy3\" - AA separately lists \"Hy3-preview\" (slug hy3-preview) which the plan does not include (the plan lists Hy3 and Hy4 preview only), so it must stay at AA list price instead of inheriting Hy3's ratio. No price or allowance changed: pattern value = 10/limit from the docs Usage-limits Go tab (per model 20%/5h, 50%/wk, 100%/mo of its monthly limit; token pricing identical for Go and Go Plus): $60 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, Kimi K2.6, LongCat-2.0, MiMo-V2.6-Flash, MiMo-V2.5, MiniMax M3, MiniMax M2.7, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Qwen3.7 Plus, DeepSeek V4.1 Flash, Hy3 (0.167; also manualRatio/defaultRule - $60 is the most common allowance); $30 for Qwen3.8 Flash, DeepSeek V4 Flash, Hy4 preview, Space Bunny (0.333); $15 for GLM-5.3, Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 (0.667). Free models get no pattern and stay at AA list price: LongCat 2.5 Preview Free and Step 5 Preview Free (both Unlimited, \"limited time\", no stated end date). Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor - Claude Haiku 5.5 already matches AA labels (Claude Haiku 5.5 plus its reasoning-effort variants, all the same plan model). Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2) - caught by the \"glm-5.2\" substring - at AA list price since OpenCode does not offer Quasar. Neither page states a multiplier promo or end date; promos stays empty. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-09).",
       "builtin": true
     },
     {
@@ -839,6 +845,13 @@
           }
         },
         {
+          "match": "claude haiku 5.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.5
+          }
+        },
+        {
           "match": "grok 4.7",
           "rule": {
             "type": "multiplier",
@@ -898,7 +911,7 @@
           "match": "mistral large 4",
           "rule": {
             "type": "multiplier",
-            "value": 0.25
+            "value": 0.5
           }
         },
         {
@@ -1000,14 +1013,20 @@
           }
         },
         {
-          "match": "tencent hy4",
+          "match": "hy4 preview",
           "rule": {
             "type": "multiplier",
             "value": 0.5
           }
         },
         {
-          "match": "tencent hy3",
+          "match": "hy3-preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "hy3",
           "rule": {
             "type": "multiplier",
             "value": 0.143
@@ -1023,14 +1042,14 @@
       ],
       "promos": [
         {
-          "match": "kimi k3",
+          "match": "mistral large 4",
           "rule": {
             "type": "multiplier",
-            "value": 0.167
+            "value": 0.25
           },
-          "reason": "Kimi K3 boosted allowance: $60/mo on GOAT (base $20) through Oct 7, 2026 - plan table \"$20$60through Oct 7th\", pricing-limits#kimi-k3-boosted-credits \"for one week, through October 7, 2026 ... from October 8 the allowance goes back to $20 on GOAT\"; endsAt from the stated date, now past (fetched 2026-10-08) so the runtime ignores it and Kimi K3 prices at the base 0.5",
+          "reason": "Mistral Large 4 boosted credits: $40 on GOAT up from the $20 base, with a stated end date - plan main table \"$20$40through Oct 20th\"; pricing-limits deal card mistral-large-4-boosted-credits \"Boosted credits through October 20, 2026 ... Ends October 20, 2026\" -> endsAt 2026-10-20 taken verbatim from the page; after that date the runtime ignores the promo and the base pattern prices it at 10/20 = 0.5",
           "startsAt": null,
-          "endsAt": "2026-10-07"
+          "endsAt": "2026-10-20"
         },
         {
           "match": "mimo v2.5 pro",
@@ -1038,7 +1057,7 @@
             "type": "multiplier",
             "value": 0.1
           },
-          "reason": "MiMo V2.5 Pro -99% deal: $20 GOAT allowance ~ $100 of list-price usage (pricing-limits deals card; pricing page effective-usage row ~$100 on GOAT)",
+          "reason": "MiMo V2.5 Pro -99% deal (still on the page, no end date stated): pricing page effective-usage row ~$100 of list-price usage on GOAT -> 10/100 = 0.1 (pricing-limits deal card instead phrases GOAT's $20 allowance as up to ~$100 at old list price - same figure)",
           "startsAt": null,
           "endsAt": null
         },
@@ -1048,7 +1067,7 @@
             "type": "multiplier",
             "value": 0.213
           },
-          "reason": "MiniMax M3 -50% deal: effective credits ~$47/mo on GOAT plan",
+          "reason": "MiniMax M3 -50% deal (still on the page, no end date stated): pricing page effective-usage row $47 on GOAT -> 10/47 = 0.213, same as its pattern",
           "startsAt": null,
           "endsAt": null
         },
@@ -1058,13 +1077,13 @@
             "type": "multiplier",
             "value": 0.1
           },
-          "reason": "MiMo V2.5 -98% deal: effective value ~$100 on GOAT plan",
+          "reason": "MiMo V2.5 -98% deal (still on the page, no end date stated): pricing page effective-usage row ~$100 of list-price usage on GOAT -> 10/100 = 0.1 (pricing-limits deal card instead phrases GOAT's $30 allowance as up to ~$300 at old list price - the designated pricing page's per-plan figure is used, as in prior runs)",
           "startsAt": null,
           "endsAt": null
         }
       ],
-      "asOf": "2026-10-08",
-      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat usage-limits section, same table on pricing-limits#usage-limits); manualRatio/defaultRule = 10/20 = 0.5, the plan's most common (default) monthly allowance. The plan page's models widget now lists 64 models = 60 paid + 4 free (Laguna S 2.1, Ling 3.0 Flash Sante, Ling 3.1 Flash, and the new Glyph Cluster free stealth-preview model at 100 requests/day - pricing-limits deal card glyph-cluster-free \"while the stealth preview lasts\"; the pricing-limits catalog additionally shows Ling 3.0 Flash free) - free models get no pattern and stay at AA list price. The paid lineup is unchanged since the last run (still 60 paid models): Claude Haiku 5.5 exists on AA but Command Code ships it Pro-and-above only (pricing page changelog \"FEAT Add Claude Haiku 5.5 (Pro and above)\"), so GOAT gets no pattern for it and it stays at AA list price; Mistral Large 4 keeps its own pattern: the plan's per-model table lists $40 of monthly credits on GOAT (10/40 = 0.25) and pricing-limits#mistral-large-4-boosted-credits confirms \"$40 on GOAT ... while launch pricing lasts\" with no stated end date, so the boost is baked into the pattern value, not a promo; AA registers the same slug mistral-large-4 under the label \"Mistral Large 4 Preview\", which is exactly what the pattern hits. Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables: $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code and GLM-5.3 Flash (0.167) - pricing-limits deal cards state DeepSeek V4.1 Flash boosted credits have \"no end date\" and GLM-5.3 Flash's apply \"while capacity lasts\" (no date), so both are baked into the pattern values, not promos; $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for Gemini 3.8 Flash, Gemini 3.7 Flash and Mistral Large 4 (0.25); $33 for Qwen 3.7 Max/Plus and Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for every other paid model (0.5), including Jev - the pricing-limits usage calculator still states \"$20 is Jev's monthly allowance\" even though Jev's output tokens bill at $0, and the 100%-off jev-free deal in the embedded model catalog expired 2026-09-24 (the pricing page's \"Free on TypeSafe Jev\" bullet is stale). Kimi K3 is the only limited-time allowance boost with a stated end date: the plan table shows \"$20$60through Oct 7th\" and pricing-limits#kimi-k3-boosted-credits says boosted \"through October 7, 2026 ... from October 8 the allowance goes back to $20 on GOAT\" - base pattern stays 0.5 ($20) and the promo keeps endsAt 2026-10-07 taken verbatim from the page's stated date; that date has now passed (today 2026-10-08, matching the card's own \"from October 8\" wording), so the runtime ignores the promo and Kimi K3 prices at the base 0.5 ($20). Deals with no end date stated (endsAt null): MiniMax M3 -50% is baked into the $47 GOAT allowance (pricing page effective-usage row and pricing-limits deal card both say $47 on GOAT -> promo 0.213, same as its pattern); MiMo V2.5 -98% and MiMo V2.5 Pro -99% use the pricing page's effective-usage row (~$100 on GOAT -> promo 0.1 for each), while the pricing-limits deal cards instead phrase the $30/$20 GOAT allowances as up to ~$300/$100 at old list price - the designated pricing page's per-plan figure is used, as in prior runs. Exclude entries at the top of nameIncludes (\"quasar\", \"glm 5v turbo\", \"glm-5-turbo\") keep AA labels Command Code does not offer at AA list price: Quasar 438B (Max, Based on GLM-5.2) was caught by \"glm-5.2\", GLM 5V Turbo and GLM-5-Turbo by \"glm-5\". Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Jev, Tencent Hy3, Tencent Hy4 Preview, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) stay removed and nemotron stays narrowed to nemotron 3 ultra; every paid plan model has a specific pattern, ordered most-specific first. Intended same-model substring hits: reasoning-effort variants (\"Grok 4.7 (High)\", \"Kimi K3 (Max)\"), dated snapshots (DeepSeek 0424/0813/0420/0731, Qwen3.8 Max (0902), Qwen3.8-Flash-Next for Qwen 3.8 Flash, Step 3.5 Flash 2603) and AA's \"Mistral Large 4 Preview\" label for Mistral Large 4. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits (deal cards and end dates) - all fetched 2026-10-08.",
+      "asOf": "2026-10-09",
+      "notes": "$10/mo buys $70 of credits (7x multiplier); limits $14/5h, $35/wk, $70/mo (commandcode.ai/docs/plans/goat usage-limits section and FAQ; pricing-limits#usage-limits); manualRatio/defaultRule = 10/20 = 0.5, the plan's most common (default) monthly allowance. The plan page's models widget now lists 65 models = 61 paid + 4 free (Laguna S 2.1, Ling 3.0 Flash Sante, Ling 3.1 Flash, Glyph Cluster) - free models get no pattern and stay at AA list price; the pricing-limits catalog additionally shows Ling 3.0 Flash free. Changes since the 2026-10-08 run: (1) Claude Haiku 5.5 is now included on GOAT - the premium table gives it $20 of monthly credits and the pricing page changelog says \"FEAT Claude Haiku 5.5 on the GOAT plan at the $20 default\" - so it gains a pattern at 10/20 = 0.5 (it previously had none); (2) Mistral Large 4's boost now states an end date - the main table shows \"$20$40through Oct 20th\" and pricing-limits deal mistral-large-4-boosted-credits says \"Boosted credits through October 20, 2026 ... Ends October 20, 2026\" - so the pattern drops to the $20 base (10/20 = 0.5) and a promo prices it at 10/40 = 0.25 with endsAt 2026-10-20 taken verbatim from the page; (3) the Kimi K3 boost is gone - the main table now shows a plain $20 with no \"through Oct 7th\" text and pricing-limits has no kimi-k3 deal card - so its promo (endsAt 2026-10-07, already past) was removed entirely; (4) AA label fixes: \"tencent hy3\" -> \"hy3\" because AA lists this exact model as \"Hy3\" (slug hy3; same $0.14/$0.58/$0.035 rates the plan shows for Tencent Hy3) - the old spelling matched zero AA names and left Hy3 at list price - and \"tencent hy4\" -> \"hy4 preview\" because AA's family labels drop the vendor prefix (AA still has no Hy4 entry, so it stays zero-hit), plus exclude \"hy3-preview\" ahead of \"hy3\": AA separately lists \"Hy3-preview\" (slug hy3-preview), which no plan includes, so it must stay at AA list price instead of inheriting Hy3's ratio. Per-model monthly credits from the plan's \"Every model on the GOAT plan is listed below\" tables (pattern value = 10/credits): $70 for GPT-5.6 Sol, GLM-5.2, Tencent Hy3, Qwen 3.8 27B (0.143); $60 for DeepSeek V4 Flash, DeepSeek V4.1 Flash, DeepSeek V4.1 Flash Fast, Kimi K2.7 Code and GLM-5.3 Flash (0.167) - pricing-limits deal cards state DeepSeek V4.1 Flash boosted credits have \"no end date\" and GLM-5.3 Flash's apply \"while capacity lasts\" (no date), so both stay baked into the pattern values, not promos; $50 for LongCat 2.0 (0.2); $47 for MiniMax M3 (0.213); $40 for Gemini 3.8 Flash and Gemini 3.7 Flash (0.25); $33 for Qwen 3.7 Max, Qwen 3.7 Plus and Qwen 3.6 Plus (0.303); $30 for MiMo V2.5 (0.333); $10 for Claude Sonnet 5.5 and MiMo V2.6 Pro UltraSpeed (1.0); $20 for every other paid model (0.5), including Jev - the plan's new-models table and the pricing-limits usage calculator both state \"$20 is Jev's monthly allowance\" on GOAT (Jev bills input $0.042, output/cache $0.00) and pricing-limits has no jev-free deal card, so the pricing page's \"Free on TypeSafe Jev\" bullet is stale, as in prior runs. Deals with no end date stated (endsAt null): MiniMax M3 -50% -> pricing page effective-usage row $47 on GOAT (promo 0.213, same as its pattern); MiMo V2.5 -98% and MiMo V2.5 Pro -99% -> pricing page effective-usage row ~$100 on GOAT (promo 0.1 each), while pricing-limits deal cards instead phrase the $30/$20 GOAT allowances as up to ~$300/~$100 at old list price - the designated pricing page's per-plan figure is used, as in prior runs. Exclude entries at the top of nameIncludes (\"quasar\", \"glm 5v turbo\", \"glm-5-turbo\") keep AA labels Command Code does not offer at AA list price: Quasar 438B (Max, Based on GLM-5.2) was caught by \"glm-5.2\", GLM 5V Turbo and GLM-5-Turbo by \"glm-5\". Zero-hit patterns kept because AA does not list these plan models yet (activate when AA adds them): Jev, Hy4 preview, GLM-5.3 FlashX, GLM-5.2 Fast, Qwen 3.8 Omni Flash, Qwen 3.7 Flash, Kimi K2.7 Code HighSpeed, MiMo V2.6 Pro UltraSpeed, DeepSeek V4 Flash Fast, Muse Spark 1.3/1.2 Contributor. Family catch-alls (glm, qwen, kimi, mimo, deepseek, grok, gpt, gemini, minimax, muse, step, tencent) stay removed and nemotron stays narrowed to nemotron 3 ultra; every paid plan model has a specific pattern, ordered most-specific first. Intended same-model substring hits: reasoning-effort variants (\"Grok 4.7 (High)\", \"Kimi K3 (Max)\"), dated snapshots (DeepSeek 0424/0813/0420/0731, Qwen3.8 Max (0902), Qwen3.8-Flash-Next for Qwen 3.8 Flash, Step 3.5 Flash 2603) and AA's \"Mistral Large 4 Preview\" / \"MiniMax-M3\" labels. Sources: commandcode.ai/docs/plans/goat, commandcode.ai/pricing, commandcode.ai/docs/resources/pricing-limits (deal cards and end dates) - all fetched 2026-10-09.",
       "builtin": true
     },
     {
@@ -1325,6 +1344,12 @@
           }
         },
         {
+          "match": "hy3-preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
           "match": "hy3",
           "rule": {
             "type": "multiplier",
@@ -1333,8 +1358,8 @@
         }
       ],
       "promos": [],
-      "asOf": "2026-10-08",
-      "notes": "New preset for the $40/mo Go Plus tier (opencode.ai/go pricing card \"Go Plus $40 per month\"; opencode.ai/docs/go plan table \"Go Plus $40/month - Higher usage limits across the models below\"), same 31-model lineup as Go. New since the 2026-10-06 run: Claude Haiku 5.5 joined the lineup with a $60 Go Plus monthly allowance (40/60 = 0.666667). Per-model monthly allowances (USD) from the docs Usage-limits Go Plus tab, pattern value = 40/limit - deliberately not a uniform multiple of the Go allowances (e.g. Kimi K2.6 $60->$240 4x but DeepSeek V4.1 Flash $60->$120 only 2x): $180 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, MiniMax M3, Qwen3.7 Plus (0.222222); $120 for GLM-5.3, MiMo-V2.6-Flash, MiMo-V2.5, Muse Spark 1.3/1.2 Contributor, DeepSeek V4.1 Flash, DeepSeek V4 Flash, Hy4 preview, Space Bunny (0.333333); $60 for Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 (0.666667 - the most common allowance, also manualRatio/defaultRule = 40/60); $240 for Kimi K2.6, LongCat-2.0, MiniMax M2.7, Hy3 (0.166667); $90 for Qwen3.8 Flash (0.444444). Token prices are identical for both tiers (docs: \"Token pricing is the same for Go and Go Plus\"); limits 20%/5h, 50%/wk, 100%/mo of each model's monthly limit. Free: LongCat 2.5 Preview Free (Unlimited, limited time) gets no pattern and stays at AA list price. Zero-hit patterns kept because AA does not list them yet: Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor - Claude Haiku 5.5 already matches AA labels (same model, reasoning-effort variants included). Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2), which the \"glm-5.2\" substring would catch, at AA list price. No multiplier promo or end date appears on either page. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-08).",
+      "asOf": "2026-10-09",
+      "notes": "$40/mo tier (opencode.ai/go pricing card \"Go Plus $40 per month\"; opencode.ai/docs/go plan table \"Go Plus $40/month - Higher usage limits across the models below\"), same 32-model lineup as Go (30 paid + 2 free). Change since the 2026-10-08 run: Step 5 Preview Free joined as a free model (go page banner \"Step 5 Preview Free, a new model, is available for a limited time\"; docs \"(limited time)\" with footnote \"Free for a limited time\", no stated end date) - it gets no pattern, so AA's paid \"Step 5 Preview\" stays at AA list price under this source; plus exclude \"hy3-preview\" ahead of \"hy3\", since AA separately lists \"Hy3-preview\" (slug hy3-preview) which the plan does not include (the plan lists Hy3 and Hy4 preview only). No allowance changed: pattern value = 40/limit from the docs Usage-limits Go Plus tab - deliberately not a uniform multiple of the Go allowances (e.g. Kimi K2.6 $60->$240 4x but DeepSeek V4.1 Flash $60->$120 only 2x): $180 for GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, MiniMax M3, Qwen3.7 Plus (0.222222); $120 for GLM-5.3, MiMo-V2.6-Flash, MiMo-V2.5, Muse Spark 1.3/1.2 Contributor, DeepSeek V4.1 Flash, DeepSeek V4 Flash, Hy4 preview, Space Bunny (0.333333); $60 for Kimi K3, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, DeepSeek V4 Flash Vision Exp, Grok 4.7, Grok 4.6, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 (0.666667 - the most common allowance, also manualRatio/defaultRule = 40/60); $240 for Kimi K2.6, LongCat-2.0, MiniMax M2.7, Hy3 (0.166667); $90 for Qwen3.8 Flash (0.444444). Token prices are identical for both tiers (docs: \"Token pricing is the same for Go and Go Plus\"); limits 20%/5h, 50%/wk, 100%/mo of each model's monthly limit. Free: LongCat 2.5 Preview Free and Step 5 Preview Free (Unlimited, limited time, no stated end date) get no pattern and stay at AA list price. Zero-hit patterns kept because AA does not list them yet: Space Bunny, Hy4 preview, Muse Spark 1.3/1.2 Contributor - Claude Haiku 5.5 already matches AA labels (same model, reasoning-effort variants included). Exclude entry \"quasar\" keeps AA's Quasar 438B (Max, Based on GLM-5.2), which the \"glm-5.2\" substring would catch, at AA list price. No multiplier promo or end date appears on either page; promos stays empty. Sources: opencode.ai/go, opencode.ai/docs/go (fetched 2026-10-09).",
       "builtin": true
     }
   ];
