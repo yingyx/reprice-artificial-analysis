@@ -105,6 +105,7 @@ Verification loop (mandatory before running the build):
      whole family: sibling models without the deal would inherit the
      discount ratio and be mispriced.
 4. When done run: `node scripts/build-sources.js && node test/run-tests.js
+   && node test/integration-test.js && node test/check-providers-test.js
    && node scripts/check-patterns.js`.
    All tests must pass; fix your JSON if schema validation fails (the
    build also reports shadowed/duplicate patterns - fix the order it

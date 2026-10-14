@@ -194,11 +194,31 @@ async function main() {
   const glmId = 'glm-5-3';
   R.state.setSource('__aa__');
 
-  R.state.setSource('opencode-go-example');
+  // Chart behavior must not depend on scheduled changes to provider prices,
+  // coverage or promotion dates. Bundled presets are checked separately below.
+  const goProfile = {
+    id: 'test-go', name: 'Test Go', kind: 'subscription', manualRatio: 0.167,
+    defaultRule: { type: 'multiplier', value: 0.167 }, rules: {},
+    nameIncludes: [
+      { match: 'glm-5.3', rule: { type: 'multiplier', value: 0.667 } },
+      { match: 'deepseek v4 pro', rule: { type: 'multiplier', value: 0.667 } },
+      { match: 'deepseek v4.1 flash', rule: { type: 'multiplier', value: 0.125 } }
+    ], promos: []
+  };
+  R.state.upsertProfile(goProfile);
+  R.state.upsertProfile({
+    id: 'test-goat', name: 'Test GOAT', kind: 'subscription', manualRatio: 0.5,
+    defaultRule: { type: 'multiplier', value: 0.5 }, rules: {},
+    nameIncludes: [
+      { match: 'glm-5.3', rule: { type: 'multiplier', value: 0.5 } },
+      { match: 'deepseek v4 pro', rule: { type: 'multiplier', value: 0.5 } }
+    ], promos: []
+  });
+  R.state.setSource('test-go');
   await new Promise((r) => setTimeout(r, 50));
 
   assert.strictEqual(R.state.getSourceMode(), 'repriced', 'source mode repriced');
-  assert.strictEqual(ctxA.select.value, 'opencode-go-example', 'select reflects profile');
+  assert.strictEqual(ctxA.select.value, 'test-go', 'select reflects profile');
   assert.ok(ctxA.svg, 'overlay svg created in repriced mode');
   assert.strictEqual(ctxA.wrap.style.display, '', 'overlay visible in repriced mode');
   assert.strictEqual(ctxA.path.attrs['stroke-dasharray'], '0.1 6', 'Pareto line dotted like AA legend');
@@ -242,24 +262,29 @@ async function main() {
   const profileList = R.state.cache.profiles;
   Object.keys(ctxA.dataById).forEach((id) => {
     const shown = ctxA.dataById[id];
-    const expected = R.pricing.resolvePrice(shown, 'opencode-go-example', R.pricing.makeCtx(profileList));
+    const expected = R.pricing.resolvePrice(shown, 'test-go', R.pricing.makeCtx(profileList));
     assert.strictEqual(shown.repricedCost, expected.price, id + ' chart price equals resolvePrice');
   });
-  const goProfile = profileList.find(p => p.id === 'opencode-go-example');
   const claudeShown = ctxA.dataById['claude-opus-5'];
   assert.strictEqual(claudeShown.repricedCost, 2.3368,
     'uncovered Claude keeps the AA list price under single-source mode');
   assert.strictEqual(claudeShown.estimate, undefined, 'uncovered model is not a subscription estimate');
   const dsFlash = ctxA.dataById['deepseek-v4-1-flash'];
-  const dsPromo = (goProfile.promos || []).find(p => p.match === 'deepseek v4.1 flash');
-  const dsPromoActive = !!(dsPromo && R.pricing.promoActive(dsPromo, R.pricing.todayStr()));
-  // The scheduled preset update made the former promotional rate permanent.
-  const dsExpected = 2 * (dsPromoActive ? dsPromo.rule.value : 0.167);
-  assert.ok(Math.abs(dsFlash.repricedCost - dsExpected) < 1e-9,
-    'promo-aware DeepSeek V4.1 Flash price, got ' + dsFlash.repricedCost);
+  assert.strictEqual(dsFlash.repricedCost, 0.25, 'per-model ratio overrides the subscription default');
   assert.strictEqual(dsFlash.estimate, 'full-quota', 'subscription price labelled as full-quota estimate');
 
-  R.state.setSource('command-code-goat');
+  // Updating a source must redraw its prices; an undated promo is stable
+  // regardless of when this test runs and must beat the per-model rule.
+  R.state.upsertProfile({ ...goProfile, promos: [{ match: 'deepseek v4.1 flash',
+    rule: { type: 'multiplier', value: 0.0625 }, endsAt: null }] });
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxA.dataById['deepseek-v4-1-flash'].repricedCost, 0.125, 'chart applies active promo');
+  assert.strictEqual(ctxA.dataById['deepseek-v4-1-flash'].ruleSource, 'promo', 'chart preserves promo provenance');
+  R.state.upsertProfile(goProfile);
+  R.integration.renderAllBars();
+  assert.strictEqual(ctxA.dataById['deepseek-v4-1-flash'].repricedCost, 0.25, 'removed promo restores per-model price');
+
+  R.state.setSource('test-goat');
   await new Promise((r) => setTimeout(r, 50));
   const dsX2 = parseX(ctxA.nodes['deepseek-v4-pro'].style.transform).x;
   const glmX2 = parseX(ctxA.nodes['glm-5-3'].style.transform).x;
