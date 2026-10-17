@@ -52,7 +52,9 @@
 
   // Only task-cost charts have the units and model semantics we reprice.
   var RELEASE_ANCHOR = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
-  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"], [id="' + RELEASE_ANCHOR + '"]';
+  // AA uses the shorter ID in multiple tab groups. Keep attribute selectors
+  // and querySelectorAll so every instance mounts, including older pages.
+  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-task"], [id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"], [id="' + RELEASE_ANCHOR + '"]';
   var TASK_CHARTS = {
     'artificial-analysis-coding-agent-index-vs-cost-per-task': { key: 'coding', label: 'Artificial Analysis Coding Agent Index' },
     'artificial-analysis-cyber-index-score-vs-cost-per-task': { key: 'artificial-analysis-cyber-index', label: 'Artificial Analysis Cyber Index' },

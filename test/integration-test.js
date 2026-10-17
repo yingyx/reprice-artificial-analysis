@@ -86,7 +86,8 @@ function makeDoc(ldJsonScripts) {
   doc.body = makeElement('body');
 
   const anchor = makeElement('div');
-  anchor.attrs.id = 'intelligence-index-vs-cost-per-intelligence-index-task';
+  // Current AA UI (2026-10-17); the older long ID remains supported below.
+  anchor.attrs.id = 'intelligence-index-vs-cost-per-task';
   const header = makeElement('div');
   const h3 = makeElement('h3');
   h3.textContent = 'Intelligence Index vs. Cost per Intelligence Index Task';
@@ -99,7 +100,7 @@ function makeDoc(ldJsonScripts) {
   anchor.rect = { left: 0, top: 0, width: 800, height: 560 };
   doc.body.appendChild(anchor);
   const release = makeElement('div');
-  release.attrs.id = anchor.attrs.id + '-by-model-release';
+  release.attrs.id = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
   doc.body.appendChild(release);
 
   doc.documentElement = makeElement('html');
@@ -159,7 +160,7 @@ async function main() {
     clearTimeout,
     requestAnimationFrame: (fn) => setTimeout(fn, 0),
     MutationObserver: function () { this.observe = () => {}; },
-    ResizeObserver: function () { this.observe = () => {}; },
+    ResizeObserver: function () { this.observe = () => {}; this.unobserve = () => {}; },
     CustomEvent: function (type, opts) { this.type = type; this.detail = opts && opts.detail; },
     addEventListener: (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); },
     removeEventListener: () => {},
@@ -381,6 +382,59 @@ async function main() {
   assert.strictEqual(Object.keys(ctxA.dataById).length, 0, 'missing slug does not restore all models');
   ctx.location.search = '';
   R.extract.extractModelsDetailed = originalExtract;
+
+  // The redesigned models page repeats this ID in independent tab groups.
+  // Offscreen charts initially have a placeholder rather than a Recharts plot.
+  const duplicate = makeElement('div');
+  duplicate.attrs.id = anchor.attrs.id;
+  duplicate.rect = anchor.rect;
+  doc.body.appendChild(duplicate);
+  const unrelated = makeElement('div');
+  unrelated.attrs.id = 'intelligence-index-vs-time-per-task';
+  doc.body.appendChild(unrelated);
+  const queryBeforeTabs = doc.querySelectorAll;
+  const legacyCharts = [];
+  let tabMounted = true;
+  doc.querySelectorAll = sel => sel.startsWith('[id=')
+    ? queryBeforeTabs(sel).concat([...(tabMounted ? [duplicate] : []), unrelated, ...legacyCharts]
+      .filter(a => sel.includes('[id="' + a.attrs.id + '"]')))
+    : queryBeforeTabs(sel);
+  R.integration.renderAllBars();
+  let duplicateContext = R.integration._contexts().find(c => c.anchor === duplicate);
+  assert.ok(duplicateContext && duplicateContext.bar, 'every repeated chart ID gets a bar');
+  assert.ok(!duplicateContext.wrap, 'lazy placeholder does not display an unrelated overlay');
+  assert.ok(!R.integration._contexts().some(c => c.anchor === unrelated), 'time chart is not repriced');
+  const duplicatePlot = makeElement('div');
+  duplicatePlot.className = 'recharts-responsive-container';
+  duplicatePlot.rect = plot.rect;
+  duplicate.appendChild(duplicatePlot);
+  R.integration.renderAllBars();
+  assert.strictEqual(duplicateContext.wrap.style.display, '', 'overlay appears after lazy plot mounts');
+  R.integration.renderAllBars();
+  assert.strictEqual(duplicate.children.filter(c => c.className === 'raa-bar').length, 1, 'repeat scans do not duplicate controls');
+  R.state.setSource('__aa__');
+  assert.strictEqual(duplicateContext.wrap.style.display, 'none', 'duplicate chart restores native AA view');
+  R.state.setSource('__best__');
+  assert.strictEqual(duplicateContext.wrap.style.display, '', 'source selection updates every instance');
+  const containsBeforeTabs = doc.documentElement.contains;
+  doc.documentElement.contains = el => tabMounted || ![duplicate, duplicatePlot, duplicateContext.wrap].includes(el);
+  tabMounted = false;
+  R.integration.renderAllBars();
+  assert.ok(!R.integration._contexts().includes(duplicateContext), 'switching tabs prunes detached chart');
+  tabMounted = true;
+  R.integration.renderAllBars();
+  duplicateContext = R.integration._contexts().find(c => c.anchor === duplicate);
+  assert.strictEqual(duplicateContext.wrap.style.display, '', 'returning to the cost tab restores repricing');
+  for (const legacyId of ['intelligence-index-vs-cost-per-intelligence-index-task', 'intelligence-vs-cost-per-task']) {
+    const legacyChart = makeElement('div');
+    legacyChart.attrs.id = legacyId;
+    legacyCharts.push(legacyChart);
+    doc.body.appendChild(legacyChart);
+    R.integration.renderAllBars();
+    assert.ok(R.integration._contexts().some(c => c.anchor === legacyChart && c.bar), legacyId + ' remains supported');
+  }
+  doc.querySelectorAll = queryBeforeTabs;
+  doc.documentElement.contains = containsBeforeTabs;
 
   // Reuse a catalogue response before requesting another large page. Keep
   // the native chart until all selected models are resolved or failed.
