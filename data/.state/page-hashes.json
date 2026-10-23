@@ -2,27 +2,27 @@
   "version": 2,
   "pages": {
     "https://opencode.ai/go": {
-      "full": "1d855a0c1fb6076c",
-      "price": "993163399844a5c7",
-      "tokens": 163,
+      "full": "51d59de892bbebc6",
+      "price": "b5313b7093d0aa13",
+      "tokens": 182,
       "drift": 0
     },
     "https://opencode.ai/docs/go": {
-      "full": "66d9ac79370c8791",
-      "price": "555c3dded1b784fa",
-      "tokens": 380,
+      "full": "3026d40232181597",
+      "price": "9d6d5e8b5545a835",
+      "tokens": 336,
       "drift": 0
     },
     "https://commandcode.ai/docs/plans/goat": {
-      "full": "9698319c67d560f3",
-      "price": "99ab4a7b3348acc0",
-      "tokens": 656,
-      "drift": 1
+      "full": "7e3da8e72bc39594",
+      "price": "568d02fd1c278791",
+      "tokens": 675,
+      "drift": 0
     },
     "https://commandcode.ai/pricing": {
-      "full": "4e3c6f49666ca277",
-      "price": "8f7dcda2eeb87bd0",
-      "tokens": 219,
+      "full": "f58bbb0c8695eb8f",
+      "price": "7f72893588f44986",
+      "tokens": 182,
       "drift": 0
     }
   }
