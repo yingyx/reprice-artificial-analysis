@@ -51,10 +51,10 @@
   }
 
   // Only task-cost charts have the units and model semantics we reprice.
-  var RELEASE_ANCHOR = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
-  // AA uses the shorter ID in multiple tab groups. Keep attribute selectors
-  // and querySelectorAll so every instance mounts, including older pages.
-  var ANCHOR_SELECTOR = '[id="intelligence-index-vs-cost-per-task"], [id="intelligence-index-vs-cost-per-intelligence-index-task"], [id="intelligence-vs-cost-per-task"], [id="' + RELEASE_ANCHOR + '"]';
+  var RELEASE_ANCHORS = [
+    'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release',
+    'intelligence-index-vs-cost-per-task-by-model-release'
+  ];
   var TASK_CHARTS = {
     'artificial-analysis-coding-agent-index-vs-cost-per-task': { key: 'coding', label: 'Artificial Analysis Coding Agent Index' },
     'artificial-analysis-cyber-index-score-vs-cost-per-task': { key: 'artificial-analysis-cyber-index', label: 'Artificial Analysis Cyber Index' },
@@ -62,7 +62,19 @@
     'deepsecbench-aa-score-vs-cost-per-task': { key: 'deepsecbench-aa', label: 'DeepsecBench-AA Score (%)' },
     'cybergym-e2e-aa-score-vs-cost-per-task': { key: 'cybergym-e2e-aa', label: 'CyberGym-E2E-AA Score (%)' }
   };
-  ANCHOR_SELECTOR += ', ' + Object.keys(TASK_CHARTS).map(function (id) { return '[id="' + id + '"]'; }).join(', ');
+  // AA added a -chart suffix and shortened the release chart ID. Match both
+  // generations exactly, including repeated IDs in independent tab groups.
+  var ANCHOR_SELECTOR = [
+    'intelligence-index-vs-cost-per-task',
+    'intelligence-index-vs-cost-per-intelligence-index-task',
+    'intelligence-vs-cost-per-task'
+  ].concat(RELEASE_ANCHORS, Object.keys(TASK_CHARTS)).map(function (id) {
+    return '[id="' + id + '"], [id="' + id + '-chart"]';
+  }).join(', ');
+
+  function chartAnchorId(anchorEl) {
+    return (anchorEl.getAttribute('id') || '').replace(/-chart$/, '');
+  }
 
   function findAnchors(doc) {
     try {
@@ -179,8 +191,8 @@
   function createContext(anchorEl) {
     var ctx = {
       anchor: anchorEl,
-      isRelease: anchorEl.getAttribute('id') === RELEASE_ANCHOR,
-      taskChart: TASK_CHARTS[anchorEl.getAttribute('id')] || null,
+      isRelease: RELEASE_ANCHORS.indexOf(chartAnchorId(anchorEl)) !== -1,
+      taskChart: TASK_CHARTS[chartAnchorId(anchorEl)] || null,
       bar: null,
       select: null,
       prov: null,

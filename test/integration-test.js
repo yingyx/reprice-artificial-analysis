@@ -80,14 +80,14 @@ function makeElement(tag) {
   return el;
 }
 
-function makeDoc(ldJsonScripts) {
+function makeDoc(ldJsonScripts, legacyIds) {
   const doc = makeElement('document');
   doc.head = makeElement('head');
   doc.body = makeElement('body');
 
   const anchor = makeElement('div');
-  // Current AA UI (2026-10-17); the older long ID remains supported below.
-  anchor.attrs.id = 'intelligence-index-vs-cost-per-task';
+  // Current AA UI (2026-10-27); legacy IDs remain supported below.
+  anchor.attrs.id = legacyIds ? 'intelligence-index-vs-cost-per-task' : 'intelligence-index-vs-cost-per-task-chart';
   const header = makeElement('div');
   const h3 = makeElement('h3');
   h3.textContent = 'Intelligence Index vs. Cost per Intelligence Index Task';
@@ -100,7 +100,8 @@ function makeDoc(ldJsonScripts) {
   anchor.rect = { left: 0, top: 0, width: 800, height: 560 };
   doc.body.appendChild(anchor);
   const release = makeElement('div');
-  release.attrs.id = 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release';
+  release.attrs.id = legacyIds ? 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release'
+    : 'intelligence-index-vs-cost-per-task-by-model-release-chart';
   doc.body.appendChild(release);
 
   doc.documentElement = makeElement('html');
@@ -127,7 +128,7 @@ function run(file, ctx) {
   vm.runInContext(code, ctx, { filename: file });
 }
 
-async function main() {
+async function main(legacyIds) {
   const models = [
     { label: 'Claude Opus 5 (max)', intelligenceIndex: 63.05, costPerIntelligenceIndexTask: 2.3368, detailsUrl: '/models/claude-opus-5' },
     { label: 'GPT-5.6 Sol (max)', intelligenceIndex: 60.92, costPerIntelligenceIndexTask: 1.0056, detailsUrl: '/models/gpt-5-6-sol' },
@@ -141,7 +142,7 @@ async function main() {
     { textContent: JSON.stringify({ '@type': 'Dataset', name: 'COST', data: models.map(m => ({ label: m.label, costPerIntelligenceIndexTask: m.costPerIntelligenceIndexTask, detailsUrl: m.detailsUrl })) }) }
   ];
 
-  const { doc, anchor, plot, release } = makeDoc(scripts);
+  const { doc, anchor, plot, release } = makeDoc(scripts, legacyIds);
 
   const localStorageStub = (() => {
     const store = {};
@@ -390,7 +391,7 @@ async function main() {
   duplicate.rect = anchor.rect;
   doc.body.appendChild(duplicate);
   const unrelated = makeElement('div');
-  unrelated.attrs.id = 'intelligence-index-vs-time-per-task';
+  unrelated.attrs.id = 'intelligence-index-vs-time-per-task-chart';
   doc.body.appendChild(unrelated);
   const queryBeforeTabs = doc.querySelectorAll;
   const legacyCharts = [];
@@ -425,13 +426,18 @@ async function main() {
   R.integration.renderAllBars();
   duplicateContext = R.integration._contexts().find(c => c.anchor === duplicate);
   assert.strictEqual(duplicateContext.wrap.style.display, '', 'returning to the cost tab restores repricing');
-  for (const legacyId of ['intelligence-index-vs-cost-per-intelligence-index-task', 'intelligence-vs-cost-per-task']) {
+  for (const legacyId of ['intelligence-index-vs-cost-per-task', 'intelligence-index-vs-cost-per-intelligence-index-task', 'intelligence-vs-cost-per-task',
+    'intelligence-index-vs-cost-per-intelligence-index-task-chart', 'intelligence-vs-cost-per-task-chart',
+    'intelligence-index-vs-cost-per-task-by-model-release', 'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release',
+    'intelligence-index-vs-cost-per-intelligence-index-task-by-model-release-chart']) {
     const legacyChart = makeElement('div');
     legacyChart.attrs.id = legacyId;
     legacyCharts.push(legacyChart);
     doc.body.appendChild(legacyChart);
     R.integration.renderAllBars();
-    assert.ok(R.integration._contexts().some(c => c.anchor === legacyChart && c.bar), legacyId + ' remains supported');
+    const legacyContext = R.integration._contexts().find(c => c.anchor === legacyChart);
+    assert.ok(legacyContext && legacyContext.bar, legacyId + ' remains supported');
+    assert.strictEqual(legacyContext.isRelease, legacyId.includes('-by-model-release'), legacyId + ' keeps the correct chart semantics');
   }
   doc.querySelectorAll = queryBeforeTabs;
   doc.documentElement.contains = containsBeforeTabs;
@@ -586,7 +592,7 @@ async function main() {
   const taskIds = ['artificial-analysis-coding-agent-index-vs-cost-per-task'].concat(fixture.evaluations.map(e => e.evalSlug + '-score-vs-cost-per-task'));
   taskIds.forEach((id, i) => {
     const a = makeElement('div'), p = makeElement('div');
-    a.attrs.id = id; a.rect = anchor.rect;
+    a.attrs.id = id + (legacyIds ? '' : '-chart'); a.rect = anchor.rect;
     p.className = 'recharts-responsive-container'; p.rect = plot.rect;
     const rows = i ? expanded.charts[fixture.evaluations[i - 1].evalSlug] : expanded.charts.coding;
     p.querySelectorAll = sel => sel === '[data-chart-item-id]' ? rows.map(m => ({ getAttribute: key =>
@@ -680,9 +686,9 @@ async function main() {
   const goat = R.state.cache.profiles.find(q => q.id === 'command-code-goat');
   assert.ok(goat.nameIncludes.length >= 7, 'GOAT has broad family patterns');
 
-  console.log('integration test passed: bar mounts; repriced switch moves GLM to x=' +
+  console.log('integration test passed (' + (legacyIds ? 'legacy' : 'current') + ' chart IDs): bar mounts; repriced switch moves GLM to x=' +
     glmX.toFixed(0) + ', DeepSeek ' + dsX1.toFixed(0) + 'px -> ' + dsX2.toFixed(0) +
     'px across profiles, overlay restores in AA mode; best-of mode composes subscription+derived sources; coding plan presets valid');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main(false).then(() => main(true)).catch((e) => { console.error(e); process.exit(1); });
