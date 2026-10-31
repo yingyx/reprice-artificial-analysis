@@ -5,25 +5,25 @@
       "full": "daad21d100863229",
       "price": "adbf3fe120975ca3",
       "tokens": 179,
-      "drift": 1
+      "drift": 0
     },
     "https://opencode.ai/docs/go": {
-      "full": "f3d90c22d2dc3f03",
-      "price": "7a9c0a2ecf6adae3",
-      "tokens": 353,
-      "drift": 1
+      "full": "9c3db25276bb81e5",
+      "price": "1f47e3a87b29650a",
+      "tokens": 537,
+      "drift": 0
     },
     "https://commandcode.ai/docs/plans/goat": {
-      "full": "4ab38948f979e14d",
+      "full": "6ca1bd759f371a17",
       "price": "32242909982b6d5f",
       "tokens": 677,
-      "drift": 1
+      "drift": 2
     },
     "https://commandcode.ai/pricing": {
-      "full": "d36010f8c787d809",
+      "full": "9ae220737bc436de",
       "price": "0ab2cd7a7c385de7",
       "tokens": 172,
-      "drift": 0
+      "drift": 1
     }
   }
 }
