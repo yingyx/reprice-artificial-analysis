@@ -2,28 +2,46 @@
   "version": 2,
   "pages": {
     "https://opencode.ai/go": {
-      "full": "daad21d100863229",
-      "price": "adbf3fe120975ca3",
-      "tokens": 179,
+      "full": "90c06d425a0978f7",
+      "price": "dc2bcb0c86347e9e",
+      "tokens": 208,
       "drift": 0
     },
     "https://opencode.ai/docs/go": {
-      "full": "9c3db25276bb81e5",
-      "price": "1f47e3a87b29650a",
-      "tokens": 537,
+      "full": "67f4ec12248e7635",
+      "price": "fe9c300ff2993f33",
+      "tokens": 535,
+      "drift": 0
+    },
+    "https://modeldial.com/subscriptions/codex": {
+      "full": "2894457752127507",
+      "price": "3cf80060c3b23bc4",
+      "tokens": 100,
+      "drift": 0
+    },
+    "https://modeldial.com/subscriptions/claude": {
+      "full": "62a28d8c50b8b4b2",
+      "price": "79d536da564924a0",
+      "tokens": 62,
       "drift": 0
     },
     "https://commandcode.ai/docs/plans/goat": {
-      "full": "6ca1bd759f371a17",
-      "price": "32242909982b6d5f",
-      "tokens": 677,
-      "drift": 2
+      "full": "56b2d394b2de7cb0",
+      "price": "01c4c1514720c78b",
+      "tokens": 686,
+      "drift": 0
     },
     "https://commandcode.ai/pricing": {
-      "full": "9ae220737bc436de",
-      "price": "0ab2cd7a7c385de7",
-      "tokens": 172,
-      "drift": 1
+      "full": "0f9233170f850b53",
+      "price": "6fbcf2cca7004578",
+      "tokens": 194,
+      "drift": 0
+    },
+    "https://modeldial.com/subscriptions": {
+      "full": "c1557e1c228b78b8",
+      "price": "9c4f7a3393b56a0f",
+      "tokens": 288,
+      "drift": 0
     }
   }
 }
