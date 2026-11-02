@@ -567,6 +567,16 @@ async function main(legacyIds) {
     'short final Flight chunk invalidates the cache and completes hydration');
   assert.strictEqual(expanded.models.find(m => m.id === 'gpt-6-1-sol').aaCost, fixture.catalogue[0].intelligenceIndexCostPerTask.cost.total,
     'late lightweight catalogue cannot erase a full cost record');
+  // The home page carries the breakdown directly, while model/release detail
+  // pages still wrap it in cost. Both must work without a detail fetch.
+  const homeCatalogue = JSON.parse(JSON.stringify(fixture.catalogue));
+  homeCatalogue[0].intelligenceIndexCostPerTask = homeCatalogue[0].intelligenceIndexCostPerTask.cost;
+  const homeHtml = flightHtml([homeCatalogue, fixture.thin]);
+  const homePage = R.extract.extractPageFromHtml(homeHtml);
+  assert.strictEqual(homePage.coverage.withCost, 1, 'home chart has a price before fetching details');
+  assert.strictEqual(homePage.models[0].aaCost, expanded.models[0].aaCost, 'home and detail prices agree');
+  assert.strictEqual(R.extract.extractFlightModelsFromHtml(homeHtml)[0].aaCost, expanded.models[0].aaCost,
+    'legacy Flight scanner also reads the direct cost breakdown');
   const explicitNull = JSON.parse(JSON.stringify(fixture.thin));
   explicitNull[0].intelligenceIndexCostPerTask = null;
   assert.strictEqual(R.extract.extractPageFromHtml(flightHtml([fixture.catalogue, explicitNull])).models[0].aaCost, null,

@@ -168,7 +168,7 @@
       }).replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim() || id;
       var segEnd = modelBoundary(text, re.lastIndex);
       var seg = text.slice(re.lastIndex, segEnd);
-      var costM = new RegExp('"intelligenceIndexCostPerTask":\\{"cost":\\{"total":(' + NUM_RE + ')').exec(seg);
+      var costM = new RegExp('"intelligenceIndexCostPerTask":\\{(?:"cost":\\{)?"total":(' + NUM_RE + ')').exec(seg);
       var cost = costM ? parseFloat(costM[1]) : null;
       var provM = new RegExp('"creator":\\{[^}]*?"name":"([^"\\\\]+)"').exec(seg);
       byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost, provider: provM ? provM[1] : null };
@@ -193,7 +193,7 @@
       var segEnd = text.indexOf('"release":{"slug":"', re.lastIndex);
       if (segEnd === -1 || segEnd - re.lastIndex > 20000) segEnd = Math.min(text.length, re.lastIndex + 20000);
       var seg = text.slice(re.lastIndex, segEnd);
-      var costM = new RegExp('"intelligenceIndexCostPerTask":\\{"cost":\\{"total":(' + NUM_RE + ')').exec(seg);
+      var costM = new RegExp('"intelligenceIndexCostPerTask":\\{(?:"cost":\\{)?"total":(' + NUM_RE + ')').exec(seg);
       var cost = costM ? parseFloat(costM[1]) : null;
       var provM = new RegExp('"creator":\\{[^}]*?"name":"([^"\\\\]+)"').exec(seg);
       byId[id] = { id: id, label: label, intelligence: parseFloat(m[3]), aaCost: cost, provider: provM ? provM[1] : null };
@@ -323,11 +323,14 @@
       if (!Array.isArray(value) && SLUG_RE.test(value.slug || '') && value.name) {
         if (value.id && value.release && value.release.slug) {
           var cost = value.intelligenceIndexCostPerTask;
+          // Home charts carry the cost breakdown directly; detail pages wrap
+          // it in `cost` alongside per-evaluation prices.
+          var breakdown = cost && (cost.cost || cost);
           var prev = models[value.slug];
           models[value.slug] = {
             id: value.slug, chartId: value.id, label: value.shortName || value.name,
             intelligence: 'intelligenceIndex' in value ? value.intelligenceIndex : (prev ? prev.intelligence : null),
-            aaCost: 'intelligenceIndexCostPerTask' in value ? (cost && cost.cost ? cost.cost.total : null) : (prev ? prev.aaCost : null),
+            aaCost: 'intelligenceIndexCostPerTask' in value ? (breakdown && num(breakdown.total) ? breakdown.total : null) : (prev ? prev.aaCost : null),
             provider: value.creator && value.creator.name,
             releaseId: value.release.slug, releaseLabel: value.release.name,
             effort: value.effort && value.effort.level
