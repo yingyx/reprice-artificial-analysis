@@ -6,7 +6,7 @@
   root.RepriceAA.SOURCES = [
     {
       "id": "opencode-go-example",
-      "name": "OpenCode Go (example)",
+      "name": "OpenCode Go",
       "kind": "subscription",
       "monthlyFee": 10,
       "manualRatio": 0.666667,
@@ -237,7 +237,7 @@
           "endsAt": "2026-11-30"
         }
       ],
-      "asOf": "2026-10-31",
+      "asOf": "2026-11-02",
       "notes": "$10/mo subscription (opencode.ai/go pricing card \"Go $10 per month\"; opencode.ai/docs/go plan table \"Go $10/month - Lower-cost access to the models below\"). Re-verified against pages fetched 2026-10-31 (opencode.ai/go and opencode.ai/docs/go): one per-model monthly limit changed since the 2026-10-29 run - DeepSeek V4.1 Flash's monthly limit (Peak and Off-Peak rows both) went from $80 to $100, so its pattern is now 10/100 = 0.1 (was 0.125); every other per-model monthly limit on the docs Usage-limits Go tab is unchanged, so all other nameIncludes values were recomputed as 10/that model's monthly limit with the same results - $15 -> 0.667 (12 models: GLM-5.3, Kimi K3.1 Pro, Kimi K3, Step 5 Preview, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, Grok 4.7, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 - still the most common allowance, so manualRatio/defaultRule stay 10/15 = 0.666667); $60 -> 0.167 (GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, LongCat-2.0, MiMo-V2.6-Flash, MiMo-V2.5, MiniMax M3, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Qwen3.7 Plus, Hy3); $30 for Qwen3.8 Flash and Hy4 preview -> 0.333; $20 for MiniMax M3.1 Flash -> 0.5; $100 for DeepSeek V4.1 Flash -> 0.1. The plan still lists 30 models = 28 paid + 2 free limited-time. Beam Free and Iceman Contributor Free are still free limited-time models (docs monthly limit **Unlimited**, footnotes \"Free for a limited time\", no end date) -> NO patterns, stay at AA list price. Gemini 4 Argon is still \"(50% off)\" with monthly limit $30, half-price tokens (~~$4.00~~ $2.00 / ~~$20.00~~ $10.00) and footnote \"The 50% discount applies through November 30, 2026\" -> base pattern stays 10/30 = 0.333 and the promo \"gemini 4 argon\" stays 10/60 = 0.167 with endsAt 2026-11-30. Excludes kept ahead of the family patterns: \"quasar\" (AA's Quasar 438B (Max, Based on GLM-5.2) is not in the plan) and \"hy3-preview\" (AA lists Hy3-preview variants the plan does not include). Zero-hit patterns kept intentionally: muse spark 1.3/1.2 contributor (the plan includes the Contributor tiers; AA lists only the non-Contributor Muse Spark 1.3/1.2, which stay unrepriced) and hy4 preview (AA does not list Hy4 yet).",
       "builtin": true
     },
@@ -1113,38 +1113,18 @@
     },
     {
       "id": "kimi-allegretto",
-      "name": "Kimi Allegretto (legacy CNY199 estimate)",
+      "name": "Kimi (paused)",
       "kind": "subscription",
       "monthlyFee": 29.37,
-      "manualRatio": 0.049507,
+      "manualRatio": 1,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.049507
+        "value": 1
       },
       "rules": {},
-      "nameIncludes": [
-        {
-          "match": "kimi k3 256k",
-          "rule": {
-            "type": "exclude"
-          }
-        },
-        {
-          "match": "kimi k3 highspeed",
-          "rule": {
-            "type": "exclude"
-          }
-        },
-        {
-          "match": "kimi k3",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.049507
-          }
-        }
-      ],
-      "asOf": "2026-10-05",
-      "notes": "Manual historical estimate for the legacy domestic CNY199 Allegretto plan, reviewed 2026-10-05; low confidence, not a current universal Kimi quota. 2026-07-19 matched-plan full-week record: 340M tokens, API equivalent $136.905 (CNY927.7), 20.97% monthly pool. Source https://linux.do/t/topic/2615396 . Weekly bottleneck projection: 136.905 * 52/12 = $593.25/month, below the monthly-pool projection 136.905/0.2097; do not add them. Fee USD29.37 uses that receipt's historical implied FX (927.7/136.905 CNY per USD), not a live FX quote. Multiplier = fee/(136.905*52/12), about 0.0495, replacing the unsupported 0.005. K3 Standard only; exclude 256K and HighSpeed via explicit rules below. Newer reports https://github.com/MoonshotAI/kimi-cli/issues/2604 suggest metering changes but do not establish this exact legacy tier's current quota. Overseas $39 reports are not transferred. K2.x and other variants stay at AA price without matched evidence.",
+      "nameIncludes": [],
+      "asOf": "2026-11-02",
+      "notes": "Temporarily paused: Kimi subscription names and quotas have changed substantially. No models are covered until current plan-specific evidence is verified; all retain AA list prices. The historical USD29.37 monthlyFee is retained only as legacy metadata, not a current offer or pricing estimate.",
       "builtin": true
     },
     {

@@ -657,7 +657,6 @@ test('manual coding estimates: weekly anchors convert to monthly model prices', 
   close(ratio('codex-pro-20x', 'GPT-6 Astra (max)'), 200 / (66 * 20 * 52 / 12));
   close(ratio('claude-pro', 'Claude Opus 5.5 (max)'), 20 / (230 * 52 / 12));
   close(ratio('claude-max-20x', 'Claude Opus 5.5 (max)'), 200 / (2155 * 52 / 12));
-  close(ratio('kimi-allegretto', 'Kimi K3 (max)'), 29.37 / (136.905 * 52 / 12));
   close(ratio('glm-coding-lite', 'GLM-5.3 (max)'), 18 / (10000 * (0.26 / 170) * 52 / 12));
   close(ratio('glm-coding-lite', 'GLM-5.3-Flash'), 18 / (10000 * (0.03 / 56) * 52 / 12));
   for (const [id, label] of [['codex-plus', 'GPT-7'], ['claude-pro', 'Claude Fable 5.1'],
