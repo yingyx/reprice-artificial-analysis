@@ -42,6 +42,8 @@ On pages without an integrated chart, open the panel with the purple **RAA** but
 
 Each benchmark keeps its own scores and costs. Coding agents are priced by their underlying model; mixed-model agents retain AA prices when a cost breakdown is unavailable. Discounts assume unchanged token usage; they do not predict how switching agents or models changes scores. Token prices, execution time, and non-cost charts are not repriced.
 
+Some subscription allowances are third-party estimates and may be inaccurate or outdated. Effective prices assume full use of the available quota; actual value varies with workload, caching, and provider policy.
+
 ## Privacy
 
 Pricing profiles and model caches stay in your browser. No analytics; the extension requests only the `storage` permission. It downloads public pricing presets from GitHub or jsDelivr and may fetch Artificial Analysis current chart page or model/release pages to fill missing chart data.
