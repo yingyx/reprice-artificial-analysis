@@ -1,5 +1,5 @@
 {
-  "note": "Scheduled source maintenance tasks (see .github/workflows/update-sources.yml and .github/update-sources-prompt.md). sourceId identifies an existing preset or a new tier for the agent to research and append. Missing presets trigger research even when shared page hashes are unchanged. Actual prices and allowances belong in data/sources.json and are maintained by Actions. Agent settings: secret AGENT_API_KEY; variables AGENT_MODEL, AGENT_PROVIDER_ID, AGENT_BASE_URL.",
+  "note": "Scheduled source maintenance tasks (see .github/workflows/update-sources.yml and .github/update-sources-prompt.md). sourceId identifies an existing preset or a new tier for the agent to research and append. Missing presets trigger research even when shared page hashes are unchanged. Codex, Claude, Google, current Kimi, MiMo and MiniMax use ModelDial's per-model API-equivalent estimates; legacy Kimi remains paused; other entries use provider pricing pages. Legacy preset ids stay stable when plan names change. Actual prices and allowances belong in data/sources.json and are maintained by Actions. Agent settings: secret AGENT_API_KEY; variables AGENT_MODEL, AGENT_PROVIDER_ID, AGENT_BASE_URL.",
   "providers": [
     {
       "sourceId": "opencode-go-example",
@@ -30,6 +30,76 @@
       ]
     },
     {
+      "sourceId": "codex-plus",
+      "label": "Codex Plus",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/codex",
+          "expect": "Current OpenAI Plus column: monthly fee and per-model weekly API-equivalent USD estimates at Standard speed; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "codex-pro-5x",
+      "label": "Codex Pro $100",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/codex",
+          "expect": "Current OpenAI Pro 100 column: monthly fee and per-model weekly API-equivalent USD estimates at Standard speed; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "codex-pro-20x",
+      "label": "Codex Pro $200",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/codex",
+          "expect": "Current OpenAI Pro 200 column: monthly fee and per-model weekly API-equivalent USD estimates at Standard speed; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "codex-pro-500",
+      "label": "Codex Pro $500",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/codex",
+          "expect": "Current OpenAI Pro 500 column: monthly fee and per-model weekly API-equivalent USD estimates at Standard speed; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "claude-pro",
+      "label": "Claude Pro",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/claude",
+          "expect": "Current Claude Pro column: monthly fee and per-model weekly API-equivalent USD estimates; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "claude-max-5x",
+      "label": "Claude Max",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/claude",
+          "expect": "Current Claude Max column: monthly fee and per-model weekly API-equivalent USD estimates; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
+      "sourceId": "claude-max-20x",
+      "label": "Claude Ultra",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions/claude",
+          "expect": "Current Claude Ultra column: monthly fee and per-model weekly API-equivalent USD estimates; sourceId stays stable if the plan is renamed"
+        }
+      ]
+    },
+    {
       "sourceId": "command-code-goat",
       "label": "Command Code GOAT",
       "pages": [
@@ -40,6 +110,216 @@
         {
           "url": "https://commandcode.ai/pricing",
           "expect": "per-model effective usage table including limited-time deals (up to 2x/4x)"
+        }
+      ]
+    },
+    {
+      "sourceId": "google-ai-pro",
+      "label": "Google AI Pro · Antigravity",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Google column \"AI Pro · Antigravity\": USD 19.99/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "google-ai-ultra-5x",
+      "label": "Google AI Ultra 5×",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Google column \"AI Ultra 5×\": USD 99.99/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "google-ai-ultra-20x",
+      "label": "Google AI Ultra 20×",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Google column \"AI Ultra 20×\": USD 199.99/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "kimi-plus",
+      "label": "Kimi Plus",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Kimi column \"Plus\": CNY 99/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "kimi-pro",
+      "label": "Kimi Pro",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Kimi column \"Pro\": CNY 199/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "kimi-max",
+      "label": "Kimi Max",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Kimi column \"Max\": CNY 699/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "kimi-ultra",
+      "label": "Kimi Ultra",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "Kimi column \"Ultra\": CNY 1399/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-intl-lite",
+      "label": "MiMo International Lite",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国际 · Lite\": USD 6/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-intl-standard",
+      "label": "MiMo International Standard",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国际 · Standard\": USD 16/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-intl-pro",
+      "label": "MiMo International Pro",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国际 · Pro\": USD 50/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-intl-max",
+      "label": "MiMo International Max",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国际 · Max\": USD 100/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-cn-lite",
+      "label": "MiMo China Lite",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国内 · Lite\": CNY 39/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-cn-standard",
+      "label": "MiMo China Standard",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国内 · Standard\": CNY 99/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-cn-pro",
+      "label": "MiMo China Pro",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国内 · Pro\": CNY 329/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "mimo-cn-max",
+      "label": "MiMo China Max",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiMo column \"国内 · Max\": CNY 659/month; per-model API-equivalent USD estimates. Shared MONTHLY pool even when the page tab says weekly; use directly, do not multiply by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-intl-go",
+      "label": "MiniMax International Go",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国际 · Go\": USD 22/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-intl-explore",
+      "label": "MiniMax International Explore",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国际 · Explore\": USD 55/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-intl-build",
+      "label": "MiniMax International Build",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国际 · Build\": USD 132/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-cn-go",
+      "label": "MiniMax China Go",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国内 · Go\": CNY 49/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-cn-explore",
+      "label": "MiniMax China Explore",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国内 · Explore\": CNY 119/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
+        }
+      ]
+    },
+    {
+      "sourceId": "minimax-cn-build",
+      "label": "MiniMax China Build",
+      "pages": [
+        {
+          "url": "https://modeldial.com/subscriptions",
+          "expect": "MiniMax column \"国内 · Build\": CNY 469/month; per-model API-equivalent USD estimates. Weekly values convert by 52/12. Convert CNY fees with the page's stated USD/CNY rate; record original currency and rate. Keep this regional tier distinct and sourceId stable if renamed."
         }
       ]
     }

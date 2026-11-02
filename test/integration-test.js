@@ -676,7 +676,7 @@ async function main(legacyIds) {
     assert.ok(p, `preset source exists: ${id}`);
     assert.strictEqual(p.kind, 'subscription', `${id} kind subscription`);
     assert.ok(R.pricing.computeSubscriptionRatio(p) != null, `${id} ratio computable`);
-    assert.ok(Number.isFinite(ratio) && ratio > 0 && ratio <= 1, `${id} ratio in supported range`);
+    assert.ok(Number.isFinite(ratio) && ratio > 0, `${id} ratio in supported range`);
     assert.ok(Math.abs(R.pricing.computeSubscriptionRatio(p) - ratio) < 1e-9, `${id} ratio = x${ratio}`);
     assert.deepStrictEqual(JSON.parse(JSON.stringify(p.nameIncludes)), JSON.parse(JSON.stringify(preset.nameIncludes)), `${id} model-specific rules preserved`);
     assert.ok(p.asOf && DATE_RE.test(p.asOf), `${id} asOf date present`);

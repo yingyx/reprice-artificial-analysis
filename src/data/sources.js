@@ -243,13 +243,13 @@
     },
     {
       "id": "codex-plus",
-      "name": "Codex Plus (ChatGPT)",
+      "name": "Codex Plus",
       "kind": "subscription",
       "monthlyFee": 20,
-      "manualRatio": 0.10256,
+      "manualRatio": 0.0982,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.10256
+        "value": 0.0982
       },
       "rules": {},
       "nameIncludes": [
@@ -257,7 +257,14 @@
           "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.10256
+            "value": 0.0982
+          }
+        },
+        {
+          "match": "gpt-6.1 terra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.0982
           }
         },
         {
@@ -275,33 +282,26 @@
           }
         },
         {
-          "match": "gpt-6 luna",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.11834
-          }
-        },
-        {
           "match": "gpt-5.6 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.053419
+            "value": 0.053667
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 1; direct Plus anchor. Per-model multiplier = $20/(anchor * 6 * 1 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/codex ; fallback table: https://modeldial.com/subscriptions . Current Plus column, $20/month; weekly API-equivalent USD: gpt-6.1 sol $47, gpt-6.1 terra $47, gpt-6 astra $66, gpt-6 sol $66, gpt-5.6 sol $86. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses gpt-6.1 sol. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Standard speed only; Pro uses a weekly limit and Plus also has a five-hour limit. Current published estimates already include the October 29 Pro changes: do not double again or apply legacy id multipliers. Terra has its own published row even where its API-equivalent equals Sol. GPT-6 Luna has no ModelDial estimate and stays at AA list price; other unlisted variants and speed-specific estimates are not inferred.",
       "builtin": true
     },
     {
       "id": "codex-pro-5x",
-      "name": "Codex Pro 5x",
+      "name": "Codex Pro $100",
       "kind": "subscription",
       "monthlyFee": 100,
-      "manualRatio": 0.10256,
+      "manualRatio": 0.033445,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.10256
+        "value": 0.033445
       },
       "rules": {},
       "nameIncludes": [
@@ -309,51 +309,51 @@
           "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.10256
+            "value": 0.033445
+          }
+        },
+        {
+          "match": "gpt-6.1 terra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.033445
           }
         },
         {
           "match": "gpt-6 astra",
           "rule": {
             "type": "multiplier",
-            "value": 0.06993
+            "value": 0.023988
           }
         },
         {
           "match": "gpt-6 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.06993
-          }
-        },
-        {
-          "match": "gpt-6 luna",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.11834
+            "value": 0.023717
           }
         },
         {
           "match": "gpt-5.6 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.053419
+            "value": 0.019135
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 5; cross-tier projection, not a measurement of this tier. Per-model multiplier = $100/(anchor * 6 * 5 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/codex ; fallback table: https://modeldial.com/subscriptions . Current Pro 100 column, $100/month; weekly API-equivalent USD: gpt-6.1 sol $690, gpt-6.1 terra $690, gpt-6 astra $962, gpt-6 sol $973, gpt-5.6 sol $1206. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses gpt-6.1 sol. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Standard speed only; Pro uses a weekly limit and Plus also has a five-hour limit. Current published estimates already include the October 29 Pro changes: do not double again or apply legacy id multipliers. Terra has its own published row even where its API-equivalent equals Sol. GPT-6 Luna has no ModelDial estimate and stays at AA list price; other unlisted variants and speed-specific estimates are not inferred.",
       "builtin": true
     },
     {
       "id": "codex-pro-20x",
-      "name": "Codex Pro 20x",
+      "name": "Codex Pro $200",
       "kind": "subscription",
       "monthlyFee": 200,
-      "manualRatio": 0.051282,
+      "manualRatio": 0.047977,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.051282
+        "value": 0.047977
       },
       "rules": {},
       "nameIncludes": [
@@ -361,40 +361,92 @@
           "match": "gpt-6.1 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.051282
+            "value": 0.047977
+          }
+        },
+        {
+          "match": "gpt-6.1 terra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.047977
           }
         },
         {
           "match": "gpt-6 astra",
           "rule": {
             "type": "multiplier",
-            "value": 0.034965
+            "value": 0.03452
           }
         },
         {
           "match": "gpt-6 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.034965
-          }
-        },
-        {
-          "match": "gpt-6 luna",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.059172
+            "value": 0.034728
           }
         },
         {
           "match": "gpt-5.6 sol",
           "rule": {
             "type": "multiplier",
-            "value": 0.026709
+            "value": 0.02455
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05; Standard mode, short context, full usable quota, no gifted resets/overage. Plus anchor: GPT-6.1 Sol $7.5, GPT-6 Astra $11, GPT-6 Sol $11, GPT-6 Luna $6.5, GPT-5.6 Sol $14.4 API-equivalent per 5h in a single user's Sep 2026 measurements. Assume six usable windows/week (not 24/7 renewal), then 52/12 weeks/month. This tier scales Plus capacity by 20; cross-tier projection, not a measurement of this tier. Per-model multiplier = $200/(anchor * 6 * 20 * 52/12); summary uses GPT-6.1 Sol. Source: https://www.reddit.com/r/codex/comments/1wp0v6x/allowance_for_gpt_6_luna_sol_and_astra_measured/ . Session/week context: https://agentsroom.dev/usage-limits-tracker . Cross-check only: https://codexradar.com/ reports different Pro 20x model-specific dollar anchors but leaves the period implicit; https://codex-quota.manetli.com/ separates one-account observations from simulations. GPT-5.6 Sol anchor uses promotional API pricing; low confidence, workload/cache sensitive. Unsupported models and Fast-mode-specific estimates are not inferred; covered labels assume Standard execution.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/codex ; fallback table: https://modeldial.com/subscriptions . Current Pro 200 column, $200/month; weekly API-equivalent USD: gpt-6.1 sol $962, gpt-6.1 terra $962, gpt-6 astra $1337, gpt-6 sol $1329, gpt-5.6 sol $1880. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses gpt-6.1 sol. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Standard speed only; Pro uses a weekly limit and Plus also has a five-hour limit. Current published estimates already include the October 29 Pro changes: do not double again or apply legacy id multipliers. Terra has its own published row even where its API-equivalent equals Sol. GPT-6 Luna has no ModelDial estimate and stays at AA list price; other unlisted variants and speed-specific estimates are not inferred.",
+      "builtin": true
+    },
+    {
+      "id": "codex-pro-500",
+      "name": "Codex Pro $500",
+      "kind": "subscription",
+      "monthlyFee": 500,
+      "manualRatio": 0.046414,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.046414
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "gpt-6.1 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.046414
+          }
+        },
+        {
+          "match": "gpt-6.1 terra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.046414
+          }
+        },
+        {
+          "match": "gpt-6 astra",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.035945
+          }
+        },
+        {
+          "match": "gpt-6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.033679
+          }
+        },
+        {
+          "match": "gpt-5.6 sol",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.023805
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/codex ; fallback table: https://modeldial.com/subscriptions . Current Pro 500 column, $500/month; weekly API-equivalent USD: gpt-6.1 sol $2486, gpt-6.1 terra $2486, gpt-6 astra $3210, gpt-6 sol $3426, gpt-5.6 sol $4847. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses gpt-6.1 sol. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Standard speed only; Pro uses a weekly limit and Plus also has a five-hour limit. Current published estimates already include the October 29 Pro changes: do not double again or apply legacy id multipliers. Terra has its own published row even where its API-equivalent equals Sol. GPT-6 Luna has no ModelDial estimate and stays at AA list price; other unlisted variants and speed-specific estimates are not inferred.",
       "builtin": true
     },
     {
@@ -402,10 +454,10 @@
       "name": "Claude Pro",
       "kind": "subscription",
       "monthlyFee": 20,
-      "manualRatio": 0.020067,
+      "manualRatio": 0.016968,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.020067
+        "value": 0.016968
       },
       "rules": {},
       "nameIncludes": [
@@ -413,23 +465,30 @@
           "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.020067
+            "value": 0.016968
+          }
+        },
+        {
+          "match": "claude sonnet 5.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.016138
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05. 2026-09-23 first-hand Pro report: Opus 5.5 about $230/week; no controlled cache mix or multi-account distribution. https://linux.do/t/topic/2942313 Monthly API-equivalent capacity = 230 * 52/12 = 996.67 USD projected; multiplier = 20/(230*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/claude ; fallback table: https://modeldial.com/subscriptions . Current Pro column, $20/month; weekly API-equivalent USD: claude opus 5.5 $272, claude sonnet 5.5 $286. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses claude opus 5.5. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Fable is not included in this column and stays at AA list price. Other versions without a published estimate stay at AA list price; no family-wide fallback or cross-tier scaling.",
       "builtin": true
     },
     {
       "id": "claude-max-5x",
-      "name": "Claude Max 5x",
+      "name": "Claude Max",
       "kind": "subscription",
       "monthlyFee": 100,
-      "manualRatio": 0.020067,
+      "manualRatio": 0.017469,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.020067
+        "value": 0.017469
       },
       "rules": {},
       "nameIncludes": [
@@ -437,23 +496,37 @@
           "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.020067
+            "value": 0.017469
+          }
+        },
+        {
+          "match": "claude sonnet 5.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.016894
+          }
+        },
+        {
+          "match": "claude fable 5.1",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.078493
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05. Conservative projection: Pro Opus 5.5 $230/week times the advertised 5x usage tier, not a direct Max 5x weekly measurement. Official relative usage: https://claude.com/pricing . Pro anchor: https://linux.do/t/topic/2942313 . The Max 5x report https://linux.do/t/topic/2941739 observes one 5h window at about 13% weekly usage; it does not establish a universal full-week amount. Monthly API-equivalent capacity = 1150 * 52/12 = 4983.3 USD projected; multiplier = 100/(1150*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/claude ; fallback table: https://modeldial.com/subscriptions . Current Max column, $100/month; weekly API-equivalent USD: claude opus 5.5 $1321, claude sonnet 5.5 $1366, claude fable 5.1 $294. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses claude opus 5.5. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Fable has a 50% shared-weekly-pool sublimit; use its published estimate without applying that cap a second time. Other versions without a published estimate stay at AA list price; no family-wide fallback or cross-tier scaling.",
       "builtin": true
     },
     {
       "id": "claude-max-20x",
-      "name": "Claude Max 20x",
+      "name": "Claude Ultra",
       "kind": "subscription",
       "monthlyFee": 200,
-      "manualRatio": 0.021417,
+      "manualRatio": 0.017056,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.021417
+        "value": 0.017056
       },
       "rules": {},
       "nameIncludes": [
@@ -461,12 +534,26 @@
           "match": "claude opus 5.5",
           "rule": {
             "type": "multiplier",
-            "value": 0.021417
+            "value": 0.017056
+          }
+        },
+        {
+          "match": "claude sonnet 5.5",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.015965
+          }
+        },
+        {
+          "match": "claude fable 5.1",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.080548
           }
         }
       ],
-      "asOf": "2026-10-05",
-      "notes": "Manual estimate, reviewed 2026-10-05. Provisional conservative anchor: RemakeBench 2026-09-25 Opus-5.5-heavy window uses $1249.83 / 0.58 = about $2155/week. https://www.remakebench.com/capacity/plans/claude-max-20x . The receipt labels Max 20x but its app plan string says Pro: tier attribution is unresolved and this is a low-confidence planning estimate, not a verified Max entitlement. Do not scale this receipt to Pro/5x. Monthly API-equivalent capacity = 2155 * 52/12 = 9338.3 USD projected; multiplier = 200/(2155*52/12). Single-model Opus 5.5 coding scenario, full usable weekly quota, no extra usage or gifts. Shared/per-model caps, caching and reasoning can lower realized value; low confidence. Other Claude versions are deliberately not covered: the old Sonnet 4.6 blend cannot calibrate Fable, Sonnet or future Opus variants.",
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions/claude ; fallback table: https://modeldial.com/subscriptions . Current Ultra column, $200/month; weekly API-equivalent USD: claude opus 5.5 $2706, claude sonnet 5.5 $2891, claude fable 5.1 $573. Monthly equivalent = each weekly amount * 52/12; per-model multiplier = monthly fee / monthly equivalent, rounded to six decimals. Uses the displayed approximate USD values, not token counts or per-$1 figures. Summary uses claude opus 5.5. Model capacities share an allowance pool and cannot be added. Estimates depend on workload, caching and reasoning; not official dollar balances or independently remeasured here. Fable has a 50% shared-weekly-pool sublimit; use its published estimate without applying that cap a second time. The legacy claude-max-20x id now maps to the current Ultra $200 tier (renamed from Max 20x); verified accounts have no five-hour limit, while unverified accounts may have temporary limits. Other versions without a published estimate stay at AA list price; no family-wide fallback or cross-tier scaling.",
       "builtin": true
     },
     {
@@ -1362,6 +1449,778 @@
       ],
       "asOf": "2026-10-31",
       "notes": "$40/mo tier (opencode.ai/go pricing card \"Go Plus $40 per month\"; opencode.ai/docs/go plan table \"Go Plus $40/month - Higher usage limits across the models below\"), same 30-model lineup as Go (28 paid + 2 free limited-time). Re-verified against pages fetched 2026-10-31 (opencode.ai/go and docs/go Go Plus tab): one per-model monthly limit changed since the 2026-10-29 run - DeepSeek V4.1 Flash's monthly limit (Peak and Off-Peak rows both) went from $160 to $200, so its pattern is now 40/200 = 0.2 (was 0.25); every other Go Plus per-model monthly limit is unchanged, so all other nameIncludes values were recomputed as 40/that model's monthly limit with the same results - $60 -> 0.666667 (11 models: Kimi K3.1 Pro, Kimi K3, Step 5 Preview, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen3.8 Max, DeepSeek V4 Pro, Grok 4.7, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 - still the most common allowance, so manualRatio/defaultRule stay 40/60 = 0.666667); $180 -> 0.222222 (GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, MiniMax M3, Qwen3.7 Plus); $120 -> 0.333333 (GLM-5.3, MiMo-V2.6-Flash, MiMo-V2.5, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Hy4 preview, Gemini 4 Argon base); $90 for Qwen3.8 Flash -> 0.444444; $80 for MiniMax M3.1 Flash -> 0.5; $200 for DeepSeek V4.1 Flash -> 0.2; $240 for LongCat-2.0 and Hy3 -> 0.166667; deliberately not a uniform multiple of the Go values. Beam Free and Iceman Contributor Free are still free limited-time models (Go Plus monthly limit **Unlimited**, \"Free for a limited time\", no end date) -> no pattern, stay at AA list price. Gemini 4 Argon is still \"(50% off)\" with monthly limit $120 and footnote \"The 50% discount applies through November 30, 2026\" -> base pattern stays 40/120 = 0.333333 and the promo \"gemini 4 argon\" stays 40/240 = 0.166667 with endsAt 2026-11-30. Excludes \"quasar\" and \"hy3-preview\" kept for the same reasons as on Go. Zero-hit patterns kept intentionally: muse spark 1.3/1.2 contributor and hy4 preview (plan models AA does not list yet).",
+      "builtin": true
+    },
+    {
+      "id": "google-ai-pro",
+      "name": "Google AI Pro · Antigravity",
+      "kind": "subscription",
+      "monthlyFee": 19.99,
+      "manualRatio": 0.307538,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.307538
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "gemini 4 argon",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.307538
+          }
+        },
+        {
+          "match": "gemini 3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.038442
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Google column \"AI Pro · Antigravity\". USD 19.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $15/week, Gemini 3.8 Flash $120/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two model estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. No allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "google-ai-ultra-5x",
+      "name": "Google AI Ultra 5×",
+      "kind": "subscription",
+      "monthlyFee": 99.99,
+      "manualRatio": 0.115373,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.115373
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "gemini 4 argon",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.115373
+          }
+        },
+        {
+          "match": "gemini 3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.038458
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 5×\". USD 99.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $200/week, Gemini 3.8 Flash $600/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two model estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. No allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "google-ai-ultra-20x",
+      "name": "Google AI Ultra 20×",
+      "kind": "subscription",
+      "monthlyFee": 199.99,
+      "manualRatio": 0.057689,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.057689
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "gemini 4 argon",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.057689
+          }
+        },
+        {
+          "match": "gemini 3.8 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.019238
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 20×\". USD 199.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $800/week, Gemini 3.8 Flash $2399/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two model estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. No allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "kimi-plus",
+      "name": "Kimi Plus",
+      "kind": "subscription",
+      "monthlyFee": 14.746846,
+      "manualRatio": 0.199282,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.199282
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "kimi k3.1 pro highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3 highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3.1 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.199282
+          }
+        },
+        {
+          "match": "kimi k3 256k",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.061445
+          }
+        },
+        {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.12289
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Kimi column \"Plus\". CNY 99/month; USD monthlyFee 14.746846 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: Kimi K3.1 Pro $74/month, Kimi K3 $120/month, Kimi K3-256K $240/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Current domestic Plus/Pro/Max/Ultra columns, not the legacy Allegretto tier. Published values are shared monthly-pool ceilings despite the weekly page tab; do not multiply by 52/12. Five-hour limits also apply. Plus excludes K3.1 Pro Highspeed; Pro and above use its own published row. K3-256K and K3.1 Pro Highspeed are not on AA yet; their explicit patterns are retained for future listings. The unlisted K3 Highspeed variant is excluded before the K3 pattern (currently zero AA hits). The legacy kimi-allegretto preset stays paused. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "kimi-pro",
+      "name": "Kimi Pro",
+      "kind": "subscription",
+      "monthlyFee": 29.64265,
+      "manualRatio": 0.201651,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.201651
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "kimi k3.1 pro highspeed",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.274469
+          }
+        },
+        {
+          "match": "kimi k3 highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3.1 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.201651
+          }
+        },
+        {
+          "match": "kimi k3 256k",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.062537
+          }
+        },
+        {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.125074
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Kimi column \"Pro\". CNY 199/month; USD monthlyFee 29.64265 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: Kimi K3.1 Pro $147/month, Kimi K3.1 Pro Highspeed $108/month, Kimi K3 $237/month, Kimi K3-256K $474/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Current domestic Plus/Pro/Max/Ultra columns, not the legacy Allegretto tier. Published values are shared monthly-pool ceilings despite the weekly page tab; do not multiply by 52/12. Five-hour limits also apply. Plus excludes K3.1 Pro Highspeed; Pro and above use its own published row. K3-256K and K3.1 Pro Highspeed are not on AA yet; their explicit patterns are retained for future listings. The unlisted K3 Highspeed variant is excluded before the K3 pattern (currently zero AA hits). The legacy kimi-allegretto preset stays paused. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "kimi-max",
+      "name": "Kimi Max",
+      "kind": "subscription",
+      "monthlyFee": 104.121669,
+      "manualRatio": 0.19985,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.19985
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "kimi k3.1 pro highspeed",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.271858
+          }
+        },
+        {
+          "match": "kimi k3 highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3.1 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.19985
+          }
+        },
+        {
+          "match": "kimi k3 256k",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.062088
+          }
+        },
+        {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.124102
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Kimi column \"Max\". CNY 699/month; USD monthlyFee 104.121669 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: Kimi K3.1 Pro $521/month, Kimi K3.1 Pro Highspeed $383/month, Kimi K3 $839/month, Kimi K3-256K $1677/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Current domestic Plus/Pro/Max/Ultra columns, not the legacy Allegretto tier. Published values are shared monthly-pool ceilings despite the weekly page tab; do not multiply by 52/12. Five-hour limits also apply. Plus excludes K3.1 Pro Highspeed; Pro and above use its own published row. K3-256K and K3.1 Pro Highspeed are not on AA yet; their explicit patterns are retained for future listings. The unlisted K3 Highspeed variant is excluded before the K3 pattern (currently zero AA hits). The legacy kimi-allegretto preset stays paused. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "kimi-ultra",
+      "name": "Kimi Ultra",
+      "kind": "subscription",
+      "monthlyFee": 208.392296,
+      "manualRatio": 0.199801,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.199801
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "kimi k3.1 pro highspeed",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.271698
+          }
+        },
+        {
+          "match": "kimi k3 highspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "kimi k3.1 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.199801
+          }
+        },
+        {
+          "match": "kimi k3 256k",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.062132
+          }
+        },
+        {
+          "match": "kimi k3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.124265
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; Kimi column \"Ultra\". CNY 1399/month; USD monthlyFee 208.392296 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: Kimi K3.1 Pro $1043/month, Kimi K3.1 Pro Highspeed $767/month, Kimi K3 $1677/month, Kimi K3-256K $3354/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Current domestic Plus/Pro/Max/Ultra columns, not the legacy Allegretto tier. Published values are shared monthly-pool ceilings despite the weekly page tab; do not multiply by 52/12. Five-hour limits also apply. Plus excludes K3.1 Pro Highspeed; Pro and above use its own published row. K3-256K and K3.1 Pro Highspeed are not on AA yet; their explicit patterns are retained for future listings. The unlisted K3 Highspeed variant is excluded before the K3 pattern (currently zero AA hits). The legacy kimi-allegretto preset stays paused. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-intl-lite",
+      "name": "MiMo International Lite",
+      "kind": "subscription",
+      "monthlyFee": 6,
+      "manualRatio": 1,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 1
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 1
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 1
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国际 · Lite\". USD 6/month. Displayed approximate API-equivalent USD: MiMo V2.6 Flash $6/month, MiMo V2.6 Pro $6/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-intl-standard",
+      "name": "MiMo International Standard",
+      "kind": "subscription",
+      "monthlyFee": 16,
+      "manualRatio": 1,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 1
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 1
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 1.066667
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国际 · Standard\". USD 16/month. Displayed approximate API-equivalent USD: MiMo V2.6 Flash $15/month, MiMo V2.6 Pro $16/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-intl-pro",
+      "name": "MiMo International Pro",
+      "kind": "subscription",
+      "monthlyFee": 50,
+      "manualRatio": 0.909091,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.909091
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.909091
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.943396
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国际 · Pro\". USD 50/month. Displayed approximate API-equivalent USD: MiMo V2.6 Flash $53/month, MiMo V2.6 Pro $55/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-intl-max",
+      "name": "MiMo International Max",
+      "kind": "subscription",
+      "monthlyFee": 100,
+      "manualRatio": 0.840336,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.840336
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.840336
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.869565
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国际 · Max\". USD 100/month. Displayed approximate API-equivalent USD: MiMo V2.6 Flash $115/month, MiMo V2.6 Pro $119/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-cn-lite",
+      "name": "MiMo China Lite",
+      "kind": "subscription",
+      "monthlyFee": 5.809364,
+      "manualRatio": 0.968227,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.968227
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.968227
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.968227
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国内 · Lite\". CNY 39/month; USD monthlyFee 5.809364 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiMo V2.6 Flash $6/month, MiMo V2.6 Pro $6/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-cn-standard",
+      "name": "MiMo China Standard",
+      "kind": "subscription",
+      "monthlyFee": 14.746846,
+      "manualRatio": 0.921678,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.921678
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.921678
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.921678
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国内 · Standard\". CNY 99/month; USD monthlyFee 14.746846 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiMo V2.6 Flash $16/month, MiMo V2.6 Pro $16/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-cn-pro",
+      "name": "MiMo China Pro",
+      "kind": "subscription",
+      "monthlyFee": 49.007195,
+      "manualRatio": 0.859775,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.859775
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.859775
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.859775
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国内 · Pro\". CNY 329/month; USD monthlyFee 49.007195 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiMo V2.6 Flash $57/month, MiMo V2.6 Pro $57/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "mimo-cn-max",
+      "name": "MiMo China Max",
+      "kind": "subscription",
+      "monthlyFee": 98.163347,
+      "manualRatio": 0.804618,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.804618
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "mimo v2.6 pro ultraspeed",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "mimo v2.6 pro",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.804618
+          }
+        },
+        {
+          "match": "mimo v2.6 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.804618
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiMo column \"国内 · Max\". CNY 659/month; USD monthlyFee 98.163347 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiMo V2.6 Flash $122/month, MiMo V2.6 Pro $122/month. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international columns have separate fees and API-equivalent estimates; do not transfer values between regions. These are shared monthly-pool ceilings with no independent weekly cap, despite the weekly page tab. Do not multiply by 52/12. Summary uses V2.6 Pro. Ratios above 1 are retained when the published estimate makes subscription use more expensive than API usage. UltraSpeed has no published allowance and is excluded; this guard is intentionally zero-hit while AA lacks the variant. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-intl-go",
+      "name": "MiniMax International Go",
+      "kind": "subscription",
+      "monthlyFee": 22,
+      "manualRatio": 0.145055,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.145055
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.145055
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国际 · Go\". USD 22/month. Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $35/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-intl-explore",
+      "name": "MiniMax International Explore",
+      "kind": "subscription",
+      "monthlyFee": 55,
+      "manualRatio": 0.119739,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.119739
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.119739
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国际 · Explore\". USD 55/month. Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $106/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-intl-build",
+      "name": "MiniMax International Build",
+      "kind": "subscription",
+      "monthlyFee": 132,
+      "manualRatio": 0.114949,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.114949
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.114949
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国际 · Build\". USD 132/month. Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $265/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-cn-go",
+      "name": "MiniMax China Go",
+      "kind": "subscription",
+      "monthlyFee": 7.298944,
+      "manualRatio": 0.080208,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.080208
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.080208
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国内 · Go\". CNY 49/month; USD monthlyFee 7.298944 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $21/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-cn-explore",
+      "name": "MiniMax China Explore",
+      "kind": "subscription",
+      "monthlyFee": 17.726007,
+      "manualRatio": 0.063916,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.063916
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.063916
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国内 · Explore\". CNY 119/month; USD monthlyFee 17.726007 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $64/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
+      "builtin": true
+    },
+    {
+      "id": "minimax-cn-build",
+      "name": "MiniMax China Build",
+      "kind": "subscription",
+      "monthlyFee": 69.86132,
+      "manualRatio": 0.063223,
+      "defaultRule": {
+        "type": "multiplier",
+        "value": 0.063223
+      },
+      "rules": {},
+      "nameIncludes": [
+        {
+          "match": "minimax m3.1 flash preview",
+          "rule": {
+            "type": "exclude"
+          }
+        },
+        {
+          "match": "minimax m3.1 flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.063223
+          }
+        }
+      ],
+      "asOf": "2026-11-02",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-02 (review date, not a new measurement date). Source: https://modeldial.com/subscriptions ; MiniMax column \"国内 · Build\". CNY 469/month; USD monthlyFee 69.86132 uses this page's stated USD1 = CNY6.7133 (review-date conversion, not a live FX quote). Displayed approximate API-equivalent USD: MiniMax M3.1 Flash $255/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Domestic and international Go/Explore/Build columns are distinct; do not scale one region from another. Published per-week API-equivalent estimates are converted by 52/12. Five-hour limits can constrain realized use. The Preview variant has no published plan allowance and is excluded; this guard is intentionally zero-hit while AA lacks that variant. No allowance is inferred for MiniMax M3 or earlier models. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances.",
       "builtin": true
     }
   ];
