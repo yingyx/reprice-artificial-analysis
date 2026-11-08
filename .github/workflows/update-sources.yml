@@ -1,30 +1,20 @@
 name: Update sources
 
-# Scheduled data maintenance: detect provider pricing-page changes by HTML
-# hash, and only when something changed, run the opencode agent to refresh
-# data/sources.json. Agent output opens a PR for human review; a run that
-# changes no data just refreshes the hash state file directly on main.
-# Runs are serialized by the concurrency group, but that does not cover the
-# window where the previous run's PR is still awaiting review: a queued run
-# would check out a main without the pending merge and produce a conflicting
-# duplicate PR. The race guard below skips the whole cycle while a preset PR
-# is open; the next run after the merge picks up any residual page changes.
-
 on:
   schedule:
     - cron: '30 3 * * *'
   workflow_dispatch:
     inputs:
       force:
-        description: 'Ignore guards and run the agent even if a preset PR is open'
-        required: false
-        default: 'false'
+        description: 'Recheck every configured source regardless of page changes'
+        type: boolean
+        default: false
       sources:
-        description: 'Space-separated source ids to run the agent for, regardless of page changes'
+        description: 'Space-separated source ids to recheck regardless of page changes'
         required: false
         default: ''
       brief:
-        description: 'Optional task context passed verbatim to the agent (research findings, plan changes...)'
+        description: 'Optional task context for the data agent'
         required: false
         default: ''
 
@@ -36,123 +26,199 @@ concurrency:
   group: update-sources
   cancel-in-progress: false
 
+env:
+  TITLE: 'chore: update pricing data'
+
 jobs:
   update:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
 
+      - name: Set the temporary plan directory
+        run: echo "PLAN=$RUNNER_TEMP/source-updates" >> "$GITHUB_ENV"
+
       - name: Detect provider page changes
         id: detect
         env:
-          # Agent runtime config lives in repo variables (Settings > Secrets
-          # and variables > Actions > Variables): AGENT_MODEL ('provider/model',
-          # required when a page changed), optional AGENT_PROVIDER_ID and
-          # AGENT_BASE_URL (endpoint override; models.dev usually suffices).
-          # FORCE_SOURCES (from the dispatch input) adds source ids to the
-          # agent task regardless of page-change detection - for sources
-          # whose providers publish no hash-detectable pages.
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           AGENT_PROVIDER_ID: ${{ vars.AGENT_PROVIDER_ID }}
           AGENT_BASE_URL: ${{ vars.AGENT_BASE_URL }}
           FORCE_SOURCES: ${{ inputs.sources }}
-        run: node scripts/check-providers.js
-
-      # A queued run starts after the previous job finished but possibly
-      # before its PR was reviewed and merged; without this guard it would
-      # branch off the pre-merge base and conflict with the open PR.
-      - name: Skip if a preset PR is already awaiting review
-        id: race
-        if: steps.detect.outputs.changed != '' && inputs.force != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
         run: |
-          open=$(gh pr list --head data/update-sources --state open --json number -q 'length' || echo 0)
-          if [ "$open" != "0" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::A data/update-sources PR is already open; skipping this cycle. Residual page changes are picked up by the next run after it merges."
-          fi
+          args=()
+          if [[ "$FORCE" == true ]]; then args+=(--force); fi
+          node scripts/check-providers.js "${args[@]}"
 
-      - name: Cache opencode
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
-        uses: actions/cache@v6
-        with:
-          path: ~/.opencode/bin
-          key: opencode-${{ runner.os }}-${{ runner.arch }}-latest
+      - name: Install OpenCode
+        if: steps.detect.outputs.changed != ''
+        run: npm install --global opencode-ai@1.19.4
 
-      - name: Install opencode
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
-        run: |
-          curl -fsSL https://opencode.ai/install | bash
-          echo "$HOME/.opencode/bin" >> "$GITHUB_PATH"
-
-      - name: Run data agent
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
+      - name: Propose pricing updates
+        if: steps.detect.outputs.changed != ''
         env:
-          # Generic key secret; which provider consumes it is decided by the
-          # AGENT_* variables above and wired into opencode via
-          # OPENCODE_CONFIG_CONTENT ({env:...} lookup).
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           OPENCODE_CONFIG_CONTENT: ${{ steps.detect.outputs.opencode_config }}
           OPENCODE_DISABLE_AUTOUPDATE: 'true'
+          OPENCODE_PERMISSION: >-
+            {"*":"deny","read":{"*":"allow","**/.env*":"deny","**/.git/**":"deny"},"grep":"allow","glob":"allow","webfetch":"allow","edit":{"*":"deny","**/data/sources.json":"allow","data/sources.json":"allow"}}
+          MODEL: ${{ steps.detect.outputs.model }}
+          CHANGED_SOURCES: ${{ steps.detect.outputs.changed }}
+          BRIEF: ${{ inputs.brief }}
         run: |
-          if [ -z "$AGENT_API_KEY" ]; then
-            echo "::error::AGENT_API_KEY secret is not set - add it under repo Settings > Secrets and variables > Actions"
+          if [[ -z "$AGENT_API_KEY" ]]; then
+            echo '::error::Configure the AGENT_API_KEY repository secret.'
             exit 1
           fi
-          opencode run \
-            --model "${{ steps.detect.outputs.model }}" \
-            --auto \
-            "Changed source ids: ${{ steps.detect.outputs.changed }}. Task context: ${{ inputs.brief }}" \
-            "$(cat .github/update-sources-prompt.md)"
+          opencode run --pure --agent build --model "$MODEL" \
+            "$(printf 'Changed source ids: %s\nTask context: %s\n\n' "$CHANGED_SOURCES" "$BRIEF"; cat .github/update-sources-prompt.md)"
 
-      - name: Validate generated data
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
+      - name: Separate automatic updates from changes that need review
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGED_SOURCES: ${{ steps.detect.outputs.changed }}
+          UNAVAILABLE_SOURCES: ${{ steps.detect.outputs.unavailable }}
         run: |
+          git diff --quiet HEAD -- . ':(exclude)data/sources.json' ':(exclude)data/.state/page-hashes.json'
+          test -z "$(git ls-files --others --exclude-standard)"
+          node scripts/build-sources.js
+
+          # Retain unmerged review candidates when the agent discovers other changes.
+          REVIEW_HEAD=$(gh pr list --head chore/review-pricing-data --base main \
+            --state open --json headRefOid --jq '.[0].headRefOid // ""')
+          if [[ -n "$REVIEW_HEAD" ]]; then git fetch --no-tags origin "$REVIEW_HEAD"; fi
+          REVIEW_HEAD="$REVIEW_HEAD" node scripts/plan-source-updates.js "$PLAN"
+          git restore --source=HEAD --staged --worktree -- data/sources.json src/data/sources.js data/.state/page-hashes.json
+
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [[ "$(git rev-parse HEAD)" != "$latest" ]]; then
+            echo '::error::Main changed during generation. Retry from the latest revision.'
+            exit 1
+          fi
+          if [[ -f "$PLAN/auto.json" ]]; then echo 'auto=true' >> "$GITHUB_OUTPUT"; fi
+          if [[ -f "$PLAN/review.json" ]]; then echo 'review=true' >> "$GITHUB_OUTPUT"; fi
+
+      - name: Validate the automatic update
+        id: validate_auto
+        if: steps.plan.outputs.auto == 'true'
+        run: |
+          cp "$PLAN/auto.json" data/sources.json
+          if [[ -f "$PLAN/hashes.json" ]]; then cp "$PLAN/hashes.json" data/.state/page-hashes.json; fi
           node scripts/build-sources.js
           node test/run-tests.js
           node test/integration-test.js
           node test/check-providers-test.js
-          node scripts/check-patterns.js || echo "::warning::pattern cross-check skipped (AA page fetch failed)"
+          git diff --check HEAD
+          git add data/sources.json src/data/sources.js data/.state/page-hashes.json
+          echo "tree=$(git write-tree)" >> "$GITHUB_OUTPUT"
+          echo "base=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Check whether data actually changed
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true'
-        id: diff
-        run: |
-          if git diff --quiet -- data/sources.json; then
-            echo "data_changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "data_changed=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Refresh page hashes (agent made no data change)
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true' && steps.diff.outputs.data_changed == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/.state/page-hashes.json
-          git commit -m "chore(data): refresh provider page hashes"
-          git push
-
-      - name: Create pull request (data changed)
-        if: steps.detect.outputs.changed != '' && steps.race.outputs.skip != 'true' && steps.diff.outputs.data_changed == 'true'
+      - name: Open the automatic update PR
+        id: auto_pr
+        if: steps.plan.outputs.auto == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          branch: data/update-sources
+          base: main
+          branch: chore/update-pricing-data
+          delete-branch: true
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          add-paths: |
+            data/sources.json
+            src/data/sources.js
+            data/.state/page-hashes.json
+          title: ${{ env.TITLE }}
+          commit-message: ${{ env.TITLE }}
+          body-path: ${{ runner.temp }}/source-updates/auto.md
+
+      - name: Merge the tested update if repository rules permit
+        id: merge
+        if: steps.auto_pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.auto_pr.outputs.pull-request-number }}
+          HEAD_SHA: ${{ steps.auto_pr.outputs.pull-request-head-sha }}
+          VALIDATED_TREE: ${{ steps.validate_auto.outputs.tree }}
+          BASE_SHA: ${{ steps.validate_auto.outputs.base }}
+        run: |
+          test -n "$HEAD_SHA"
+          git fetch --no-tags origin "$HEAD_SHA"
+          if [[ "$(git rev-parse "$HEAD_SHA^{tree}")" != "$VALIDATED_TREE" ||
+                "$(git rev-parse "$HEAD_SHA^")" != "$BASE_SHA" ||
+                "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)" != "$BASE_SHA" ]]; then
+            echo "::error::PR #$PR no longer matches the update tested on main."
+            exit 1
+          fi
+          if merged=$(gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$PR/merge" \
+            -f sha="$HEAD_SHA" -f merge_method=squash -f commit_title="$TITLE" -f commit_message='' \
+            --jq 'select(.merged) | .sha') && [[ -n "$merged" ]]; then
+            echo "sha=$merged" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::GitHub did not merge PR #$PR. The validated update remains open for review."
+          fi
+
+      - name: Validate the review update on the current base
+        if: steps.plan.outputs.review == 'true'
+        env:
+          MERGED_SHA: ${{ steps.merge.outputs.sha }}
+        run: |
+          git restore --source=HEAD --staged --worktree -- data/sources.json src/data/sources.js data/.state/page-hashes.json
+          git fetch --no-tags origin main
+          expected=${MERGED_SHA:-$(git rev-parse HEAD)}
+          if [[ "$(git rev-parse FETCH_HEAD)" != "$expected" ]]; then
+            echo '::error::Main changed during publication. Retry from the latest revision.'
+            exit 1
+          fi
+          git merge --ff-only FETCH_HEAD
+          if [[ -n "$MERGED_SHA" ]]; then
+            cp "$PLAN/combined.json" data/sources.json
+          else
+            cp "$PLAN/review.json" data/sources.json
+          fi
+          node scripts/build-sources.js
+          node test/run-tests.js
+          node test/integration-test.js
+          node test/check-providers-test.js
+          node scripts/check-patterns.js || echo '::warning::AA model audit could not run.'
+          git diff --check HEAD
+
+      - name: Open or refresh the review PR
+        if: steps.plan.outputs.review == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          base: main
+          branch: chore/review-pricing-data
           delete-branch: true
           labels: needs-review
-          title: 'chore(data): scheduled source preset update'
-          commit-message: 'chore(data): scheduled source preset update'
-          body: |
-            Automated scheduled update triggered by provider page changes:
-            `${{ steps.detect.outputs.changed }}`
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          add-paths: |
+            data/sources.json
+            src/data/sources.js
+          title: ${{ env.TITLE }}
+          commit-message: ${{ env.TITLE }}
+          body-path: ${{ runner.temp }}/source-updates/review.md
 
-            Review before merging, especially:
-            - `manualRatio` / multiplier changes (must be backed by numbers in `notes`)
-            - added/removed `nameIncludes` model families
-            - `promos` entries added or removed (limited-time offers)
+      - name: Record provider hashes when no automatic data update is needed
+        if: steps.plan.outputs.auto != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ ! -f "$PLAN/hashes.json" ]]; then exit 0; fi
+          cp "$PLAN/hashes.json" data/.state/page-hashes.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/.state/page-hashes.json
+          git commit -m 'chore: refresh provider page hashes'
+          gh auth setup-git
+          git push origin HEAD:refs/heads/main

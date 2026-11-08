@@ -115,6 +115,7 @@ async function main() {
   const changed = [];
   const failures = [];
   const warnings = [];
+  const unavailable = [];
   const lines = [];
   // Tiers commonly share the same evidence pages. Fetch once per run so all
   // tiers compare the same snapshot and public sites receive fewer requests.
@@ -132,6 +133,7 @@ async function main() {
 
   for (const p of providers) {
     const marks = [];
+    let hasEvidence = (p.pages || []).length > 0;
     if (!sourceIds.has(p.sourceId)) marks.push('new-source:' + p.sourceId);
     const tokenCounts = [];
     for (const page of p.pages || []) {
@@ -142,6 +144,7 @@ async function main() {
         const tokens = extractPriceSignals(text);
         tokenCounts.push(tokens.length);
         const price = hashPriceSignals(tokens);
+        if (price == null) hasEvidence = false;
         nextPages[page.url] = { full: full, price: price, tokens: tokens.length, drift: 0 };
 
         if (!before || !before.full) {
@@ -168,6 +171,7 @@ async function main() {
           }
         }
       } catch (e) {
+        hasEvidence = false;
         // Keep the previous state on fetch failure so a transient network
         // blip retries next run; persist an error marker only after the
         // first failure so permanently dead pages go quiet instead of
@@ -177,6 +181,7 @@ async function main() {
         failures.push(page.url + ' fetch failed: ' + e.message);
       }
     }
+    if (!hasEvidence) unavailable.push(p.sourceId);
     // A source needs the agent when any page changed (or fetch broke) - a
     // stable "error" hash avoids re-firing on permanently dead pages.
     const isChanged = force || marks.length > 0;
@@ -265,6 +270,7 @@ async function main() {
 
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + changed.join(' ') + '\n');
+    fs.appendFileSync(process.env.GITHUB_OUTPUT, 'unavailable=' + unavailable.join(' ') + '\n');
     if (agentModel) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'model=' + agentModel + '\n');
     if (changed.length > 0) {
       fs.appendFileSync(process.env.GITHUB_OUTPUT, 'opencode_config=' + opencodeConfig + '\n');

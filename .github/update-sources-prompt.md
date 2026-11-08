@@ -1,4 +1,4 @@
-# Scheduled task: update built-in source presets
+# Scheduled task: update pricing data
 
 You are the scheduled data-maintenance agent for RepriceAA, a browser
 extension that reprices Artificial Analysis benchmarks with subscription
@@ -68,17 +68,10 @@ Rules:
 - Free models get no pattern (they stay at AA list price; say so in
   `notes`).
 
-Verification loop (mandatory before running the build):
-
-1. Run `node scripts/check-patterns.js` (it fetches the AA /models page
-   and cross-checks every pattern against AA's actual model names).
-2. Fix every reported zero-hit pattern: either correct the spelling to
-   AA's canonical name, or justify it in `notes` ("model not on AA yet").
-3. Review the hit-sets the checker prints for over-coverage: if a
-   pattern matches an AA model outside the plan, narrow it to the exact
-   included model's name.
-4. The build also fails on shadowed/duplicate patterns - fix the order
-   it reports.
+When adding or changing a match pattern, cross-check it against the names at
+https://artificialanalysis.ai/models. Narrow patterns that would also match
+models outside the plan. If a covered model is absent from AA, document that
+in `notes`.
 
 ## Procedure
 
@@ -99,9 +92,12 @@ Verification loop (mandatory before running the build):
    - if a configured source id is missing, research its named tier and append
      a new entry using the schema below and the provider label as its name;
      leave it absent when evidence is insufficient; never add placeholder pricing;
-   - keep `id` stable and `name` stable unless the plan was renamed;
-     bump `asOf` to today (YYYY-MM-DD) only after successful verification;
-   - rewrite `notes` with the concrete numbers you used;
+   - keep `id` stable and `name` stable unless the plan was renamed.
+     Set `asOf` to the current UTC date (YYYY-MM-DD) after successfully
+     verifying the source, including when all existing values are confirmed.
+     Leave it unchanged if any required evidence is missing;
+   - update `notes` with the concrete numbers behind pricing changes. Keep
+     existing evidence notes when the published terms and numbers are unchanged;
    - recompute every affected `nameIncludes` pattern value with the formula
      above. Do not invent a ratio you cannot support with numbers from the
      page. For per-model tables, omit patterns for rows with no allowance
@@ -116,14 +112,8 @@ Verification loop (mandatory before running the build):
    - a promo `match` must name the specific discounted model, never a
      whole family: sibling models without the deal would inherit the
      discount ratio and be mispriced.
-4. When done run: `node scripts/build-sources.js && node test/run-tests.js
-   && node test/integration-test.js && node test/check-providers-test.js
-   && node scripts/check-patterns.js`.
-   All tests must pass; fix your JSON if schema validation fails (the
-   build also reports shadowed/duplicate patterns - fix the order it
-   reports).
-5. Only edit `data/sources.json`; regenerate `src/data/sources.js` with
-   the build command above. Never commit.
+4. Edit only `data/sources.json`. The workflow validates the result and
+   regenerates `src/data/sources.js`.
 
 ## Entry schema (data/sources.json sources[])
 
