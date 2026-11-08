@@ -1,0 +1,201 @@
+name: Check AA UI
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-aa-ui
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      confirmed: ${{ steps.probe.outputs.confirmed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Scan eligible AA charts and retry possible regressions
+        id: probe
+        run: |
+          mkdir -p dist/aa-ui
+          echo '[]' > dist/aa-ui/confirmed.json
+          initial=0
+          AA_UI_ARTIFACTS=dist/aa-ui/initial npm run check:aa-ui || initial=$?
+          result=$initial
+          confirmed=false
+          if [[ "$initial" == 1 ]]; then
+            retry=0
+            AA_UI_ARTIFACTS=dist/aa-ui/retry npm run check:aa-ui || retry=$?
+            result=$retry
+            if [[ "$retry" == 1 ]]; then
+              jq -s '
+                [.[0].charts[] | select(.status == "regression") | .chart] as $first
+                | [.[1].charts[] | select(.status == "regression") | .chart] as $retry
+                | $first - ($first - $retry)
+              ' dist/aa-ui/{initial,retry}/report.json > dist/aa-ui/confirmed.json
+              if jq -e 'length > 0' dist/aa-ui/confirmed.json >/dev/null; then confirmed=true; fi
+            fi
+          fi
+          echo "confirmed=$confirmed" >> "$GITHUB_OUTPUT"
+          echo "result=$result" >> "$GITHUB_OUTPUT"
+          printf 'AA UI check: initial=%s, final=%s, confirmed regression=%s. Codes: 0 pass, 1 regression, 2 AA unavailable, 3 harness error.\n' \
+            "$initial" "$result" "$confirmed" >> "$GITHUB_STEP_SUMMARY"
+          for run in initial retry; do
+            if [[ -f "dist/aa-ui/$run/report.json" ]]; then
+              jq -r --arg run "$run" '"- \($run): \(.pages | length) pages, \(.charts | length) charts, \([.charts[] | select(.status == "regression")] | length) regressions."' \
+                "dist/aa-ui/$run/report.json" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: aa-ui-evidence
+          path: dist/aa-ui/
+          retention-days: 14
+      - name: Report unsuccessful check
+        if: steps.probe.outputs.result != '0'
+        run: exit 1
+
+  diagnose:
+    needs: probe
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.probe.outputs.confirmed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      patch: ${{ steps.validate.outputs.patch }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v8
+        with:
+          name: aa-ui-evidence
+          path: dist/aa-ui/before
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm install --global opencode-ai@1.19.4
+      - name: Ask OpenCode to diagnose and patch the extension
+        timeout-minutes: 25
+        env:
+          AGENT_MODEL: ${{ vars.AGENT_MODEL }}
+          AGENT_PROVIDER_ID: ${{ vars.AGENT_PROVIDER_ID }}
+          AGENT_BASE_URL: ${{ vars.AGENT_BASE_URL }}
+          AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+          OPENCODE_DISABLE_AUTOUPDATE: 'true'
+          OPENCODE_PERMISSION: >-
+            {"*":"deny","read":{"*":"allow","**/.env*":"deny","**/.git/**":"deny"},"grep":"allow","glob":"allow",
+            "edit":{"*":"deny","**/src/content/extract.js":"allow","**/src/content/chart-integration.js":"allow",
+            "src/content/extract.js":"allow","src/content/chart-integration.js":"allow"}}
+        run: |
+          if [[ "$AGENT_MODEL" != */* || -z "$AGENT_API_KEY" ]]; then
+            echo '::error::Configure the AGENT_MODEL variable and AGENT_API_KEY secret used by Update sources.'
+            exit 1
+          fi
+          export OPENCODE_CONFIG_CONTENT="$(node -e '
+            const env = process.env;
+            const provider = env.AGENT_PROVIDER_ID || env.AGENT_MODEL.split("/")[0];
+            const options = { apiKey: "{env:AGENT_API_KEY}" };
+            if (env.AGENT_BASE_URL) options.baseURL = env.AGENT_BASE_URL;
+            console.log(JSON.stringify({ provider: { [provider]: { options } } }));
+          ')"
+          opencode run --pure --agent build --model "$AGENT_MODEL" \
+            "$(cat .github/aa-ui-agent-prompt.md)" >dist/aa-ui/agent.log 2>&1
+      - name: Verify and export the proposed fix
+        id: validate
+        run: |
+          allowed=(src/content/extract.js src/content/chart-integration.js)
+          git diff --quiet HEAD -- . ':(exclude)src/content/extract.js' ':(exclude)src/content/chart-integration.js'
+          test -z "$(git ls-files --others --exclude-standard)"
+          if git diff --quiet HEAD -- "${allowed[@]}"; then
+            echo 'OpenCode found no patch to verify. See the diagnosis artifact.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git diff --check HEAD
+          node test/run-tests.js
+          node test/integration-test.js
+          node test/check-providers-test.js
+          AA_UI_ARTIFACTS=dist/aa-ui/after npm run check:aa-ui
+          jq -e --slurpfile before dist/aa-ui/before/confirmed.json '
+            $before[0] as $confirmed
+            | [.charts[] | select(.status == "pass") | .chart] as $passed
+            | ($confirmed | length > 0) and (($confirmed - $passed) | length == 0)
+          ' dist/aa-ui/after/report.json >/dev/null || {
+            echo '::error::A confirmed regression was not rediscovered and verified after the patch.'
+            exit 1
+          }
+          git diff --no-ext-diff --no-textconv HEAD -- "${allowed[@]}" >dist/aa-ui/fix.patch
+          echo 'patch=true' >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: aa-ui-diagnosis
+          path: |
+            dist/aa-ui/agent.log
+            dist/aa-ui/after/
+            dist/aa-ui/fix.patch
+          retention-days: 14
+
+  propose:
+    needs: diagnose
+    if: ${{ !cancelled() && needs.diagnose.result == 'success' && needs.diagnose.outputs.patch == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: aa-ui-diagnosis
+          path: dist/aa-ui
+      - name: Apply the validated patch to the tested revision
+        id: apply
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          open=$(gh pr list --head fix/aa-ui-compatibility --state open --json number --jq length)
+          if [[ "$latest" != "$GITHUB_SHA" || "$open" != 0 ]]; then
+            echo 'Skipping proposal: main moved or an AA UI fix is already awaiting review.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git apply --check --include=src/content/extract.js --include=src/content/chart-integration.js dist/aa-ui/fix.patch
+          git apply --include=src/content/extract.js --include=src/content/chart-integration.js dist/aa-ui/fix.patch
+          if ! git diff --quiet; then echo 'ready=true' >> "$GITHUB_OUTPUT"; fi
+      - uses: peter-evans/create-pull-request@v8
+        if: steps.apply.outputs.ready == 'true'
+        with:
+          base: main
+          branch: fix/aa-ui-compatibility
+          draft: true
+          delete-branch: true
+          author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          add-paths: |
+            src/content/extract.js
+            src/content/chart-integration.js
+          title: 'fix: restore AA chart repricing'
+          commit-message: 'fix: restore AA chart repricing'
+          body: |
+            The scheduled Chromium check reproduced an AA chart regression. OpenCode proposed this patch. The full live scan and repository tests passed, including every chart with a confirmed regression.
+
+            Review the patch and the before/after evidence in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).

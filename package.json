@@ -1,0 +1,10 @@
+{
+  "name": "repriceaa",
+  "private": true,
+  "scripts": {
+    "check:aa-ui": "node test/live-aa-ui.js"
+  },
+  "devDependencies": {
+    "playwright": "1.65.0"
+  }
+}

@@ -8,3 +8,4 @@ assets/*
 !assets/hero.gif
 
 dist/
+node_modules/

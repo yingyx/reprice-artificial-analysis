@@ -37,7 +37,7 @@ On pages without an integrated chart, open the panel with the purple **RAA** but
 - **Custom pricing:** multipliers, fixed task costs, formulas, and model exclusions.
 - **Subscription plans:** effective prices from monthly fees and per-model allowances.
 - **Source comparison:** cheapest enabled source per model, with pricing provenance and fallback sources.
-- **Chart integration:** updated cost-optimal frontier; supports Intelligence Index (including release variants), Coding Agent Index, Cyber Index, CWE-Bench-AA, DeepsecBench-AA, and CyberGym-E2E-AA cost-per-task scatter plots.
+- **Chart integration** recalculates the cost-optimal frontier on supported score-versus-cost-per-task scatter plots.
 - **Pricing maintenance:** expiring promotional rules, error indicators, and automatically refreshed built-in presets.
 
 Each benchmark keeps its own scores and costs. Coding agents are priced by their underlying model; mixed-model agents retain AA prices when a cost breakdown is unavailable. Discounts assume unchanged token usage; they do not predict how switching agents or models changes scores. Token prices, execution time, and non-cost charts are not repriced.
