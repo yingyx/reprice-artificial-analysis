@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { chromium } = require('playwright');
+const { nativeGeometry, matchesPoint } = require('../scripts/check-aa-ui-repair');
 
 const root = path.resolve(process.env.AA_UI_EXTENSION_DIR || path.join(__dirname, '..'));
 const output = path.resolve(process.env.AA_UI_ARTIFACTS || '.opencode/aa-ui');
@@ -21,6 +22,7 @@ const costTab = new RegExp(costScatter.source + '|^Cost per Task$', 'i');
 const nativePoints = '.recharts-scatter [data-chart-item-id], .recharts-scatter circle, .recharts-scatter path';
 const nativeContainer = 'xpath=ancestor::*[.//*[contains(concat(" ", normalize-space(@class), " "), " recharts-responsive-container ")]][1]';
 const evaluationPath = /^\/evaluations\/[a-z0-9-]+\/?$/;
+const selectedCharts = new Set();
 
 function extensionWorld(cdp) {
   const worlds = new Map();
@@ -78,10 +80,16 @@ async function checkChart(page, evaluate, heading, result, evidenceDir) {
     result.nativePoints = await chart.locator(nativePoints).count();
     result.status = 'regression';
     result.stage = 'mount';
+    let geometry;
+    if (selectedCharts.has(result.chart)) {
+      const svg = await chart.locator('.recharts-surface').first().evaluate(el => el.outerHTML);
+      geometry = nativeGeometry(svg, result.axes);
+      assert(geometry, 'Could not measure the selected native plot');
+    }
     select = chart.locator('.raa-srcselect');
     await select.waitFor({ state: 'visible', timeout: 5000 });
     // A page can contain the same AA ID in multiple tab groups. Associate the exact tested control.
-    await select.evaluate(el => el.setAttribute('data-raa-live-check', ''));
+    await select.evaluate((el, id) => el.setAttribute('data-raa-live-check', id), result.chart);
     const configured = await evaluate(`(() => {
       RepriceAA.state.upsertProfile(${JSON.stringify(source)});
       RepriceAA.state.setSource('__aa__');
@@ -92,7 +100,8 @@ async function checkChart(page, evaluate, heading, result, evidenceDir) {
     result.stage = 'repricing';
     await select.selectOption(source.id, { timeout: 5000 });
     const readChart = `(() => {
-      const control = document.querySelector('[data-raa-live-check]');
+      const control = Array.from(document.querySelectorAll('[data-raa-live-check]'))
+        .find(el => el.getAttribute('data-raa-live-check') === ${JSON.stringify(result.chart)});
       const ctx = RepriceAA.integration._contexts().find(c => c.select === control);
       if (!ctx?.wrap?.getClientRects().length) return null;
       const models = Object.values(ctx.dataById || {}).filter(m => m.aaCost > 0 && Number.isFinite(m.repricedCost));
@@ -100,8 +109,8 @@ async function checkChart(page, evaluate, heading, result, evidenceDir) {
         isRelease: ctx.isRelease,
         isBenchmark: Boolean(ctx.taskChart),
         rendered: Object.values(ctx.nodes).filter(node => ctx.wrap.contains(node)).length,
-        models: models.map(({ id, chartId, aaCost, repricedCost, pricingUnsupported }) =>
-          ({ id, chartId, aaCost, repricedCost, pricingUnsupported }))
+        models: models.map(({ id, chartId, intelligence, aaCost, repricedCost, pricingUnsupported }) =>
+          ({ id, chartId, intelligence, aaCost, repricedCost, pricingUnsupported }))
       } : null;
     })()`;
     const priced = await waitFor(() => evaluate(readChart), 'Native plot loaded, but the repriced plot never rendered');
@@ -122,6 +131,17 @@ async function checkChart(page, evaluate, heading, result, evidenceDir) {
       assert(Math.abs(model.repricedCost - expected) < 1e-8,
         `${model.id}: expected ${expected}, got ${model.repricedCost} for AA cost ${model.aaCost}`);
     }
+    if (geometry) {
+      const comparable = priced.models.filter(model => geometry.points.has(model.chartId));
+      const verifiedPoints = new Set(comparable.map(model => model.chartId)).size;
+      assert(verifiedPoints >= Math.max(3, geometry.points.size / 2),
+        'Too few repriced points to verify the selected chart against the native plot');
+      for (const model of comparable) {
+        assert(matchesPoint(geometry, model.chartId, model.aaCost, model.intelligence),
+          `${model.id}: extracted AA cost or score differs from the native plot`);
+      }
+      result.verifiedCoordinates = verifiedPoints;
+    }
     await select.selectOption('__aa__', { timeout: 5000 });
     await chart.locator('.raa-chartwrap').waitFor({ state: 'hidden', timeout: 5000 });
     await visiblePoint.waitFor({ state: 'visible', timeout: 5000 });
@@ -140,17 +160,28 @@ async function checkChart(page, evaluate, heading, result, evidenceDir) {
     if (dom) await fs.writeFile(path.join(evidenceDir, 'chart.html'), dom.replace(/></g, '>\n<'), 'utf8');
     await page.screenshot({ path: path.join(evidenceDir, 'chart.png'), timeout: 5000 }).catch(() => {});
   } finally {
-    if (select) await select.evaluate(el => el.removeAttribute('data-raa-live-check'), null, { timeout: 1000 }).catch(() => {});
+    if (select) await page.evaluate(id => {
+      for (const el of document.querySelectorAll('[data-raa-live-check]')) {
+        if (el.getAttribute('data-raa-live-check') === id) el.removeAttribute('data-raa-live-check');
+      }
+    }, result.chart).catch(() => {});
   }
 }
 
 async function openPage(page, route) {
-  const response = await page.goto(new URL(route, origin).href, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  if (!response?.ok() || new URL(page.url()).origin !== origin) {
-    throw new Error(`AA navigation returned HTTP ${response?.status()} or left the AA origin`);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await page.goto(new URL(route, origin).href, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      if (!response?.ok() || new URL(page.url()).origin !== origin) {
+        throw new Error(`AA navigation returned HTTP ${response?.status()} or left the AA origin`);
+      }
+      await page.locator('main').waitFor({ state: 'visible', timeout: 10000 });
+      return response.status();
+    } catch (err) {
+      if (attempt || err.name !== 'TimeoutError') throw err;
+      console.log(`${route}: retrying after a navigation timeout`);
+    }
   }
-  await page.locator('main').waitFor({ state: 'visible', timeout: 10000 });
-  return response.status();
 }
 
 async function evaluationLinks(page) {
@@ -268,6 +299,10 @@ async function main() {
   const report = { url: origin, status: 'error', charts: [], pages: [], discovery: {} };
   const contexts = [];
   try {
+    if (process.env.AA_UI_TARGET_FILE) {
+      const target = JSON.parse(await fs.readFile(process.env.AA_UI_TARGET_FILE, 'utf8'));
+      for (const chart of target.evidence) selectedCharts.add(chart.chart);
+    }
     // Use independent profiles because the active price source is shared within a profile.
     const workers = await Promise.allSettled(Array.from({ length: 4 }, async () => {
       const context = await chromium.launchPersistentContext('', {

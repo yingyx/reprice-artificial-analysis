@@ -426,6 +426,7 @@
   root.RepriceAA = root.RepriceAA || {};
   root.RepriceAA.extract = {
     extractPageFromHtml: extractPageFromHtml,
+    readFlightRecords: function (html) { return flightRecords(flightChunksFromString(html)); },
     extractReleaseDataFromHtml: extractReleaseDataFromHtml,
     parseLdJsonDatasets: parseLdJsonDatasets,
     pickBestDataset: pickBestDataset,

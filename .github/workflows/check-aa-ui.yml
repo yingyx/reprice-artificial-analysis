@@ -87,12 +87,18 @@ jobs:
         with:
           name: aa-ui-evidence
           path: dist/aa-ui/before
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm install --global opencode-ai@1.19.4
-      - name: Summarize confirmed failures for OpenCode
-        run: node scripts/check-aa-ui-repair.js triage dist/aa-ui/before dist/aa-ui/triage.jsonl
+      - name: Select one confirmed group with matching native and inline data
+        id: triage
+        run: |
+          ready=$(node scripts/check-aa-ui-repair.js triage dist/aa-ui/before dist/aa-ui/triage.jsonl dist/aa-ui/target.json)
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          if [[ "$ready" == false ]]; then
+            echo 'No confirmed group had enough matching native and inline data for an automated repair. See the triage artifact.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - if: steps.triage.outputs.ready == 'true'
+        run: npm install --global opencode-ai@1.19.4
       - name: Ask OpenCode to diagnose and patch the extension
+        if: steps.triage.outputs.ready == 'true'
         timeout-minutes: 10
         env:
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
@@ -101,7 +107,8 @@ jobs:
           AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
           OPENCODE_DISABLE_AUTOUPDATE: 'true'
           OPENCODE_PERMISSION: >-
-            {"*":"deny","read":{"*":"allow","**/.env*":"deny","**/.git/**":"deny"},"grep":"allow","glob":"allow",
+            {"*":"deny","read":{"*":"deny","**/src/content/extract.js":"allow","**/src/content/chart-integration.js":"allow",
+            "src/content/extract.js":"allow","src/content/chart-integration.js":"allow"},
             "edit":{"*":"deny","**/src/content/extract.js":"allow","**/src/content/chart-integration.js":"allow",
             "src/content/extract.js":"allow","src/content/chart-integration.js":"allow"}}
         run: |
@@ -114,17 +121,26 @@ jobs:
             const provider = env.AGENT_PROVIDER_ID || env.AGENT_MODEL.split("/")[0];
             const options = { apiKey: "{env:AGENT_API_KEY}" };
             if (env.AGENT_BASE_URL) options.baseURL = env.AGENT_BASE_URL;
-            console.log(JSON.stringify({ provider: { [provider]: { options } }, agent: { build: { steps: 10 } } }));
+            console.log(JSON.stringify({ provider: { [provider]: { options } }, agent: { build: { steps: 14 } } }));
           ')"
+          evidence=$(jq '[.evidence[] | {chart, stage, anchor, axes, mapping} |
+            .mapping |= (.rowArrayKey = .recordPath[-1] | del(.recordPath))]' dist/aa-ui/target.json)
+          extract_line=$(awk '/^  function extractReleaseData\(/ { print NR; exit }' src/content/extract.js)
+          anchors_line=$(awk '/^  var RELEASE_ANCHORS =/ { print NR; exit }' src/content/chart-integration.js)
           agent_status=0
           timeout --kill-after=15s 8m opencode run --pure --agent build --model "$AGENT_MODEL" \
-            "$(cat .github/aa-ui-agent-prompt.md)" >dist/aa-ui/agent.log 2>&1 || agent_status=$?
+            "$(cat .github/aa-ui-agent-prompt.md
+              printf '\nRead src/content/extract.js at offset %s with limit 65.\n' "${extract_line:-1}"
+              printf 'Read src/content/chart-integration.js at offset %s with limit 30.\n' "${anchors_line:-1}"
+              printf '\nSelected evidence (JSON)\n%s\n' "$evidence")" \
+            >dist/aa-ui/agent.log 2>&1 || agent_status=$?
           if [[ "$agent_status" == 124 || "$agent_status" == 137 ]]; then
             echo '::error::OpenCode did not finish within eight minutes. See the diagnosis artifact.'
           fi
           exit "$agent_status"
       - name: Verify and export the proposed fix
         id: validate
+        if: steps.triage.outputs.ready == 'true'
         run: |
           allowed=(src/content/extract.js src/content/chart-integration.js)
           git diff --quiet HEAD -- . ':(exclude)src/content/extract.js' ':(exclude)src/content/chart-integration.js'
@@ -134,13 +150,15 @@ jobs:
             exit 0
           fi
           git diff --check HEAD
+          npm ci
+          npx playwright install --with-deps chromium
           node test/run-tests.js
           node test/integration-test.js
           node test/check-providers-test.js
           result=0
-          AA_UI_ARTIFACTS=dist/aa-ui/after npm run check:aa-ui || result=$?
+          AA_UI_TARGET_FILE=dist/aa-ui/target.json AA_UI_ARTIFACTS=dist/aa-ui/after npm run check:aa-ui || result=$?
           if (( result > 1 )); then exit "$result"; fi
-          node scripts/check-aa-ui-repair.js verify dist/aa-ui/before dist/aa-ui/after dist/aa-ui/agent.log >> "$GITHUB_STEP_SUMMARY"
+          node scripts/check-aa-ui-repair.js verify dist/aa-ui/before dist/aa-ui/after dist/aa-ui/target.json >> "$GITHUB_STEP_SUMMARY"
           git diff --no-ext-diff --no-textconv HEAD -- "${allowed[@]}" >dist/aa-ui/fix.patch
           echo 'patch=true' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v7
@@ -150,6 +168,7 @@ jobs:
           path: |
             dist/aa-ui/agent.log
             dist/aa-ui/triage.jsonl
+            dist/aa-ui/target.json
             dist/aa-ui/after/
             dist/aa-ui/fix.patch
           retention-days: 14

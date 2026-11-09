@@ -553,7 +553,9 @@ async function main(legacyIds) {
   // repeats a model without cost; it must not erase the complete chart record.
   const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/task-charts.json'), 'utf8'));
   const flightHtml = value => 'self.__next_f.push([1,' + JSON.stringify('a:' + JSON.stringify(value) + '\n') + ']);';
-  const pageHtml = flightHtml([fixture.catalogue, fixture.thin, { rows: fixture.coding }, fixture.evaluations]);
+  const pageHtml = flightHtml([
+    fixture.catalogue, fixture.thin, { rows: fixture.coding }, fixture.evaluations, { models: ['unrelated-option'] }
+  ]);
   const expanded = R.extract.extractPageFromHtml(pageHtml);
   const streamedRecord = 'b:' + JSON.stringify(fixture.catalogue) + '\n';
   const firstChunk = 'self.__next_f.push([1,' + JSON.stringify(streamedRecord.slice(0, -20)) + ']);';
