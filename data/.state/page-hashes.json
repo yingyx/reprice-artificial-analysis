@@ -2,28 +2,28 @@
   "version": 2,
   "pages": {
     "https://opencode.ai/go": {
-      "full": "d31aa0511bec2d8a",
+      "full": "d0765ea39571965a",
       "price": "1e3ab1a752c16a22",
       "tokens": 213,
-      "drift": 2
+      "drift": 3
     },
     "https://opencode.ai/docs/go": {
-      "full": "ed78f31c293d1f8b",
+      "full": "3ec1801886ef9e31",
       "price": "d3b77c9724e88174",
       "tokens": 571,
-      "drift": 0
+      "drift": 1
     },
     "https://modeldial.com/subscriptions/codex": {
-      "full": "6f74753244043222",
+      "full": "6c0165b7bb5cf98d",
       "price": "3cf80060c3b23bc4",
       "tokens": 100,
-      "drift": 4
+      "drift": 5
     },
     "https://modeldial.com/subscriptions/claude": {
-      "full": "4bc709400e209d41",
+      "full": "d64be49e451404db",
       "price": "df2eb3a1b47c2821",
       "tokens": 62,
-      "drift": 3
+      "drift": 4
     },
     "https://commandcode.ai/docs/plans/goat": {
       "full": "83f59abf183359e6",
@@ -35,13 +35,13 @@
       "full": "439adda378f92312",
       "price": "20a87685862c8234",
       "tokens": 172,
-      "drift": 2
+      "drift": 0
     },
     "https://modeldial.com/subscriptions": {
-      "full": "8f7cf3a445091865",
+      "full": "154a8f678fe52b09",
       "price": "d7a2353ab4ee9600",
       "tokens": 315,
-      "drift": 2
+      "drift": 3
     }
   }
 }
