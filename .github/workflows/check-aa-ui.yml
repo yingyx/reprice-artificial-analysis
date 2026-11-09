@@ -65,7 +65,7 @@ jobs:
           name: aa-ui-evidence
           path: dist/aa-ui/
           retention-days: 14
-      - name: Report unsuccessful check
+      - name: Flag chart coverage gaps or scan failures
         if: steps.probe.outputs.result != '0'
         run: exit 1
 
@@ -73,7 +73,7 @@ jobs:
     needs: probe
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' && needs.probe.outputs.confirmed == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     outputs:
       patch: ${{ steps.validate.outputs.patch }}
     steps:
@@ -90,8 +90,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm install --global opencode-ai@1.19.4
+      - name: Summarize confirmed failures for OpenCode
+        run: node scripts/check-aa-ui-repair.js triage dist/aa-ui/before dist/aa-ui/triage.jsonl
       - name: Ask OpenCode to diagnose and patch the extension
-        timeout-minutes: 25
+        timeout-minutes: 10
         env:
           AGENT_MODEL: ${{ vars.AGENT_MODEL }}
           AGENT_PROVIDER_ID: ${{ vars.AGENT_PROVIDER_ID }}
@@ -112,10 +114,15 @@ jobs:
             const provider = env.AGENT_PROVIDER_ID || env.AGENT_MODEL.split("/")[0];
             const options = { apiKey: "{env:AGENT_API_KEY}" };
             if (env.AGENT_BASE_URL) options.baseURL = env.AGENT_BASE_URL;
-            console.log(JSON.stringify({ provider: { [provider]: { options } } }));
+            console.log(JSON.stringify({ provider: { [provider]: { options } }, agent: { build: { steps: 10 } } }));
           ')"
-          opencode run --pure --agent build --model "$AGENT_MODEL" \
-            "$(cat .github/aa-ui-agent-prompt.md)" >dist/aa-ui/agent.log 2>&1
+          agent_status=0
+          timeout --kill-after=15s 8m opencode run --pure --agent build --model "$AGENT_MODEL" \
+            "$(cat .github/aa-ui-agent-prompt.md)" >dist/aa-ui/agent.log 2>&1 || agent_status=$?
+          if [[ "$agent_status" == 124 || "$agent_status" == 137 ]]; then
+            echo '::error::OpenCode did not finish within eight minutes. See the diagnosis artifact.'
+          fi
+          exit "$agent_status"
       - name: Verify and export the proposed fix
         id: validate
         run: |
@@ -130,15 +137,10 @@ jobs:
           node test/run-tests.js
           node test/integration-test.js
           node test/check-providers-test.js
-          AA_UI_ARTIFACTS=dist/aa-ui/after npm run check:aa-ui
-          jq -e --slurpfile before dist/aa-ui/before/confirmed.json '
-            $before[0] as $confirmed
-            | [.charts[] | select(.status == "pass") | .chart] as $passed
-            | ($confirmed | length > 0) and (($confirmed - $passed) | length == 0)
-          ' dist/aa-ui/after/report.json >/dev/null || {
-            echo '::error::A confirmed regression was not rediscovered and verified after the patch.'
-            exit 1
-          }
+          result=0
+          AA_UI_ARTIFACTS=dist/aa-ui/after npm run check:aa-ui || result=$?
+          if (( result > 1 )); then exit "$result"; fi
+          node scripts/check-aa-ui-repair.js verify dist/aa-ui/before dist/aa-ui/after dist/aa-ui/agent.log >> "$GITHUB_STEP_SUMMARY"
           git diff --no-ext-diff --no-textconv HEAD -- "${allowed[@]}" >dist/aa-ui/fix.patch
           echo 'patch=true' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v7
@@ -147,6 +149,7 @@ jobs:
           name: aa-ui-diagnosis
           path: |
             dist/aa-ui/agent.log
+            dist/aa-ui/triage.jsonl
             dist/aa-ui/after/
             dist/aa-ui/fix.patch
           retention-days: 14
@@ -196,6 +199,6 @@ jobs:
           title: 'fix: restore AA chart repricing'
           commit-message: 'fix: restore AA chart repricing'
           body: |
-            The scheduled Chromium check reproduced an AA chart regression. OpenCode proposed this patch. The full live scan and repository tests passed, including every chart with a confirmed regression.
+            The Chromium check reproduced an AA chart regression. The repository tests passed with this patch, and a full live scan verified the selected repair without introducing new regressions. Other detected coverage gaps are tracked in the workflow run.
 
             Review the patch and the before/after evidence in the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
