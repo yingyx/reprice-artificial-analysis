@@ -135,7 +135,13 @@ jobs:
               printf '\nSelected evidence (JSON)\n%s\n' "$evidence")" \
             >dist/aa-ui/agent.log 2>&1 || agent_status=$?
           if [[ "$agent_status" == 124 || "$agent_status" == 137 ]]; then
-            echo '::error::OpenCode did not finish within eight minutes. See the diagnosis artifact.'
+            if git diff --quiet HEAD -- src/content/extract.js src/content/chart-integration.js; then
+              echo '::error::OpenCode was interrupted before writing a candidate patch. See the diagnosis artifact.'
+            else
+              echo "::warning::OpenCode was interrupted (exit $agent_status). The candidate must still pass verification."
+              echo 'OpenCode was interrupted after writing changes. Verifying the candidate against the full test suite and browser scan.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
           fi
           exit "$agent_status"
       - name: Verify and export the proposed fix

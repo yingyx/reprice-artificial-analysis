@@ -188,12 +188,21 @@ function verify(before, afterDir, targetFile) {
     throw new Error('The after-scan could not inspect all discovered pages and charts.');
   }
 
+  // A chart the retry could not inspect can still have a known state from the first scan.
+  let baselineCharts = retry.charts;
+  if (retry.charts.some(chart => chart.status === 'site-unavailable')) {
+    const initialById = new Map(readJson(before, 'initial/report.json').charts
+      .filter(chart => ['pass', 'regression'].includes(chart.status)).map(chart => [chart.chart, chart]));
+    baselineCharts = retry.charts.map(chart => chart.status === 'site-unavailable'
+      ? initialById.get(chart.chart) || chart : chart);
+  }
+
   const afterById = new Map(after.charts.map(chart => [chart.chart, chart]));
-  const beforeById = new Map(retry.charts.map(chart => [chart.chart, chart]));
-  const beforeByNative = uniqueNativeCharts(retry.charts);
+  const beforeById = new Map(baselineCharts.map(chart => [chart.chart, chart]));
+  const beforeByNative = uniqueNativeCharts(baselineCharts);
   const afterByNative = uniqueNativeCharts(after.charts);
   const paired = new Map();
-  for (const chart of retry.charts) {
+  for (const chart of baselineCharts) {
     let observed = afterById.get(chart.chart);
     if (!observed) {
       // AA can move the same scatter out of a tab, changing only its display identity.
@@ -210,7 +219,7 @@ function verify(before, afterDir, targetFile) {
     }
   }
   const previousRegressions = new Set();
-  for (const chart of retry.charts) {
+  for (const chart of baselineCharts) {
     const observed = paired.get(chart.chart);
     if (['pass', 'regression'].includes(chart.status) && !observed) {
       throw new Error('A previously inspected chart disappeared: ' + chart.chart);
