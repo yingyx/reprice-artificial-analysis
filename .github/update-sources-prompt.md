@@ -83,9 +83,9 @@ in `notes`.
    third-party estimates as estimates rather than official allowances.
    GLM and the legacy Kimi preset (`kimi-allegretto`) remain manually maintained.
    Never modify those entries, even if mentioned in dispatch context.
-2. Fetch the supplied URLs directly with webfetch; no browser interaction
-   is configured. If the table is unavailable, leave the preset unchanged
-   and report the failure rather than treating it as removed coverage.
+2. Fetch the supplied URLs directly with webfetch. Reuse each page across
+   all requested tiers it covers. If the table is unavailable, leave the
+   preset unchanged and report the failure.
 3. Update `data/sources.json` - and ONLY the entries whose `id` matches a
    changed source id (array order must be preserved; other entries stay
    byte-identical):
@@ -93,9 +93,10 @@ in `notes`.
      a new entry using the schema below and the provider label as its name;
      leave it absent when evidence is insufficient; never add placeholder pricing;
    - keep `id` stable and `name` stable unless the plan was renamed.
-     Set `asOf` to the current UTC date (YYYY-MM-DD) after successfully
-     verifying the source, including when all existing values are confirmed.
-     Leave it unchanged if any required evidence is missing;
+     After verifying a source, write its completed changes and the current
+     UTC date (YYYY-MM-DD) in `asOf` in the same edit. For a confirmed
+     source with unchanged data, update only `asOf`. Leave it unchanged
+     if any required evidence is missing;
    - update `notes` with the concrete numbers behind pricing changes. Keep
      existing evidence notes when the published terms and numbers are unchanged;
    - recompute every affected `nameIncludes` pattern value with the formula
@@ -112,8 +113,9 @@ in `notes`.
    - a promo `match` must name the specific discounted model, never a
      whole family: sibling models without the deal would inherit the
      discount ratio and be mispriced.
-4. Edit only `data/sources.json`. The workflow validates the result and
-   regenerates `src/data/sources.js`.
+4. Save each verified source as you go. When every requested source is
+   either updated or unverified, finish. Edit only `data/sources.json`.
+   The workflow validates the result and regenerates `src/data/sources.js`.
 
 ## Entry schema (data/sources.json sources[])
 

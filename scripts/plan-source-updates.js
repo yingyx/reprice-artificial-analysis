@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { isDeepStrictEqual: equal } = require('node:util');
+const { validateProfile } = require('./build-sources.js');
 const { loadPages } = require('./check-providers.js');
 
 const SOURCES = 'data/sources.json';
@@ -155,13 +156,14 @@ function main(outputDir) {
   const base = byId(baseDoc);
   const ids = candidate.sources.map(s => s.id);
   if (!equal({ ...candidate, sources: [] }, { ...baseDoc, sources: [] })
-      || !equal(ids.slice(0, base.size), [...base.keys()])) {
-    throw new Error('The agent changed source order, removed a source, or edited document metadata');
+      || !equal(ids.slice(0, base.size), [...base.keys()]) || new Set(ids).size !== ids.length) {
+    throw new Error('The agent changed source order, removed or duplicated a source, or edited document metadata');
   }
 
   const providers = new Map(read('data/providers.json').providers.map(p => [p.sourceId, p]));
   const requested = words(process.env.CHANGED_SOURCES);
   const unavailable = words(process.env.UNAVAILABLE_SOURCES);
+  const timedOut = process.env.AGENT_TIMED_OUT === 'true';
   const today = new Date().toISOString().slice(0, 10);
   const pending = new Map();
   const reviewHead = process.env.REVIEW_HEAD;
@@ -183,10 +185,22 @@ function main(outputDir) {
       throw new Error('The agent changed a source outside its task: ' + after.id);
     }
     if (equal(before, { ...after, asOf: before?.asOf })) continue;
+    if (timedOut) {
+      // The agent writes asOf with the completed edit, after checking the source.
+      if (after.asOf !== today || (before && after.asOf <= before.asOf)) continue;
+      try {
+        validateProfile(after, 'Source ' + after.id);
+      } catch (error) {
+        console.warn('Skipping invalid candidate from the interrupted run: ' + error.message);
+        continue;
+      }
+    }
     const previousProposal = pending.get(after.id);
     if (previousProposal && equal(previousProposal, { ...after, asOf: previousProposal.asOf })) continue;
-    const reason = process.env.GITHUB_EVENT_NAME !== 'schedule' ? 'Manually requested update'
-      : reviewReason(before, after, providers.get(after.id), unavailable, today);
+    let reason;
+    if (timedOut) reason = 'OpenCode timed out after writing this candidate';
+    else if (process.env.GITHUB_EVENT_NAME !== 'schedule') reason = 'Manually requested update';
+    else reason = reviewReason(before, after, providers.get(after.id), unavailable, today);
     if (reason || pending.has(after.id)) {
       review.set(after.id, after);
       if (reason) reasons.set(after.id, reason);
@@ -199,7 +213,7 @@ function main(outputDir) {
   const oldState = show('HEAD', HASHES);
   const oldPages = loadPages(oldState);
   const proposed = byId(candidate);
-  const unverified = [...requested].filter(id => proposed.get(id)?.asOf !== today);
+  const unverified = [...requested].filter(id => timedOut || proposed.get(id)?.asOf !== today);
   // A shared page must be checked again until every affected plan has landed.
   for (const id of new Set([...review.keys(), ...unavailable, ...unverified])) {
     for (const { url } of providers.get(id)?.pages || []) {

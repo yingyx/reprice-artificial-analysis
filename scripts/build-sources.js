@@ -148,7 +148,7 @@ function buildSourcesModule(repoRoot) {
   ].join('\n');
 }
 
-module.exports = { buildSourcesModule, loadSourceProfiles, lintPatternWarnings };
+module.exports = { buildSourcesModule, loadSourceProfiles, lintPatternWarnings, validateProfile };
 
 if (require.main === module) {
   const root = path.join(__dirname, '..');
