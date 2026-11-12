@@ -320,6 +320,16 @@
             intelligence: num(m.score) ? m.score * scale : null, aaCost: m.costPerTask, provider: m.creatorName };
         });
       }
+      if (Array.isArray(value.models) && value.models.some(function (m) { return m && typeof m === 'object' && 'gatedAllPass' in m; })) {
+        var gatedRows = value.models.filter(function (m) { return m && typeof m === 'object' && m.id && 'gatedAllPass' in m && 'costPerTask' in m; });
+        if (gatedRows.length && (!charts['harvey-lab-aa'] || gatedRows.length > charts['harvey-lab-aa'].length)) {
+          charts['harvey-lab-aa'] = gatedRows.map(function (m) {
+            return { id: m.id, chartId: m.id, label: m.name,
+              intelligence: typeof m.gatedAllPass === 'number' ? m.gatedAllPass * 100 : null,
+              aaCost: m.costPerTask, provider: m.creator && m.creator.name };
+          });
+        }
+      }
       if (!Array.isArray(value) && SLUG_RE.test(value.slug || '') && value.name) {
         if (value.id && value.release && value.release.slug) {
           var cost = value.intelligenceIndexCostPerTask;
