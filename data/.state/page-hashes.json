@@ -14,10 +14,10 @@
       "drift": 1
     },
     "https://modeldial.com/subscriptions/codex": {
-      "full": "6c0165b7bb5cf98d",
-      "price": "3cf80060c3b23bc4",
-      "tokens": 100,
-      "drift": 5
+      "full": "2db11fa6442a9651",
+      "price": "741dbeb255574abe",
+      "tokens": 103,
+      "drift": 0
     },
     "https://modeldial.com/subscriptions/claude": {
       "full": "d64be49e451404db",
@@ -38,10 +38,10 @@
       "drift": 0
     },
     "https://modeldial.com/subscriptions": {
-      "full": "154a8f678fe52b09",
-      "price": "d7a2353ab4ee9600",
-      "tokens": 315,
-      "drift": 3
+      "full": "43b43a13fc69f646",
+      "price": "60ead85ed9e8a3ca",
+      "tokens": 417,
+      "drift": 0
     }
   }
 }
