@@ -60,7 +60,8 @@
     'artificial-analysis-cyber-index-score-vs-cost-per-task': { key: 'artificial-analysis-cyber-index', label: 'Artificial Analysis Cyber Index' },
     'cwe-bench-aa-score-vs-cost-per-task': { key: 'cwe-bench-aa', label: 'CWE-Bench-AA Score (%)' },
     'deepsecbench-aa-score-vs-cost-per-task': { key: 'deepsecbench-aa', label: 'DeepsecBench-AA Score (%)' },
-    'cybergym-e2e-aa-score-vs-cost-per-task': { key: 'cybergym-e2e-aa', label: 'CyberGym-E2E-AA Score (%)' }
+    'cybergym-e2e-aa-score-vs-cost-per-task': { key: 'cybergym-e2e-aa', label: 'CyberGym-E2E-AA Score (%)' },
+    'harvey-lab-aa-v11-hallucination-gated-all-pass-rate-vs-cost-per-task': { key: 'harvey-lab-aa', label: 'Harvey LAB-AA Hallucination-Gated All-Pass Rate (%)' }
   };
   // AA added a -chart suffix and shortened the release chart ID. Match both
   // generations exactly, including repeated IDs in independent tab groups.
