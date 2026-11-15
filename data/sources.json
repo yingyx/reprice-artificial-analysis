@@ -1519,10 +1519,10 @@
       "name": "Google AI Ultra 5×",
       "kind": "subscription",
       "monthlyFee": 99.99,
-      "manualRatio": 0.115373,
+      "manualRatio": 0.114799,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.115373
+        "value": 0.114799
       },
       "rules": {},
       "nameIncludes": [
@@ -1530,7 +1530,7 @@
           "match": "gemini 4 argon",
           "rule": {
             "type": "multiplier",
-            "value": 0.115373
+            "value": 0.114799
           }
         },
         {
@@ -1541,18 +1541,18 @@
           }
         }
       ],
-      "asOf": "2026-11-07",
-      "notes": "ModelDial third-party estimate, reviewed 2026-11-07 (review date, not a new measurement date; page re-fetched on this date and the pricing table shows the same numbers as the previous review). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 5×\". USD 99.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $200/week, Gemini 3.8 Flash $600/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two model estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. No allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances."
+      "asOf": "2026-11-15",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-15 (review date, not a new measurement date; page re-fetched on this date; the Gemini 4 Argon weekly estimate moved $200 -> $201 since the 2026-11-07 review, measurement id google-ultra-5x-argon-20261113, so its pattern recomputes 99.99/871 = 0.114799; Gemini 3.8 Flash is unchanged at $600/week -> 99.99/2600 = 0.038458). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 5×\". USD 99.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $201/week, Gemini 3.8 Flash $600/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; monthly equivalent = weekly × 52 ÷ 12 (Argon $871, Flash $2,600); displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two priced estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. New rows since the 2026-11-07 review - Gemini 4 Hydrogen, Gemini 4 Carbon (measurement ids google-*-hydrogen/carbon-20261113) and Claude Sonnet 5.5 / Claude Opus 5.5 (included-google-antigravity-*) - publish token counts and per-$1 token rates but no API-equivalent USD, so they get NO patterns and stay at AA list price; no allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances."
     },
     {
       "id": "google-ai-ultra-20x",
       "name": "Google AI Ultra 20×",
       "kind": "subscription",
       "monthlyFee": 199.99,
-      "manualRatio": 0.057689,
+      "manualRatio": 0.057474,
       "defaultRule": {
         "type": "multiplier",
-        "value": 0.057689
+        "value": 0.057474
       },
       "rules": {},
       "nameIncludes": [
@@ -1560,7 +1560,7 @@
           "match": "gemini 4 argon",
           "rule": {
             "type": "multiplier",
-            "value": 0.057689
+            "value": 0.057474
           }
         },
         {
@@ -1571,8 +1571,8 @@
           }
         }
       ],
-      "asOf": "2026-11-07",
-      "notes": "ModelDial third-party estimate, reviewed 2026-11-07 (review date, not a new measurement date; page re-fetched on this date and the pricing table shows the same numbers as the previous review). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 20×\". USD 199.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $800/week, Gemini 3.8 Flash $2399/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two model estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. No allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances."
+      "asOf": "2026-11-15",
+      "notes": "ModelDial third-party estimate, reviewed 2026-11-15 (review date, not a new measurement date; page re-fetched on this date; the Gemini 4 Argon weekly estimate moved $800 -> $803 since the 2026-11-07 review, measurement id google-ultra-20x-argon-20261113, so its pattern recomputes 199.99/3479.67 = 0.057474; Gemini 3.8 Flash is unchanged at $2399/week -> 199.99/10395.67 = 0.019238). Source: https://modeldial.com/subscriptions ; Google column \"AI Ultra 20×\". USD 199.99/month. Displayed approximate API-equivalent USD: Gemini 4 Argon $803/week, Gemini 3.8 Flash $2399/week. Each model ratio = USD monthlyFee / its monthly equivalent, rounded to six decimals; monthly equivalent = weekly × 52 ÷ 12 (Argon $3,479.67, Flash $10,395.67); displayed USD values are used without inferring additional precision from token counts. Antigravity estimates, not general Gemini app allowances. Pro Argon has an independent weekly quota; Ultra shares a pool. The two priced estimates are alternatives and must not be added. Published per-week API-equivalent estimates are converted by 52/12; no extra 5x/20x tier multiplier is applied. New rows since the 2026-11-07 review - Gemini 4 Hydrogen, Gemini 4 Carbon (measurement ids google-*-hydrogen/carbon-20261113) and Claude Sonnet 5.5 / Claude Opus 5.5 (included-google-antigravity-*) - publish token counts and per-$1 token rates but no API-equivalent USD, so they get NO patterns and stay at AA list price; no allowance is inferred for other Gemini versions. Full usable quota assumed; shared model allowances cannot be added. Workload, caching and short-window limits affect realized value; these are not official USD balances."
     },
     {
       "id": "kimi-plus",
