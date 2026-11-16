@@ -14,16 +14,16 @@
       "drift": 0
     },
     "https://modeldial.com/subscriptions/codex": {
-      "full": "fa1cdb6949ed3d6a",
+      "full": "04b36ff5ef6c0cb7",
       "price": "741dbeb255574abe",
       "tokens": 103,
-      "drift": 1
+      "drift": 2
     },
     "https://modeldial.com/subscriptions/claude": {
-      "full": "ca9575f2f06af471",
+      "full": "fc4afefa59607ace",
       "price": "15871084770d0843",
       "tokens": 73,
-      "drift": 0
+      "drift": 1
     },
     "https://commandcode.ai/docs/plans/goat": {
       "full": "f548d3ac3dab5eef",
@@ -38,10 +38,10 @@
       "drift": 0
     },
     "https://modeldial.com/subscriptions": {
-      "full": "35ccd8e5909826d4",
+      "full": "743b2149ec84096d",
       "price": "462314e714d9ec46",
       "tokens": 430,
-      "drift": 0
+      "drift": 1
     }
   }
 }
