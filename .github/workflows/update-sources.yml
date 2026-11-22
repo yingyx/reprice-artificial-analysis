@@ -67,6 +67,13 @@ jobs:
         timeout-minutes: 4
         run: npm install --global opencode-ai@1.19.4
 
+      - name: Prepare AA model names for the data agent
+        if: steps.detect.outputs.changed != ''
+        run: |
+          mkdir -p "$PLAN"
+          timeout --kill-after=10s 90s node scripts/check-patterns.js --names-output "$PLAN/aa-model-names.json" \
+            || echo '::warning::AA model names are unavailable. The agent can still verify provider pricing.'
+
       - name: Propose pricing updates
         id: propose
         if: steps.detect.outputs.changed != ''
@@ -87,7 +94,7 @@ jobs:
           # Stop OpenCode before the job deadline so validation and PR creation can still run.
           agent_status=0
           timeout --kill-after=15s 30m opencode run --pure --agent build --model "$MODEL" \
-            "$(printf 'Changed source ids: %s\nTask context: %s\n\n' "$CHANGED_SOURCES" "$BRIEF"; cat .github/update-sources-prompt.md)" \
+            "$(printf 'Changed source ids: %s\nTask context: %s\nAA model names file: %s/aa-model-names.json\n\n' "$CHANGED_SOURCES" "$BRIEF" "$PLAN"; cat .github/update-sources-prompt.md)" \
             || agent_status=$?
           if [[ "$agent_status" == 124 || "$agent_status" == 137 ]]; then
             echo '::warning::OpenCode reached its time limit. Checking completed entries for a review PR.'
@@ -207,7 +214,7 @@ jobs:
           node test/run-tests.js
           node test/integration-test.js
           node test/check-providers-test.js
-          timeout --kill-after=10s 90s node scripts/check-patterns.js || echo '::warning::AA model audit did not complete.'
+          node scripts/check-patterns.js --names-file "$PLAN/aa-model-names.json" || echo '::warning::AA model audit did not complete.'
           git diff --check HEAD
 
       - name: Open or refresh the review PR

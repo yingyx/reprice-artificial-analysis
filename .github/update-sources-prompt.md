@@ -68,10 +68,14 @@ Rules:
 - Free models get no pattern (they stay at AA list price; say so in
   `notes`).
 
-When adding or changing a match pattern, cross-check it against the names at
-https://artificialanalysis.ai/models. Narrow patterns that would also match
-models outside the plan. If a covered model is absent from AA, document that
-in `notes`.
+When adding or changing a match pattern, cross-check it against the AA model
+names file supplied at the top of this task. It contains the names extracted
+from https://artificialanalysis.ai/models, one name per line. Read this file
+instead of fetching AA's model listings or searching their raw HTML, whose
+large embedded payloads can exceed tool limits. If the file is unavailable,
+verify pricing from the provider evidence and record the missing AA check
+in `notes`. Narrow patterns that would also match models outside the plan.
+If a covered model is absent from the names file, document that in `notes`.
 
 ## Procedure
 
@@ -84,8 +88,9 @@ in `notes`.
    GLM and the legacy Kimi preset (`kimi-allegretto`) remain manually maintained.
    Never modify those entries, even if mentioned in dispatch context.
 2. Fetch the supplied URLs directly with webfetch. Reuse each page across
-   all requested tiers it covers. If the table is unavailable, leave the
-   preset unchanged and report the failure.
+   all requested tiers it covers. Finish and save the sources covered by
+   those pages before researching the next provider. If the table is
+   unavailable, leave the preset unchanged and report the failure.
 3. Update `data/sources.json` - and ONLY the entries whose `id` matches a
    changed source id (array order must be preserved; other entries stay
    byte-identical):

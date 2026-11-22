@@ -14,6 +14,8 @@
 // Usage:
 //   node scripts/check-patterns.js                 # fetch + audit
 //   node scripts/check-patterns.js --file <html>   # audit a saved page
+//   node scripts/check-patterns.js --names-output <json> # export model names
+//   node scripts/check-patterns.js --names-file <json>   # audit saved names
 //   node scripts/check-patterns.js --strict        # fail on zero-hit patterns
 
 const fs = require('fs');
@@ -89,16 +91,40 @@ async function main() {
   const argv = process.argv.slice(2);
   const strict = argv.includes('--strict');
   const fileIdx = argv.indexOf('--file');
-  let html;
-  if (fileIdx !== -1 && argv[fileIdx + 1]) {
-    console.log('audit against saved page: ' + argv[fileIdx + 1]);
-    html = fs.readFileSync(argv[fileIdx + 1], 'utf8');
-  } else {
-    const res = await fetch(AA_MODELS_URL, { headers: { 'user-agent': USER_AGENT } });
-    if (!res.ok) throw new Error('AA models page HTTP ' + res.status);
-    html = await res.text();
+  const namesFileIdx = argv.indexOf('--names-file');
+  const namesOutputIdx = argv.indexOf('--names-output');
+  for (const option of ['--file', '--names-file', '--names-output']) {
+    const index = argv.indexOf(option);
+    if (index !== -1 && (!argv[index + 1] || argv[index + 1].startsWith('--'))) {
+      throw new Error(option + ' requires a file path');
+    }
   }
-  const names = extractAaModelNames(html);
+  let names;
+  if (namesFileIdx !== -1) {
+    names = JSON.parse(fs.readFileSync(argv[namesFileIdx + 1], 'utf8'));
+  } else {
+    let html;
+    if (fileIdx !== -1) {
+      console.log('audit against saved page: ' + argv[fileIdx + 1]);
+      html = fs.readFileSync(argv[fileIdx + 1], 'utf8');
+    } else {
+      const res = await fetch(AA_MODELS_URL, {
+        headers: { 'user-agent': USER_AGENT },
+        signal: AbortSignal.timeout(60000)
+      });
+      if (!res.ok) throw new Error('AA models page HTTP ' + res.status);
+      html = await res.text();
+    }
+    names = extractAaModelNames(html);
+  }
+  if (!Array.isArray(names) || !names.length || names.some(name => typeof name !== 'string' || !name.trim())) {
+    throw new Error('AA model names are missing or invalid');
+  }
+  if (namesOutputIdx !== -1) {
+    fs.writeFileSync(argv[namesOutputIdx + 1], JSON.stringify(names, null, 2) + '\n');
+    console.log('Exported ' + names.length + ' AA model names');
+    return;
+  }
   const doc = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'sources.json'), 'utf8'));
   const { lines, zeroHitCount } = auditPatterns(doc.sources, names);
   console.log('AA model names: ' + names.length);
