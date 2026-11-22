@@ -105,20 +105,6 @@
           }
         },
         {
-          "match": "mimo-v2.5-pro",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.667
-          }
-        },
-        {
-          "match": "mimo-v2.5",
-          "rule": {
-            "type": "multiplier",
-            "value": 0.167
-          }
-        },
-        {
           "match": "deepseek v4.1 flash",
           "rule": {
             "type": "multiplier",
@@ -253,9 +239,29 @@
           "reason": "Gemini 4 Argon 50% off limited-time offer with a stated end date: docs footnote \"The 50% discount applies through November 30, 2026\" on the \"Gemini 4 Argon (50% off)\" row (half-price tokens ~~$4.00~~ $2.00 / ~~$20.00~~ $10.00) with monthly limit $30 -> 50%-off tokens make the $30 limit buy $60 of list-price usage, 10/60 = 0.167, same effective price as the old 2x limit boost; falls back to the 0.333 base pattern (10/30) after the date",
           "startsAt": null,
           "endsAt": "2026-11-30"
+        },
+        {
+          "match": "glm-5.3-flash",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.167
+          },
+          "reason": "Ordering guard, not an offer: GLM-5.3-Flash keeps its $60 Go monthly limit (10/60 = 0.167, chart row unchanged) - listed before the GLM-5.3 boost promo because a \"glm-5.3\" promo would also hit the sibling label \"GLM-5.3-Flash\" (punctuation-insensitive key \"glm53flash\" contains \"glm53\") and misprice it at 0.02; promos beat nameIncludes at runtime",
+          "startsAt": null,
+          "endsAt": null
+        },
+        {
+          "match": "glm-5.3",
+          "rule": {
+            "type": "multiplier",
+            "value": 0.02
+          },
+          "reason": "GLM-5.3 higher usage limits with a stated end date: the opencode.ai/go chart row now shows Go $500 / Go Plus $1000 monthly limits (vs the $15 base recorded on 2026-11-16) and the docs footnote reads \"GLM-5.3: Higher usage limits apply through November 22, 2026\" -> 10/500 = 0.02 while active; falls back to the unchanged 0.667 base pattern (10/$15) after the date",
+          "startsAt": null,
+          "endsAt": "2026-11-22"
         }
       ],
-      "asOf": "2026-11-16",
+      "asOf": "2026-11-22",
       "notes": "$10/mo subscription (opencode.ai/go pricing card \"Go $10 per month\"; opencode.ai/docs/go plan table \"Go $10/month - Lower-cost access to the models below\"). Re-verified against pages fetched 2026-11-16 (opencode.ai/go and opencode.ai/docs/go Usage-limits Go tab): the docs included-models list now has 34 entries = 30 paid + 4 free limited-time (the /go chart link now reads \"View all 34 models\") - two additions since the 2026-11-13 review: Qwen4 Max (paid) and Hy4 flash Free (free limited-time). Hy4 was added at the previous review (docs included-models list adds \"Hy4\" next to \"Hy4 preview\"; /go hero reads \"Hy4 is now available in Go\"; the /go chart row shows Hy4 New, Go $60 / Go Plus $240; docs Usage-limits Go tab Hy4 monthly limit $60) -> new pattern \"hy4\" = 10/60 = 0.167, placed after \"hy4 preview\" so the preview keeps 10/30 = 0.333; it hits AA's \"Tencent Hy4\" label. Added this review: pattern \"qwen4 max\" = 10/15 = 0.667 (docs usage-limits Go tab Qwen4 Max monthly limit $15; AA registry label \"Qwen4 Max\" verified on artificialanalysis.ai this fetch), placed before \"qwen3.8 max\"; and exclude \"hy4 flash\" placed between \"hy4 preview\" and \"hy4\" so the family pattern can never discount an AA Hy4 Flash label - the plan carries that variant only as the free \"Hy4 flash Free\" (model id hy4-flash-free, monthly limit Unlimited), the exclude matches 0 AA names today. Every other per-model monthly limit is unchanged, so the existing nameIncludes values stay 10/that model's monthly limit: $15 -> 0.667 (13 models: GLM-5.3, Kimi K3.1 Pro, Kimi K3, Step 5 Preview, MiMo-V2.6-Pro, MiMo-V2.5-Pro, Qwen4 Max, Qwen3.8 Max, DeepSeek V4 Pro, Grok 4.7, GPT 6 Luna, GPT 5.6 Luna, Claude Haiku 5.5 - still the most common allowance, so manualRatio/defaultRule stay 10/15 = 0.666667); $60 -> 0.167 (now 12 models: GLM-5.3-Flash, GLM-5.2, Kimi K2.7 Code, LongCat-2.0, MiMo-V2.6-Flash, MiMo-V2.5, MiniMax M3, Muse Spark 1.3 Contributor, Muse Spark 1.2 Contributor, Qwen3.7 Plus, Hy3, Hy4); $30 for Qwen3.8 Flash and Hy4 preview -> 0.333; $20 for MiniMax M3.1 Flash -> 0.5; $100 for DeepSeek V4.1 Flash -> 0.1. LongCat 2.5 Free replaced Crouton Alpha Free in the docs included-models list and usage-limits tables (monthly limit **Unlimited**, footnote \"Free for a limited time\", no end date) alongside Beam Free, Iceman Contributor Free and the newly added Hy4 flash Free - all four are free limited-time models (Go monthly limit **Unlimited**, footnote \"Free for a limited time\", no end date) -> NO positive patterns (plus the \"hy4 flash\" exclude), stay at AA list price. The fetched /go hero now advertises Hy4 and no longer shows the earlier \"DeepSeek V4.1 Flash gets 4× usage limits for a limited time\" banner (no \"4×\"/\"limited time\" text anywhere on the fetched /go page); the docs Usage-limits tables publish $100 (Go) / $200 (Go Plus) monthly limits for DeepSeek V4.1 Flash, which are used as published, with no promo entry. Gemini 4 Argon is still \"(50% off)\" with monthly limit $30, half-price tokens (~~$4.00~~ $2.00 / ~~$20.00~~ $10.00) and docs footnote \"The 50% discount applies through November 30, 2026\" -> base pattern stays 10/30 = 0.333 and the promo \"gemini 4 argon\" stays 10/60 = 0.167 with endsAt 2026-11-30. Excludes kept ahead of the family patterns: \"quasar\" (AA's Quasar 438B (Max, Based on GLM-5.2) is not in the plan) and \"hy3-preview\" (AA lists Hy3-preview variants the plan does not include). Zero-hit patterns kept intentionally: muse spark 1.3/1.2 contributor (the plan includes the Contributor tiers; AA lists only the non-Contributor Muse Spark 1.3/1.2, which stay unrepriced) and hy4 preview (AA does not list Hy4 preview yet)."
     },
     {
